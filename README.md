@@ -1,21 +1,17 @@
 # expreess
 
+##　package.json
+
+添加以下 支持sass
+
+    "node-sass": "^4.5.3",
+    "pug": "^2.0.0-beta6",
+    "pug-loader": "^2.3.0",
+    "sass-loader": "^6.0.6"
 > exepress nuxt ssr
 
 ## Build Setup
 
-``` bash
-# install dependencies
-$ npm install # Or yarn install
-
-# serve with hot reload at localhost:3000
-$ npm run dev
-
-# build for production and launch server
-$ npm start
-```
-
-For detailed explanation on how things work, checkout the [Nuxt.js docs](https://github.com/nuxt/nuxt.js).
 
 ## Backpack
 
