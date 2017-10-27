@@ -6,7 +6,7 @@ const router = Router()
 const users = [
   { name: 'Alexandre' },
   { name: 'Pooya' },
-  { name: 'Sébastien' },
+  { name: 'Sébastien' }
 ]
 
 /* GET users listing. */
@@ -16,7 +16,7 @@ router.get('/users', function (req, res, next) {
 
 /* GET user by ID. */
 router.get('/users/:id', function (req, res, next) {
-  console.info(req.params);
+  console.info(req.params)
   const id = parseInt(req.params.id)
   if (id >= 0 && id < users.length) {
     res.json(users[id])

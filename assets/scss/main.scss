@@ -23,6 +23,11 @@ html,body{
   }
   .container{
     flex:1;
+    .login{
+      width: 400px;
+      margin: 0 auto;
+      text-align: center
+    }
   }
   footer{
     color: red;
