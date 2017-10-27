@@ -5,18 +5,24 @@ module.exports = {
   head: {
     title: 'starter',
     meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: 'Nuxt.js project' }
+      {charset: 'utf-8'},
+      {name: 'viewport', content: 'width=device-width, initial-scale=1'},
+      {hid: 'description', name: 'description', content: 'Nuxt.js project'}
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      {rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'}
     ]
   },
   /*
   ** Global CSS
   */
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css',
+    {
+      src: '~assets/scss/main.scss', lang: 'scss'
+    },
+    {
+      src: '~assets/scss/common.scss', lang: 'scss'// 指定scss 文件而非sass，然而使用scss产生大量的map无效字符，后期还是需要引用scss
+    }],
   /*
   ** Add axios globally
   */
@@ -35,5 +41,6 @@ module.exports = {
         })
       }
     }
-  }
+  },
+  plugins: ['~plugins/axios', '~plugins/iview']
 }

@@ -4,9 +4,12 @@
  *@date 2017/10/26
  -------------------------->
 <template>
-    <div class="login">
+    <section class="container">
         登录页面
-    </div>
+        <div id="login">
+            <Input v-model="value" placeholder="请输入..." style="width: 300px"></Input>
+        </div>
+    </section>
 </template>
 <script>
   export default {
@@ -15,7 +18,9 @@
     },
     data () {
       return {
-        msg: 'Hello world login VueJS'
+        msg: 'Hello world login VueJS',
+        login: 'login',
+        password: 'password'
       }
     },
     methods: {}

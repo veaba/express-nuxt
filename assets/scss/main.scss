@@ -1,36 +1,31 @@
+@charset "utf-8";
 /*!*********************
  *@name style
  *@author Jo.gel
  *@date 2017/10/27
  ***********************/
-* {
-  margin: 0;
-  padding: 0;
-  border: 0;
+html,body{
+  width: 100%;
+  height: 100%;
 }
+#__nuxt{
+  width: 100%;
+  height: 100%;
+  .main{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+  header{
 
-*, :before, :after {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-ul {
-  -webkit-margin-before: 0;
-  -webkit-margin-after: 0;
-  -webkit-margin-start: 0;
-  -webkit-margin-end: 0;
-  -webkit-padding-start: 0;
-}
-
-/********special font*******/
-* {
-  font-family: "Microsoft Jhenghei", "serif", "sans-serif", "cursive", "fantasy", "monospace"
-}
-
-/**********root*************/
-html {
-}
-
-body {
+  }
+  .container{
+    flex:1;
+  }
+  footer{
+    color: red;
+    margin-bottom: 20px;
+  }
 }

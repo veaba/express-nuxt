@@ -1,9 +1,14 @@
-import * as axios from 'axios'
+import Vue from 'vue'
+import axios from 'axios'
 
-let options = {}
-// The server-side needs a full url to works
-if (process.server) {
-  options.baseURL = `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`
-}
+Vue.prototype.$ajax = axios
 
-export default axios.create(options)
+// import * as axios from 'axios'
+//
+// let options = {}
+// // The server-side needs a full url to works
+// if (process.server) {
+//   options.baseURL = `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`
+// }
+//
+// export default axios.create(options)

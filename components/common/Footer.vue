@@ -1,9 +1,11 @@
 <template>
   <footer>
-    &copy;2017 - {{year}} Admingod.com
+    &copy;{{year}} Admingod.com
   </footer>
 </template>
 <script>
+  /* eslint-disable indent */
+
   export default {
     name: 'footer',
     components: {
@@ -15,7 +17,11 @@
     computed: {
       year: function () {
         const TheYear = new Date()
-        return TheYear.getFullYear()
+        if (TheYear.getFullYear() === 2017) {
+          return TheYear.getFullYear()
+        } else {
+          return '2017-' + TheYear.getFullYear()
+        }
       }
     }
   }

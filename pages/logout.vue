@@ -4,8 +4,9 @@
  *@date 2017/10/26
  -------------------------->
 <template>
-    <div class="logout">
-    </div>
+    <section class="container">
+        logout
+    </section>
 </template>
 <script>
   export default {

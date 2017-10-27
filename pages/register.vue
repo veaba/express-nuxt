@@ -4,9 +4,9 @@
  *@date 2017/10/26
  -------------------------->
 <template>
-    <div class="register">
-        <register></register>
-    </div>
+    <section class="container">
+        register
+    </section>
 </template>
 <script>
   export default {

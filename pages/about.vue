@@ -4,9 +4,9 @@
  *@date 2017/10/26
  -------------------------->
 <template>
-    <div class="about">
-        ass
-    </div>
+    <section class="container">
+        about
+    </section>
 </template>
 <script>
   export default {
