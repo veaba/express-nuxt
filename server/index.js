@@ -1,12 +1,14 @@
 import express from 'express'
 import { Nuxt, Builder } from 'nuxt'
-
+import bodyParser from 'body-parser' // 必须，需要解析
 import api from './api'
 
 const app = express()
 const host = process.env.HOST || '127.0.0.1'
 const port = process.env.PORT || 5000
 
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
 app.set('port', port)
 
 // Import API Routes

@@ -16,6 +16,7 @@
     "cross-env": "^5.0.1",
     "express": "^4.15.3",
     "iview": "^2.6.0",
+    "mongodb": "^2.2.33",
     "nuxt": "^1.0.0-rc3",
     "source-map-support": "^0.4.15"
   },

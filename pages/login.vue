@@ -11,13 +11,13 @@
         <Col>
         <Form :model="formItem" :label-width="80">
           <FormItem label="username">
-            <Input v-model="login" placeholder="请输入..."></Input>
+            <Input v-model="username" placeholder="请输入..."></Input>
           </FormItem>
           <FormItem label="password">
             <Input v-model="password" placeholder="password"></Input>
           </FormItem>
           <br>
-          <Button type="primary">Login</Button>
+          <Button type="primary"  @click="loginEvent" style="width: 100%">Login</Button>
         </Form>
         </Col>
       </Row>
@@ -25,6 +25,8 @@
   </section>
 </template>
 <script>
+  /* eslint-disable space-in-parens,handle-callback-err */
+
   export default {
     name: 'login',
     components: {},
@@ -32,11 +34,24 @@
       return {
         formItem: {},
         msg: 'Hello world login VueJS',
-        login: 'login',
+        username: 'username',
         password: 'password'
       }
     },
-    methods: {}
+    methods: {
+      loginEvent () {
+        this.$ajax.post('/api/login', {
+          username: this.username,
+          password: this.password
+        })
+          .then(res => {
+
+          })
+          .catch(err => {
+
+          })
+      }
+    }
   }
 </script>
 <style lang="scss" scoped>
