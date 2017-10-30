@@ -5,8 +5,11 @@
  * */
 import { Router } from 'express'
 const Mongodb = require('mongodb').MongoClient // es 语法引入mongodb
-const host = 'mongodb://localhost:27017'
-
+// const host = 'mongodb://localhost:27017'
+const config = {
+  host: 'mongodb://127.0.0.1:27017/admin',
+  user: 'admin'
+}
 const router = Router()
 
 // Mock Users
@@ -15,18 +18,24 @@ const users = [
   { name: 'Pooya' },
   { name: 'Sébastien' }
 ]
+// 链接数据库，如果没有则自动创建
+function _connectDB (callback) {
+  Mongodb.connect(config.host, function (err, db) {
+    if (err) {
+      console.info(err)
+      callback(err, null)// ？用途
+    } else {
+      // 数据库链接成功执行回掉
+      console.info('~~~~~~~~~~链接成功~~~~~~~~~~')
+      callback(err, db)
+    }
+  })
+}
 
 // POST user login
 
 router.post('/login', function (req, res, text) {
-  Mongodb.connect(host, function (err, db) {
-    if (err) {
-      console.info(err)
-    } else {
-      // 数据库链接成功执行回掉
-      console.info('~~~~~~~~~~链接成功~~~~~~~~~~')
-    }
-  })
+
   console.info(req.body)
 
   res.json({loginStatus: 'success'})
