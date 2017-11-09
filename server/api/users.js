@@ -5,9 +5,6 @@
  * */
 import { Router } from 'express'
 
-const config = {
-
-}
 const router = Router()
 
 // Mock Users
