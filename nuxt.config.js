@@ -1,3 +1,8 @@
+/**
+ * @desc nuxt 配置文件
+ * @Port 端口配置 env.PORT
+ * */
+
 module.exports = {
   /*
   ** Headers of the page
@@ -42,5 +47,11 @@ module.exports = {
       }
     }
   },
-  plugins: ['~plugins/axios', '~plugins/iview']
+  env: {
+    baseUrl: process.env.BASE_URL || 'http://localhost:5000',
+    HOST: '127.0.0.1',
+    PORT: '5000'
+  },
+  plugins: ['~plugins/axios', '~plugins/iview', '~plugins/socket']
+  // src: '~plugins/socket', ssr: false}
 }

@@ -1,18 +1,36 @@
+/* eslint-disable import/no-duplicates */
+/***********************
+ * @name JS
+ * @author Jo.gel
+ * @date 2017/11/12
+ ***********************/
+/* eslint-disable no-irregular-whitespace */
 import express from 'express'
 import { Nuxt, Builder } from 'nuxt'
 import bodyParser from 'body-parser' // 必须，需要解析
-import api from './api'
-
+import { router } from './api'
 const app = express()
 const host = process.env.HOST || '127.0.0.1'
 const port = process.env.PORT || 5000
-
-app.use(bodyParser.urlencoded({ extended: true }))
+// 创建socket服务
+const server = app.listen(port + 1)
+const io = require('socket.io')(server)
+app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 app.set('port', port)
 
 // Import API Routes
-app.use('/api', api)
+app.use('/api', router)
+// app.use('', socket)
+
+io.on('connection', function (socket) {
+  console.info(11111 + 'socketl 链接了吗')
+  socket.emit('news', {hello: 'world'})
+  socket.on('my other event', function (data) {
+    console.info(222)
+    console.log(data)
+  })
+})
 
 // Import and Set Nuxt.js options
 let config = require('../nuxt.config.js')
@@ -25,6 +43,7 @@ const nuxt = new Nuxt(config)
 if (config.dev) {
   const builder = new Builder(nuxt)
   builder.build()
+  // 可以执行then方法
 }
 
 // Give nuxt middleware to express

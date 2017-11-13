@@ -11,7 +11,14 @@
 <script>
   export default {
     data () {
-      return {}
+      return {
+      }
+    },
+    /* asyncData (context) {
+      console.info(context.env)
+      return { project: 'nuxt' }
+    }, */
+    mounted () {
     },
     methods: {
       postEvent () {

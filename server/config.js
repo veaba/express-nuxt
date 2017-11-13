@@ -10,7 +10,7 @@
  * @desc db config
  * */
 module.exports.config = {
-  base: 'mongodb://127.0.0.1:27017/beike', // 普通不授权模式链接mongodb
+  base: 'mongodb://127.0.0.1/beike', // 普通不授权模式链接mongodb
   domain: 'vsorg.com', // 主域名
   port: '27017',
   host: '127.0.0.1',

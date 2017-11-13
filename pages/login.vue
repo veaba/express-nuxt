@@ -38,7 +38,6 @@
 </template>
 <script>
   /* eslint-disable space-in-parens,handle-callback-err */
-
   export default {
     name: 'login',
     components: {},
@@ -50,8 +49,10 @@
         password: 'admin'
       }
     },
+    mounted () {
+      console.info(this.socket)
+    },
     methods: {
-
       /**
        * @desc login
        * */
