@@ -23,8 +23,11 @@ app.set('port', port)
 app.use('/api', router)
 // app.use('', socket)
 
+/*********************
+ * @desc webSocket
+ * *******************/
 io.on('connection', function (socket) {
-  console.info(11111 + 'socketl 链接了吗')
+  console.info('socketl 链接了吗')
   socket.emit('news', {hello: 'world'})
   socket.on('my other event', function (data) {
     console.info(222)

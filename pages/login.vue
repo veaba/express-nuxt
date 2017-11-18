@@ -17,7 +17,7 @@
                         <Input v-model="password" placeholder="password"></Input>
                     </FormItem>
                     <br>
-                    <Button type="primary" @click="loginEvent" style="width: 100%">Login</Button>
+                    <Button type="primary" @click="login" style="width: 100%">Login</Button>
                     <br>
                     <br>
                     <Button type="ghost" @click="monGoTest" style="width: 100%">monGoTest</Button>
@@ -46,7 +46,7 @@
         formItem: {},
         msg: 'Hello world login VueJS',
         username: 'admin',
-        password: 'admin'
+        password: '123456'
       }
     },
     mounted () {
@@ -56,13 +56,17 @@
       /**
        * @desc login
        * */
-      loginEvent () {
+      login () {
         this.$ajax.post('/api/login', {
           username: this.username,
           password: this.password
         })
           .then(res => {
-
+            if ( res.errorCode === 0) {
+              alert(res.msg)
+            } else {
+              alert(res.msg)
+            }
           })
           .catch(err => {
 
