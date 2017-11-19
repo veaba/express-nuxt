@@ -2,7 +2,6 @@
  * @desc nuxt 配置文件
  * @Port 端口配置 env.PORT
  * */
-
 module.exports = {
   /*
   ** Headers of the page
@@ -52,6 +51,11 @@ module.exports = {
     HOST: '127.0.0.1',
     PORT: '5000'
   },
-  plugins: ['~plugins/axios', '~plugins/iview', '~plugins/socket']
+  plugins: ['~plugins/axios', '~plugins/iview', '~plugins/socket'],
   // src: '~plugins/socket', ssr: false}
+  // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
+  // 路由跳转调用中间鉴权文件
+  router: {
+    middleware: 'auth'
+  }
 }

@@ -108,11 +108,11 @@ function insertData () {
 /** ***************************** Routes ****************************************/
 // Add USERS Routes
 // router.use(users)
-
 /**
  * @desc 用户登录
  * */
 router.post('/login', async function (req, res, text) {
+  console.info(req.session)
   let findUser = await UsersModel.find({username: req.body.username}).exec()
   let checkPwd = findUser[0] ? findUser[0].password : ''
   let inputPwd = await _PWD(req.body.password)
@@ -123,6 +123,8 @@ router.post('/login', async function (req, res, text) {
     })
   } else {
     if (checkPwd === inputPwd) {
+      console.info(req.session)
+      req.session.isAuth = true
       res.json({
         errorCode: 0,
         msg: '登录成功'
@@ -142,6 +144,17 @@ router.post('/login', async function (req, res, text) {
   console.info(checkPwd === inputPwd)
 })
 
+/**
+ * @desc 注销登录 路由
+ * */
+router.post('/logout', function (req, res, text, {commit}) {
+  req.session.isAuth = '~~~null~~~null'
+  res.json({
+    errorCode: 0,
+    msg: '退出成功'
+  })
+  commit('SET_AUTH', req.session.isAuth)
+})
 /**
  * @desc 插入数据 路由
  * */

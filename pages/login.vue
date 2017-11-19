@@ -20,7 +20,10 @@
                     <Button type="primary" @click="login" style="width: 100%">Login</Button>
                     <br>
                     <br>
-                    <Button type="ghost" @click="monGoTest" style="width: 100%">monGoTest</Button>
+                    <Button type="error" @click="logout" style="width: 100%">logout</Button>
+                    <br>
+                    <br>
+                    <Button type="ghost" @click="$store.commit('increment')" style="width: 100%">{{ $store.state.counter }}</Button>
                     <br>
                     <br>
                     <Button type="ghost" @click="insertTest" style="width: 100%">插入测试 当前时间点</Button>
@@ -72,16 +75,18 @@
 
           })
       },
-      monGoTest () {
-        this.$ajax.post('/api/mongoTest', {
-          username: 'test',
-          password: 'test2'
+      logout () {
+        this.$ajax.post('/api/logout', {
+          isAuth: null
         })
           .then(res => {
-
+            console.info(res)
+            if (res.errorCode === 0) {
+              alert(res.msg)
+            }
           })
           .catch(err => {
-
+            console.info(err)
           })
       },
       /**
