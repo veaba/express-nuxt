@@ -56,6 +56,6 @@ module.exports = {
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件
   router: {
-    middleware: 'auth'
+    middleware: ['auth']
   }
 }

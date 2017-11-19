@@ -147,13 +147,12 @@ router.post('/login', async function (req, res, text) {
 /**
  * @desc 注销登录 路由
  * */
-router.post('/logout', function (req, res, text, {commit}) {
-  req.session.isAuth = '~~~null~~~null'
+router.post('/logout', function (req, res, text) {
+  req.session.isAuth = null
   res.json({
     errorCode: 0,
     msg: '退出成功'
   })
-  commit('SET_AUTH', req.session.isAuth)
 })
 /**
  * @desc 插入数据 路由
