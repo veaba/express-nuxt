@@ -21,10 +21,10 @@ const store = () => new Vuex.Store({
   // 此时user为store.commit传入额外参数，即mutation的载荷（payload）
   mutations: {
     // SET_USER mutation 会把当前已登录对象注入到state.isAuth中
-    SET_AUTH: function (state) {
+    SET_AUTH: function (state, session) {
       console.info('---------vuex mutations----------')
       console.info(state)
-      state.isAuth = true
+      console.info(session)
     },
     increment (state) {
       state.counter++
@@ -34,22 +34,21 @@ const store = () => new Vuex.Store({
   // 可以包含任意异步操作
   actions: {
     nuxtServerInit ({commit}, {req}) {
-      console.info('action')
       if (req.session && req.session.isAuth) {
         commit('SET_AUTH', req.session.isAuth)
       }
+      console.info('action nuxtServerInit')
+      console.info(req.session)
+    },
+    cc ({commit}) {
+      console.info(232)
     }
   },
   /**
    * @desc 相当于计算属性,缺点是，并不能及时更新数据。。。实际需要检测数据的变化，有没有登录
    * */
   getters: {
-    doneTodo: state => {
-      console.info('-----------getters 变化------------')
-      console.info(state)
-      return state.isAuth
-    }
+
   }
 })
-console.info('加载vuex store')
 export default store

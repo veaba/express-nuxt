@@ -16,10 +16,12 @@
 export default function ({store, redirect, error, route, req, res}) {
   console.info('~~~~~ auth auth auth ~~~~~')
   console.info('-----------------------------------------')
-  console.info(store.commit)
+  // console.info(store.commit)
+  console.info(req.session.isAuth)
+  console.info(store.state.isAuth)
+  store.state.isAuth = req.session.isAuth ? req.session.isAuth : null
   if (!store.state.isAuth) {
     // 如果没有登录状态则跳转到login页面
     return redirect('/login')
   }
-  console.info(route)
 }

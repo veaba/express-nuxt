@@ -67,6 +67,8 @@
           .then(res => {
             if ( res.errorCode === 0) {
               alert(res.msg)
+              // this.$store.state.isAuth = true
+              console.info(this.$store.state)
             } else {
               alert(res.msg)
             }
@@ -82,7 +84,7 @@
           .then(res => {
             console.info(res)
             if (res.errorCode === 0) {
-              alert(res.msg)
+              console.info(this.$store.state)
             }
           })
           .catch(err => {

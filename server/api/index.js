@@ -112,7 +112,6 @@ function insertData () {
  * @desc 用户登录
  * */
 router.post('/login', async function (req, res, text) {
-  console.info(req.session)
   let findUser = await UsersModel.find({username: req.body.username}).exec()
   let checkPwd = findUser[0] ? findUser[0].password : ''
   let inputPwd = await _PWD(req.body.password)
@@ -123,8 +122,8 @@ router.post('/login', async function (req, res, text) {
     })
   } else {
     if (checkPwd === inputPwd) {
-      console.info(req.session)
       req.session.isAuth = true
+      console.info(req.session)
       res.json({
         errorCode: 0,
         msg: '登录成功'
