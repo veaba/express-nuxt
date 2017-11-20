@@ -63,13 +63,22 @@
 	errorCode:0 正常/成功
 	errorCode:1 没有找到
 	errorCode:2 method方式错误
-	errorCode:3 查询超时
+	errorCode:3 访问授权
 	errorCode:4 尚未注册
-	errorCode:5 访问授权
+	errorCode:5 查询超时
 	errorCode:-1 服务器错误
 	...
 ## 系统设计
-
+### 翻译组件
+	express 
+	express-session
+	socket.io
+	socket.io-client
+	bodyParser
+	axios
+	mongoose
+	tracer
+	node
 ### 系统组件设计
 	账号-加入微博登录
 	右侧添加微博账号互动参与

@@ -53,7 +53,6 @@
       }
     },
     mounted () {
-      console.info(this.socket)
     },
     methods: {
       /**
@@ -66,11 +65,8 @@
         })
           .then(res => {
             if ( res.errorCode === 0) {
-              alert(res.msg)
-              // this.$store.state.isAuth = true
+              this.$store.commit('SET_AUTH', true)
               console.info(this.$store.state)
-            } else {
-              alert(res.msg)
             }
           })
           .catch(err => {
@@ -82,9 +78,8 @@
           isAuth: null
         })
           .then(res => {
-            console.info(res)
             if (res.errorCode === 0) {
-              console.info(this.$store.state)
+              this.$store.commit('SET_AUTH', null)
             }
           })
           .catch(err => {

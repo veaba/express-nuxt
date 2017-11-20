@@ -4,11 +4,12 @@
  * @date 2017/10/26
  -------------------------->
 <style scoped>
-    .layout{
+    .layout {
         border: 1px solid #d7dde4;
         background: #f5f7f9;
     }
-    .layout-logo{
+
+    .layout-logo {
         width: 100px;
         height: 30px;
         background: #5b6270;
@@ -18,29 +19,35 @@
         top: 15px;
         left: 20px;
     }
-    .layout-nav{
+
+    .layout-nav {
         width: 420px;
         margin: 0 auto;
     }
-    .layout-assistant{
+
+    .layout-assistant {
         width: 300px;
         margin: 0 auto;
         height: inherit;
     }
-    .layout-breadcrumb{
+
+    .layout-breadcrumb {
         padding: 10px 15px 0;
     }
-    .layout-content{
+
+    .layout-content {
         min-height: 200px;
         margin: 15px;
         overflow: hidden;
         background: #fff;
         border-radius: 4px;
     }
-    .layout-content-main{
+
+    .layout-content-main {
         padding: 10px;
     }
-    .layout-copy{
+
+    .layout-copy {
         text-align: center;
         padding: 10px 0 20px;
         color: #9ea7b4;
@@ -48,24 +55,24 @@
 </style>
 <template>
     <header>
-        <Menu mode="horizontal" theme="dark" active-name="1">
+        <Menu mode="horizontal" theme="dark" active-name="1" @on-select="goRouter">
             <div class="layout-logo"></div>
             <div class="layout-nav">
-                <MenuItem name="1">
+                <MenuItem name="/">
                     <Icon type="ios-navigate"></Icon>
-                    Item 1
+                    Home
                 </MenuItem>
-                <MenuItem name="2">
+                <MenuItem name="about">
                     <Icon type="ios-keypad"></Icon>
-                    Item 2
+                    about
                 </MenuItem>
-                <MenuItem name="3">
+                <MenuItem name="login">
                     <Icon type="ios-analytics"></Icon>
-                    Item 3
+                    login
                 </MenuItem>
-                <MenuItem name="4">
+                <MenuItem name="register">
                     <Icon type="ios-paper"></Icon>
-                    Item 4
+                    register
                 </MenuItem>
             </div>
         </Menu>
@@ -88,14 +95,27 @@
 <script>
   export default {
     name: 'header',
-    components: {
-    },
+    components: {},
     data () {
       return {
         msg: 'Hello world Header VueJS'
       }
     },
-    methods: {}
+    methods: {
+      goRouter (name) {
+        if (name === 'register') {
+          this.$ajax.post('/api/register', {register: 'admin'})
+            .then(res => {
+              console.info(res)
+            })
+            .catch(err => {
+              console.info(err)
+            })
+        } else {
+          this.$router.push(name)
+        }
+      }
+    }
   }
 </script>
 <style lang="scss" scoped>
