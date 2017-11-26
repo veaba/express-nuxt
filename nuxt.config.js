@@ -7,7 +7,7 @@ module.exports = {
   ** Headers of the page
   */
   head: {
-    title: 'starter',
+    title: 'beike.io',
     meta: [
       {charset: 'utf-8'},
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
@@ -26,6 +26,9 @@ module.exports = {
     },
     {
       src: '~assets/scss/common.scss', lang: 'scss'// 指定scss 文件而非sass，然而使用scss产生大量的map无效字符，后期还是需要引用scss
+    },
+    {
+      src: '~assets/scss/iViewFix.scss', lang: 'scss'// 修复iView缺陷
     }],
   /*
   ** Add axios globally

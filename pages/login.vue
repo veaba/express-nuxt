@@ -43,6 +43,7 @@
   /* eslint-disable space-in-parens,handle-callback-err */
   export default {
     name: 'login',
+    layout: 'noHeader',
     components: {},
     data () {
       return {
@@ -51,6 +52,8 @@
         username: 'admin',
         password: '123456'
       }
+    },
+    created () {
     },
     mounted () {
     },
@@ -66,7 +69,10 @@
           .then(res => {
             if ( res.errorCode === 0) {
               this.$store.commit('SET_AUTH', true)
-              console.info(this.$store.state)
+              this.$router.push('/')
+            }
+            if ( res.errorCode === 1) {
+              this.$Message.error(res.msg)
             }
           })
           .catch(err => {
