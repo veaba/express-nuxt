@@ -54,12 +54,14 @@
                 /*background: linear-gradient(to right,#022647,#3b1d47);*/
             }
             .section-item{
+                display: flex;
                 margin-top: 20px;
             }
             .item3x {
                 position: relative;
-                float: left;
-                width: 33.3333%;
+                display: flex;
+                flex: 1;
+                width: 100%;
                 height: 275px;
                 -webkit-box-sizing: border-box;
                 -moz-box-sizing: border-box;
@@ -68,6 +70,7 @@
                     position: relative;
                     background: radial-gradient(circle at 50%, #022647, #3b1d47);
                     z-index: 1;
+                    width: 100%;
                     line-height: 275px;
                     font-size: 48px;
                 }
@@ -86,6 +89,16 @@
                     z-index: 2;
                     /*background: linear-gradient(to right,#022647,#3b1d47);*/
                     background: rgba(0, 0, 0, .4)
+                }
+                &{
+                    margin: 0 5px;
+                }
+                &:first-child{
+                    margin: 0 10px 0 0;
+                }
+
+                &:last-child{
+                    margin: 0 0 0 10px;
                 }
             }
             &:after {
