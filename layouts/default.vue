@@ -50,7 +50,7 @@
         <!--头部文件-->
         <Header-com></Header-com>
         <!--nuxt 主体内容-->
-        <nuxt/>
+        <nuxt class="container"/>
         <!--尾部组件-->
         <Footer-com></Footer-com>
     </div>
@@ -73,8 +73,8 @@
         width: 100%;
         padding: 100px 0;
         text-align: center;
+        background: #f7f7f7;
     }
-
     .button, .button:visited {
         display: inline-block;
         color: black;
