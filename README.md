@@ -89,14 +89,31 @@
 	微信账号引入
 ### 用户URL路径设计（尚未）
 	http://beike.io/username
-### 路由保留，以下路由不开放给用户
-#### 站方
+### 路由保留，以下路由不开放给用户（用户名，至少大于5个词汇）
+
+#### 默认禁止的词汇
+	0-999999 长度的字符串（比如年份之类）
+#### *【路由特别分配渠道】
+	假如是特定的权限的话，是可以重新调用被禁止的路由词汇
+#### 站方保留词汇
 	about
 	home
+	route
+	router
 	user
 	users
 	manage
 	us
+	organizations
+	my
+	your
+	Community
+	book
+	app
+	store
+	mall
+	shop
+	marker
 	server
 	service
 	active
@@ -104,6 +121,7 @@
 	register
 	logout
 	api
+	article 文章
 	...
 #### 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
 	baidu
