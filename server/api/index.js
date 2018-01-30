@@ -20,14 +20,24 @@ const router = Router()
  * @desc 配置数据库连接选项,访问数据库的通信证
  * */
 let options = {
+  // useMongoClient: true,
   db: {native_parser: true},
   server: {
-    poolSize: 5,
-    socketOptions: {keepAlive: 1}
+    // ssl: true, // ssl
+    poolSize: 5, // 线程池是什么鬼
+    socketOptions: {
+      keepAlive: 30000
+      // connectTimeoutMS: 30000 // 链接超时
+    }
+    // auto_reconnect: true, // 自动链接
+    // reconnectTries: 300000, // 重新链接
+    // reconnectInterval: 5000 // 重新连接间隔
   },
+  // promiseLibrary: global.Promise,
   user: 'admin',
   pass: 'admin'
 }
+// mongoose.createConnection('mongodb://121.42.203.142:27017/beike', options) // 连接
 mongoose.connect('mongodb://127.0.0.1:27017/beike', options) // 连接
 let db = mongoose.connection
 
@@ -133,6 +143,7 @@ router.post('/login', async function (req, res, next) {
     })
   } else {
     if (checkPwd === inputPwd) {
+      // TODO 配置用户的到session
       req.session.isAuth = true
       logger.info(req.session)
       res.json({
@@ -206,7 +217,28 @@ router.post('/find', function (req, res, next) {
     })
   })
 })
+/**
+ * @desc 获取用户身份信息
+ * */
+router.get('/user', function (req, res, text) {
+  console.info(req.body)
+  console.table('sessionsessionsessionsessionsessionsessionsession')
+  // 如果session 存在则判断用户在登录状态
+  if (req.session && req.session.isAuth) {
+    // TODO 查询当前用户
+  }
+  res.json({isLogin: true})
 
+  // db.openSet('connected', function () {
+  //   UsersModel.find({}, function (err, res) {
+  //     if (err) {
+  //       logger.info('error:' + err)
+  //     } else {
+  //       logger.info('success:' + res)
+  //     }
+  //   })
+  // })
+})
 /**
  * @desc 1 走/*方式 向外暴露一个webSocket
  * @desc 2 走/api/*

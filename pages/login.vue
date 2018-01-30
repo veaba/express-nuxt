@@ -89,7 +89,7 @@
             }
           })
           .catch(err => {
-            console.info(err)
+            console.info(err + '/api/logout')
           })
       },
       /**
@@ -101,10 +101,10 @@
           password: 'insert'
         })
           .then(res => {
-            console.info(res)
+            console.info(res + '/api/insert')
           })
           .catch(err => {
-            console.info(err)
+            console.info(err + '/api/insert')
           })
       },
 
@@ -114,10 +114,10 @@
           password: 'find'
         })
           .then(res => {
-            console.info(res)
+            console.info(res + '/api/find')
           })
           .catch(err => {
-            console.info(err)
+            console.info(err + '/api/find')
           })
       },
 
@@ -127,10 +127,10 @@
           password: 'delete'
         })
           .then(res => {
-            console.info(res)
+            console.info(res + '/api/delete')
           })
           .catch(err => {
-            console.info(err)
+            console.info(err + '/api/delete')
           })
       }
     }

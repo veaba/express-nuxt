@@ -10,6 +10,7 @@ import { Nuxt, Builder } from 'nuxt'
 import bodyParser from 'body-parser' // 必须，需要解析
 import { router } from './api'
 import session from 'express-session'
+
 const logger = require('tracer').console()
 
 const app = express()
@@ -30,7 +31,7 @@ app.use(session({
   secret: 'super-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 60000 }
+  cookie: {maxAge: 60000}
 }))
 
 // Import API Routes
@@ -39,10 +40,10 @@ app.use('/api', router)
  * @desc webSocket
  * *******************/
 io.on('connection', function (socket) {
-  socket.volatile.emit('an event', { some: 'data' })
+  socket.volatile.emit('an event', {some: 'data'})
   logger.info('socketl 链接了吗')
 })
-io.volatile.emit('an event', { some: 'data' })
+io.volatile.emit('an event', {some: 'data'})
 // Import and Set Nuxt.js options
 let config = require('../nuxt.config.js')
 config.dev = !(process.env.NODE_ENV === 'production')
@@ -68,6 +69,7 @@ function logErrors (err, req, res, next) {
   console.error(err.stack)
   next(err)
 }
+
 /**
  * @desc 客户端错误处理，错误会显式传递到下一项
  * */
@@ -76,6 +78,7 @@ function clientErrorHandler (err, req, res, next) {
     res.status(500).send({errorCode: -1, msg: 'Something faild!'})
   }
 }
+
 /**
  * @desc 错误处理
  * */
@@ -86,6 +89,7 @@ function errorHandler (err, req, res, next) {
   res.status(500)
   res.render('error', {error: err})
 }
+
 // app.use(logErrors)
 // app.use(clientErrorHandler)
 // app.use(errorHandler)

@@ -87,6 +87,10 @@
                         <Icon type="ios-navigate"></Icon>
                         Home
                     </MenuItem>
+                    <MenuItem name="canvas">
+                        <Icon type="ios-navigate"></Icon>
+                        canvas
+                    </MenuItem>
                     <MenuItem name="about">
                         <Icon type="ios-keypad"></Icon>
                         about
@@ -101,6 +105,7 @@
                                 <Avatar icon="person"></Avatar>
                             </Badge>
                         </template>
+                        <MenuItem name="admin">叶子飘飘点点空</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
                     </Submenu>
@@ -118,7 +123,22 @@
         msg: 'Hello world Header VueJS'
       }
     },
+    created () {
+
+    },
     methods: {
+      /**
+       * @desc 获取账号信息
+       * */
+      getUser () {
+        this.$ajax.get('/api/user')
+          .then(res => {
+            console.info(res)
+          })
+          .catch(err => {
+            console.info(err)
+          })
+      },
       goRouter (name) {
         switch (name) {
           case 'register':
@@ -126,6 +146,9 @@
             break
           case 'logout':
             this.logout()
+            break
+          case 'admin':
+            this.getUser()
             break
           default:
             this.goPage(name)

@@ -28,11 +28,12 @@ ul {
 * {
   font-family: "Microsoft Jhenghei", "serif", "sans-serif", "cursive", "fantasy", "monospace"
 }
+
 /********** clearFix*************/
-.clear{
-  &:after{
+.clear {
+  &:after {
     display: block;
-    content:'';
+    content: '';
     width: 0;
     height: 0;
     clear: both;
@@ -44,4 +45,9 @@ html {
 }
 
 body {
+}
+
+#__layout {
+  width: 100%;
+  height: 100%;
 }
