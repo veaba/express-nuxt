@@ -21,6 +21,7 @@ let Schema = mongoose.Schema
  * @Mixed
  * */
 let usersSchema = new Schema({
+  id: String,
   username: String, // 用户名
   password: String, // 密码
   pwd: String, // 密码

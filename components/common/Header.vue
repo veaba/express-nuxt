@@ -105,7 +105,7 @@
                                 <Avatar icon="person"></Avatar>
                             </Badge>
                         </template>
-                        <MenuItem name="admin">叶子飘飘点点空</MenuItem>
+                        <MenuItem name="admin">{{userInfo.nick}}</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
                     </Submenu>
@@ -116,11 +116,12 @@
 </template>
 <script>
   export default {
-    name: 'header',
+    name: 'v-header',
     components: {},
     data () {
       return {
-        msg: 'Hello world Header VueJS'
+        msg: 'Hello world Header VueJS',
+        userInfo: {}
       }
     },
     created () {
@@ -133,7 +134,9 @@
       getUser () {
         this.$ajax.get('/api/user')
           .then(res => {
-            console.info(res)
+            if (res.errorCode === 0) {
+              this.userInfo = res.data
+            }
           })
           .catch(err => {
             console.info(err)

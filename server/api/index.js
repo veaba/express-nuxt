@@ -9,7 +9,7 @@ import { config } from '../config'
  * @desc 密码加密模块
  * @desc 加盐'beike'，十六进制,加密算法sha256
  * */
-function _PWD (password) {
+function encryptedPWD (password) {
   return crypto.createHmac('sha256', password)
     .update('beike')
     .digest('hex')
@@ -59,12 +59,11 @@ function insertData () {
   let contentInsert = new UsersModel(InitUser)
   logger.info(contentInsert)
   db.openSet('connected', function () {
-    logger.info('------------ 连接成功 ------------')
     contentInsert.save(function (err, res) {
       if (err) {
-        logger.info('error:' + err)
+        // logger.info('error:' + err)
       } else {
-        logger.info('success' + res)
+        // logger.info('success' + res)
       }
     })
   })
@@ -76,7 +75,6 @@ function insertData () {
  * */
 
 (function init () {
-  logger.info('----------> 开始初始化admin数据')
   // 初始化admin信息
   let InitAdministrator = {
     username: 'admin',
@@ -89,23 +87,23 @@ function insertData () {
     // 先查找存不存在admin 这个管理员账号
     UsersModel.find({'username': InitAdministrator.username}, function (err, res) {
       if (err) {
-        console.info('error:' + err)
+        // console.info('error:' + err)
       }
       // 查询为空会返回空数组
       if (res.length > 0) {
-        logger.info('----------> 初始化时找到成功的数据 ^_^')
-        logger.info(res)
+        // logger.info('----------> 初始化时找到成功的数据 ^_^')
+        // logger.info(res)
       } else {
-        logger.info('----------> 初始化时没有找到 v_v')
+        // logger.info('----------> 初始化时没有找到 v_v')
         // 为数据库新建默认admin信息
-        InitAdministrator.password = _PWD(InitAdministrator.password) // 用户密码加密
+        InitAdministrator.password = encryptedPWD(InitAdministrator.password) // 用户密码加密
         let adminModel = new UsersModel(InitAdministrator)
         adminModel.save(function (err, res) {
           if (err) {
-            logger.info('----------> 初始化admin账号失败 v_v')
+            // logger.info('----------> 初始化admin账号失败 v_v')
           } else {
-            logger.info('----------> 初始化admin账号成功 ^_^')
-            logger.info(res)
+            // logger.info('----------> 初始化admin账号成功 ^_^')
+            // logger.info(res)
           }
         })
       }
@@ -137,21 +135,31 @@ router.post('/login', async function (req, res, next) {
   logger.error(req.body)
   let findUser = await UsersModel.find({username: req.body.username}).exec()
   let checkPwd = findUser[0] ? findUser[0].password : ''
-  let inputPwd = await _PWD(req.body.password)
+  let inputPwd = await encryptedPWD(req.body.password)
   if (findUser.length === 0) {
+    // TODO 频繁的操作
     res.json({
       errorCode: 1,
       msg: '该用户尚未注册'
     })
   } else {
+    // 密码正确
     if (checkPwd === inputPwd) {
       // TODO 配置用户的到session
+      req.session.userInfo = {
+        id: findUser[0]._id,
+        username: findUser[0].username, // 用户名
+        nick: findUser[0].nick || null, // 用户名
+        email: findUser[0].email || null, // 用户名
+        isLogin: true
+      }
       req.session.isAuth = true
       logger.info(req.session)
       res.json({
         errorCode: 0,
         msg: '登录成功'
       })
+      logger.success(findUser)// 登录成功后返回的数据
     } else {
       res.json({
         errorCode: 1,
@@ -159,7 +167,6 @@ router.post('/login', async function (req, res, next) {
       })
     }
   }
-  logger.error(findUser)
 })
 
 /**
@@ -223,27 +230,13 @@ router.post('/find', function (req, res, next) {
  * @desc 获取用户身份信息
  * */
 router.get('/user', function (req, res, text) {
-  console.info(req.body)
-  console.table('sessionsessionsessionsessionsessionsessionsession')
   // 如果session 存在则判断用户在登录状态
   if (req.session && req.session.isAuth) {
     // TODO 查询当前用户
+    res.json({
+      errorCode: 0,
+      data: req.session.userInfo
+    })
   }
-  res.json({isLogin: true})
-
-  // db.openSet('connected', function () {
-  //   UsersModel.find({}, function (err, res) {
-  //     if (err) {
-  //       logger.info('error:' + err)
-  //     } else {
-  //       logger.info('success:' + res)
-  //     }
-  //   })
-  // })
 })
-/**
- * @desc 1 走/*方式 向外暴露一个webSocket
- * @desc 2 走/api/*
- * */
-// const api = router
 export { router }

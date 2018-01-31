@@ -7,7 +7,7 @@
   /* eslint-disable indent */
 
   export default {
-    name: 'footer',
+    name: 'v-footer',
     components: {
     },
     data () {
