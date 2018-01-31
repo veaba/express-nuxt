@@ -3,6 +3,8 @@ import { Router } from 'express'
 import mongoose from 'mongoose' // mongoose 库
 import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
+import { config } from '../config'
+
 /**
  * @desc 密码加密模块
  * @desc 加盐'beike'，十六进制,加密算法sha256
@@ -37,7 +39,8 @@ let options = {
   user: 'admin',
   pass: 'admin'
 }
-mongoose.connect('mongodb://127.0.0.1:27017/beike', options) // 连接
+
+mongoose.connect(config.base + ':' + config.port + '/' + config.database, options) // 连接
 let db = mongoose.connection
 
 /** *********************** 数据库链接周期函数 *****************************/
