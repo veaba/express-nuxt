@@ -37,7 +37,6 @@ let options = {
   user: 'admin',
   pass: 'admin'
 }
-// mongoose.createConnection('mongodb://121.42.203.142:27017/beike', options) // 连接
 mongoose.connect('mongodb://127.0.0.1:27017/beike', options) // 连接
 let db = mongoose.connection
 
