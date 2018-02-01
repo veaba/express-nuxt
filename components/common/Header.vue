@@ -125,7 +125,7 @@
       }
     },
     created () {
-
+      this.getUser()
     },
     methods: {
       /**
