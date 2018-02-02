@@ -38,8 +38,8 @@ module.exports = {
     /*
     ** Run ESLINT on save
     */
-    extend (config, ctx) {
-      if (ctx.isClient) {
+    extend (config, { isClient, isServer }) {
+      if (isClient) {
         config.module.rules.push({
           enforce: 'pre',
           test: /\.(js|vue)$/,
@@ -50,9 +50,9 @@ module.exports = {
     }
   },
   env: {
-    baseUrl: process.env.BASE_URL || 'http://localhost:5000',
+    baseUrl: process.env.BASE_URL || 'http://localhost:4000',
     HOST: '127.0.0.1',
-    PORT: '5000'
+    PORT: '4000'
   },
   plugins: ['~plugins/axios', '~plugins/iview', '~plugins/socket'],
   // src: '~plugins/socket', ssr: false}

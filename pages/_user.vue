@@ -6,7 +6,7 @@
 
 <script>
   export default {
-    name: '_user',
+    name: 'v-user',
     data () {
       return {
 

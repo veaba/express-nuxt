@@ -14,12 +14,16 @@ axios.interceptors.request.use(req => {
  * @desc res 拦截器
  * */
 axios.interceptors.response.use(res => {
-  // console.info('axios response 拦截器')
   // console.info(res)
-  // console.info(res)
-  return res.data
+  if (res && res.data) {
+    return res.data
+  }
+  return {errorCode: -1, data: null, msg: 'service error'}
 }, error => {
   // 错误信息扶正，后续在请求时，不需要catch
   return Promise.resolve(error.response)
 })
 Vue.prototype.$ajax = axios
+
+// 暴露出去给vuex 使用
+export default axios

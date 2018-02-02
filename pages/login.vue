@@ -68,7 +68,12 @@
         })
           .then(res => {
             if ( res.errorCode === 0) {
+              // 1、登录成功之后，设置通行状态
               this.$store.commit('SET_AUTH', true)
+              // 2、登录成功之后，用户配置信息到vuex
+              this.$store.dispatch('getUserInfoAPI')
+              // 3、跳转到首页 后续：TODO 跳到来源地
+              // console.info()
               this.$router.push('/')
             }
             if ( res.errorCode === 1) {

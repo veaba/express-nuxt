@@ -105,7 +105,7 @@
                                 <Avatar icon="person"></Avatar>
                             </Badge>
                         </template>
-                        <MenuItem name="admin">{{userInfo.nick}}</MenuItem>
+                        <MenuItem name="admin">222</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
                     </Submenu>
@@ -125,23 +125,27 @@
       }
     },
     created () {
-      this.getUser()
+      // this.getUser()
     },
     methods: {
+
+      getUserInfo () {
+        this.$store.dispatch('getUserInfoAPI')
+      },
       /**
        * @desc 获取账号信息
        * */
-      getUser () {
-        this.$ajax.get('/api/user')
-          .then(res => {
-            if (res.errorCode === 0) {
-              this.userInfo = res.data
-            }
-          })
-          .catch(err => {
-            console.info(err)
-          })
-      },
+      // getUser () {
+      //   this.$ajax.get('/api/user')
+      //     .then(res => {
+      //       if (res.errorCode === 0) {
+      //         this.userInfo = res.data
+      //       }
+      //     })
+      //     .catch(err => {
+      //       console.info(err)
+      //     })
+      // },
       goRouter (name) {
         switch (name) {
           case 'register':
@@ -151,7 +155,7 @@
             this.logout()
             break
           case 'admin':
-            this.getUser()
+            this.getUserInfo()
             break
           default:
             this.goPage(name)

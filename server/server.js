@@ -15,11 +15,10 @@ const logger = require('tracer').console()
 
 const app = express()
 const host = process.env.HOST || '127.0.0.1'
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 4000
 
 // 创建socket服务
 const server = app.listen(port + 1)
-// const server = app.listen(port)
 const io = require('socket.io')(server)
 // body parser 封装req.bdoy
 app.use(bodyParser.urlencoded({extended: true}))
