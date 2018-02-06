@@ -18,7 +18,12 @@ const store = () => new Vuex.Store({
   state: {
     isAuth: null, // 通行状态
     counter: 0,
-    userInfo: null, // 存储用户基础信息
+    userInfo: {
+      id: null,
+      username: null,
+      nick: null,
+      email: null
+    }, // 存储用户基础信息
     Referer: null // 存储来源页面地址
   },
   // 变化。更改store的唯一方法是提交mutations，每个mutations都有一个字符串的事件类型和一个回调函数
@@ -61,10 +66,9 @@ const store = () => new Vuex.Store({
      * @desc 此方法可以让服务端将一些数据传给客户端
      * */
     nuxtServerInit ({commit}, {req}) {
-      // 处理referer
+      // 1未授权之前处理referer的路由跳转
       let referer = req.session.referer
       if (referer && referer !== '/login') {
-        console.info(referer)
         commit('REFERER', referer)
       } else {
         commit('REFERER', '/')

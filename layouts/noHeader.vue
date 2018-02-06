@@ -27,7 +27,7 @@
   }
 </script>
 
-<style>
+<style lang="scss" scoped>
     .container {
         margin: 0;
         width: 100%;

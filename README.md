@@ -41,7 +41,8 @@
 	
 ## 色系设计	
 ## 数据库设计
-
+### [Collections] router 路由器，放置合法的路由表 {user、###路由保留、}
+### [Collections] user
 ### [待完善]API封装 
 	（“*” 可选）
 	

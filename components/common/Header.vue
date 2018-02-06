@@ -105,7 +105,7 @@
                                 <Avatar icon="person"></Avatar>
                             </Badge>
                         </template>
-                        <MenuItem name="admin">222</MenuItem>
+                        <MenuItem :name="$store.state.userInfo.nick">{{$store.state.userInfo.nick}}</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
                     </Submenu>
@@ -130,32 +130,12 @@
     methods: {
 
       getUserInfo () {
-        this.$store.dispatch('getUserInfoAPI')
+        // this.$store.dispatch('getUserInfoAPI')
       },
-      /**
-       * @desc 获取账号信息
-       * */
-      // getUser () {
-      //   this.$ajax.get('/api/user')
-      //     .then(res => {
-      //       if (res.errorCode === 0) {
-      //         this.userInfo = res.data
-      //       }
-      //     })
-      //     .catch(err => {
-      //       console.info(err)
-      //     })
-      // },
       goRouter (name) {
         switch (name) {
-          case 'register':
-            this.goPage(name)
-            break
           case 'logout':
             this.logout()
-            break
-          case 'admin':
-            this.getUserInfo()
             break
           default:
             this.goPage(name)
