@@ -10,7 +10,7 @@
 </template>
 <script>
   export default {
-    name: 'router',
+    name: 'routerList',
     layout: 'console',
     components: {
     },

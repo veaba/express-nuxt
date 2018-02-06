@@ -24,7 +24,7 @@
                                 </template>
                                 <MenuItem name="router-list">路由管理</MenuItem>
                                 <MenuItem name="router-forbidden">路由禁用</MenuItem>
-                                <MenuItem name="router-permission ">路由权限</MenuItem>
+                                <MenuItem name="router-permission">路由权限</MenuItem>
                             </Submenu>
                             <MenuItem name="home">
                                 <Icon type="document"></Icon>
