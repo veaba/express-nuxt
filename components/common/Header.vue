@@ -23,7 +23,6 @@
         display: flex;
         flex: 1;
         justify-content: flex-end;
-        margin-right: 20px;
     }
 
     .layout-assistant {
@@ -64,7 +63,7 @@
 
     /*********menu********/
     header {
-
+        border-bottom: 2px solid red;
     }
 
     .ul-bar {
@@ -73,8 +72,9 @@
     }
 
     nav {
-        width: 1200px;
+        width: 100%;
         margin: 0 auto;
+        padding: 0 20px;
     }
 </style>
 <template>
@@ -82,8 +82,9 @@
         <nav>
             <Menu mode="horizontal" class="ul-bar" active-name="1" @on-select="goRouter">
                 <div class="layout-logo"></div>
+                <strong style="padding-top: 4px;font-size: 32px;">beike.io</strong>
                 <div class="layout-nav clear">
-                    <MenuItem name="/">
+                    <MenuItem name="home">
                         <Icon type="ios-navigate"></Icon>
                         Home
                     </MenuItem>
@@ -125,13 +126,8 @@
       }
     },
     created () {
-      // this.getUser()
     },
     methods: {
-
-      getUserInfo () {
-        // this.$store.dispatch('getUserInfoAPI')
-      },
       goRouter (name) {
         switch (name) {
           case 'logout':
@@ -141,8 +137,15 @@
             this.goPage(name)
         }
       },
+      /**
+       * @desc header menu 路由跳转
+       * */
       goPage (url) {
-        this.$router.push(url)
+        if (url === 'home') {
+          this.$router.push('/')
+        } else {
+          this.$router.push('/' + url)
+        }
       },
       logout () {
         this.$ajax.post('/api/logout')

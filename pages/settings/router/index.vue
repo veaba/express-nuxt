@@ -1,24 +1,22 @@
 <!------------------------
  *@name Vue.js
  *@author Jo.gel
- *@date 2017/11/26
+ *@date 2018/2/6
  -------------------------->
-<style lang="scss">
-
-</style>
 <template>
-    <nuxt-child/>
+    <div class="iam-router">
+        {{msg}}
+    </div>
 </template>
 <script>
-  /* eslint-disable quotes */
-
   export default {
-    name: 'settings',
+    name: 'router',
     layout: 'console',
-    components: {},
+    components: {
+    },
     data () {
       return {
-        msg: 'Hello world settings VueJS'
+        msg: 'Hello world router VueJS'
       }
     },
     methods: {}

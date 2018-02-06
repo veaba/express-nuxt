@@ -3,11 +3,10 @@
  *@author Jo.gel
  *@date 2017/11/26
  -------------------------->
-<style lang="scss">
-
-</style>
 <template>
-    <nuxt-child/>
+    <section class="is-settings">
+        {{msg}}
+    </section>
 </template>
 <script>
   /* eslint-disable quotes */

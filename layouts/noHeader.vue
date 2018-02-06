@@ -14,7 +14,7 @@
         <!--nuxt 主体内容-->
         <nuxt/>
         <!--尾部组件-->
-        <Footer-com></Footer-com>
+        <Footer-com/>
     </div>
 </template>
 
