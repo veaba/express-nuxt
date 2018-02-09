@@ -63,7 +63,7 @@
 
     /*********menu********/
     header {
-        border-bottom: 2px solid red;
+        /*border-bottom: 1px solid red;*/
     }
 
     .ul-bar {

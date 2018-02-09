@@ -168,6 +168,9 @@
 	vue-boostrap 在考虑中...	
 ### WebSocket
 	socket.io
+	
+### 编辑器
+	mavon-editor
 ##　package.json
 ## 兼容特性
 	SSL

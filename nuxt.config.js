@@ -54,7 +54,8 @@ module.exports = {
     HOST: '127.0.0.1',
     PORT: '4000'
   },
-  plugins: ['~plugins/axios', '~plugins/iview', '~plugins/socket'],
+  // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件
+  plugins: ['~plugins/axios', {src: '~plugins/iview', ssr: false}, '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
   // src: '~plugins/socket', ssr: false}
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件

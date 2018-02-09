@@ -64,6 +64,7 @@
        * @desc login
        * */
       login () {
+        console.info('点击 登录')
         this.$ajax.post('/api/login', {
           username: this.username,
           password: this.password
@@ -85,7 +86,8 @@
             }
           })
           .catch(err => {
-
+            console.info(err)
+            console.info('************** login error')
           })
       },
       /**
