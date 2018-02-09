@@ -8,3 +8,11 @@
 .ivu-menu-submenu-title span>i{
   margin-right: 0 !important;
 }
+
+// 取消table border
+.ivu-table-wrapper{
+  border: 0 none !important;
+}
+.ivu-table th{
+  border-bottom: none !important;
+}

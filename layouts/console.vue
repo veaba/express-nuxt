@@ -8,7 +8,7 @@
         <Header-com></Header-com>
         <!--nuxt 主体内容-->
         <article class="article">
-            <section class="workspace">
+            <section class="all-section workspace">
                 <Row type="flex">
                     <!--menu区域-->
                     <i-col span="3" class="work-menu" style="overflow-y: auto;">
@@ -26,7 +26,19 @@
                                 <MenuItem name="router-forbidden">路由禁用</MenuItem>
                                 <MenuItem name="router-permission">路由权限</MenuItem>
                             </Submenu>
-                            <MenuItem name="home">
+
+                            <Submenu name="users">
+                                <template slot="title">
+                                    <Icon type="xbox"></Icon>
+                                    用户配置
+                                </template>
+                                <MenuItem name="users-list">用户管理</MenuItem>
+                                <MenuItem name="users-forbidden">用户黑名单</MenuItem>
+                                <MenuItem name="users-permission">用户权限</MenuItem>
+                            </Submenu>
+
+
+                            <MenuItem name="articles">
                                 <Icon type="document"></Icon>
                                 文章管理
                             </MenuItem>
@@ -42,7 +54,7 @@
                                 <Icon type="social-wordpress"></Icon>
                                 安全设置
                             </MenuItem>
-                            <MenuItem name="organizations">
+                            <MenuItem name="organization">
                                 <Icon type="social-css3"></Icon>
                                 组织设置
                             </MenuItem>
@@ -73,9 +85,19 @@
     data () {
       return {
         menu: {
+          // 路由
           'router-list': '/settings/router',
           'router-forbidden': '/settings/router/forbidden',
-          'router-permission': '/settings/router/permission'
+          'router-permission': '/settings/router/permission',
+          // 用户
+          'users-list': '/settings/users',
+          'users-forbidden': '/settings/users/forbidden',
+          'users-permission': '/settings/users/permission',
+          'account': '/settings/account', // 账号
+          'articles': '/settings/articles', // 文章管理
+          'profile': '/settings/profile', // 简介
+          'security': '/settings/security',
+          'organization': '/settings/organization'
         }
       }
     },
@@ -144,10 +166,7 @@
     }
     .workspace {
         padding: 0 20px;
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        height: 100%;
+
     }
 
     .work-menu {

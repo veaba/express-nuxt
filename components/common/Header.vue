@@ -108,6 +108,7 @@
                         </template>
                         <MenuItem :name="$store.state.userInfo.nick">{{$store.state.userInfo.nick}}</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
+                        <MenuItem name="article">写文章</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
                     </Submenu>
                 </div>

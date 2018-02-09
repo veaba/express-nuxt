@@ -1,3 +1,6 @@
+<!--
+@desc view 前台布局模式
+-->
 <template>
     <div class="main">
         <!--头部文件-->
