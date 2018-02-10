@@ -43,6 +43,15 @@
 ## 数据库设计
 ### [Collections] router 路由器，放置合法的路由表 {user、###路由保留、}
 ### [Collections] user
+	user_login 登录名 string
+	user_pass 密码 string
+	user_nickname 昵称 string
+	user_email 邮箱 string
+	urse_url 个人网站 string 
+	user_registered 注册时间  2018-2-10 11:49:21
+	user_status 用户状态
+	display_name  显示的名称
+	
 ### [待完善]API封装 
 	（“*” 可选）
 	
