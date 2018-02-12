@@ -108,9 +108,9 @@
 ...
 	
 ``` 
-	一级路由 beike.io/router
-	二级路由 beike.io/router/router1
-	三级路由 beike.io/router/router1/router2
+一级路由 beike.io/router
+二级路由 beike.io/router/router1
+三级路由 beike.io/router/router1/router2
 	
 ``` mongodb desgined
 路由表：
@@ -124,12 +124,12 @@ type: user      已注册的词汇
 type: org(organizations)    组织/团队/小队/工作室等
 	
 ```
-	- 默认禁止的词汇 —— 前端+后端禁止写入到mongodb
-		0-999999 长度的字符串（比如年份之类）
-	- status 0 被解禁的可重新申请出的词汇 【前端有专门的分配入口】
-	- 站方保留词汇 
-		nuxt page的 基础路由
-		预设禁止的词汇
+- 默认禁止的词汇 —— 前端+后端禁止写入到mongodb
+	0-999999 长度的字符串（比如年份之类）
+- status 0 被解禁的可重新申请出的词汇 【前端有专门的分配入口】
+- 站方保留词汇 
+	nuxt page的 基础路由
+	预设禁止的词汇
 ```txt 
 about
 home
@@ -159,11 +159,14 @@ api
 article 文章
 ...
 ```
-	- 用户路由 （默认用户名，至少大于5个词汇，除非特殊，注册时候，优先级最高！！）
-		http://beike.io/username
+- 用户路由 （默认用户名，至少大于5个词汇，除非特殊，注册时候，优先级最高！！）
+
+```text
+http://beike.io/username
+``` 
 ####　保留的路由词汇
 
-	- 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
+- 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
 ```
 baidu
 qihoo
@@ -174,19 +177,17 @@ sun
 adobe
 		
 ```
-	- 国家
+- 国家
 ```
 china
 ```
-	- 专业术语
-```
-class
+- 专业术语
+
+```text
 js
-javaScript
-vue
-vuejs
-```	
-	More [【Official】：站点路由路径保留词——品牌词（brand words）](https://github.com/veaba/express-nuxt/issues/1)
+class
+```
+- More [【Official】：站点路由路径保留词——品牌词（brand words）](https://github.com/veaba/express-nuxt/issues/1)
 	
 ## 系统架构
 
