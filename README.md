@@ -97,63 +97,97 @@
 	facebook账号引入
 	twitter账号引入
 	微信账号引入
-### 用户URL路径设计（尚未）
-	http://beike.io/username
-### 路由保留，以下路由不开放给用户（用户名，至少大于5个词汇）
+### 路由设计 (mongodb: router)
 
-#### 默认禁止的词汇
-	0-999999 长度的字符串（比如年份之类）
-#### *【路由特别分配渠道】
-	假如是特定的权限的话，是可以重新调用被禁止的路由词汇
-#### 站方保留词汇
-	about
-	home
-	route
-	router
-	user
-	users
-	manage
-	us
-	organizations
-	my
-	your
-	Community
-	book
-	app
-	store
-	mall
-	shop
-	marker
-	server
-	service
-	active
-	login
-	register
-	logout
-	api
-	article 文章
-	...
-#### 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
-	baidu
-	qihoo
-	microsoft
-	netease
-	360
-	sun
-	adobe
-[【Official】：站点路由路径保留词——品牌词（brand words）](https://github.com/veaba/express-nuxt/issues/1)
-#### 国家
-	china
-	...
-#### 专业术语
-	class 
-	js
-	javascript
-	vue
-	vuejs
-	java
-	...
+	``` mongodb
+		{
+			name: 'about',
+			status: 1,
+			type: 'official' 
+		}
+		...
 	
+	``` 
+	一级路由 beike.io/router
+	二级路由 beike.io/router/router1
+	三级路由 beike.io/router/router1/router2
+	
+	``` mongodb desgined
+
+		路由表：
+    	status:0    原来属于（1、2）类的词汇——被解禁的词汇
+        status:1    已注册的路由词汇——站方路由，用户
+        stauts:2    保留的路由词汇——品牌词汇、特殊、国家、组织 **
+    
+        type：official   官方词汇
+        type: brand     品牌词汇
+        type: user      已注册的词汇
+        type: org(organizations)    组织/团队/小队/工作室等
+	
+	```
+	- 默认禁止的词汇 —— 前端+后端禁止写入到mongodb
+		0-999999 长度的字符串（比如年份之类）
+	- status 0 被解禁的可重新申请出的词汇 【前端有专门的分配入口】
+	- 站方保留词汇 
+		nuxt page的 基础路由
+		预设禁止的词汇
+		```txt 
+			about
+        	home
+        	route
+        	router
+        	user
+        	users
+        	manage
+        	us
+        	organizations
+        	my
+        	your
+        	Community
+        	book
+        	app
+        	store
+        	mall
+        	shop
+        	marker
+        	server
+        	service
+        	active
+        	login
+        	register
+        	logout
+        	api
+        	article 文章
+        	...
+		```
+	- 用户路由 （默认用户名，至少大于5个词汇，除非特殊，注册时候，优先级最高！！）
+		http://beike.io/username
+####　保留的路由词汇
+			
+	- 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
+		``` txt
+			baidu
+        	qihoo
+        	microsoft
+        	netease
+        	360
+        	sun
+        	adobe
+		
+		```
+	- 国家
+		```
+			china
+		```
+	- 专业术语
+		```
+			class
+			js
+			javaScript
+			vue
+			vuejs
+		```	
+	More [【Official】：站点路由路径保留词——品牌词（brand words）](https://github.com/veaba/express-nuxt/issues/1)
 	
 ## 系统架构
 

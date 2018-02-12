@@ -12,7 +12,7 @@
                 文章信息（共233条）
             </i-col>
         	<i-col span="6" offset="12">
-                <Input v-model="search" icon="search" @on-click="onSearchEnter" :on-enter="onSearchEnter"></Input>
+                <Input v-model="search" icon="search" @on-click="onSearchEnter" @on-enter="onSearchEnter"></Input>
             </i-col>
         </Row>
 

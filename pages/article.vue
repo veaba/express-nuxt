@@ -30,6 +30,12 @@
 
             </div>
 
+            <div class="article-actions">
+                <Row>
+                    <Button type="primary" class="m-right-5" @click="commitArticle">发表文章</Button>
+                    <Button type="ghost" @click="saveArticle">保存文章</Button>
+                </Row>
+            </div>
             <mavon-editor
                     v-model="content"
                     class="article-editor"
@@ -55,7 +61,18 @@
     },
     mounted () {
     },
-    methods: {}
+    methods: {
+      /**
+       * @desc 手动保存文章
+       * */
+      saveArticle () {
+        console.info('手动保存文章')
+      },
+      commitArticle () {
+        console.info('发布文章')
+      }
+
+    }
   }
 </script>
 <style lang="scss" scoped>
@@ -71,6 +88,10 @@
         strong {
             font-size: 18px;
         }
+    }
+
+    .article-actions {
+        margin-top: 20px;
     }
 
     .article-editor {
