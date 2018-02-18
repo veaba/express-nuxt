@@ -3,14 +3,13 @@
  * @author Jo.gel
  * @date 2017/11/7
  * @desc 向api/index.js 暴露配置文件
- * @desc [121.42.203.142]
  ***********************/
 
 /**
  * @desc db config
  * */
 module.exports.config = {
-  base: 'mongodb://121.42.203.142', // 普通不授权模式链接mongodb
+  base: 'mongodb://127.0.0.1', // 普通不授权模式链接mongodb
   domain: 'vsorg.com', // 主域名
   port: '27017',
   host: '127.0.0.1',
