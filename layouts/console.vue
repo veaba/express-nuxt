@@ -17,16 +17,10 @@
                               @on-select="onSelectPage"
                               ref="menu"
                                 theme="light" width="auto">
-                            <Submenu name="router">
-                                <template slot="title">
-                                    <Icon type="flag"></Icon>
-                                    路由配置
-                                </template>
-                                <MenuItem name="router-list">路由管理</MenuItem>
-                                <MenuItem name="router-forbidden">路由禁用</MenuItem>
-                                <MenuItem name="router-permission">路由权限</MenuItem>
-                            </Submenu>
-
+                            <MenuItem name="router-list">
+                                <Icon type="flag"></Icon>
+                                路由配置
+                            </MenuItem>
                             <Submenu name="users">
                                 <template slot="title">
                                     <Icon type="xbox"></Icon>

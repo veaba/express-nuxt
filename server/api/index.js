@@ -4,6 +4,8 @@ import mongoose from 'mongoose' // mongoose 库
 import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
 import { config } from '../config'
+import { UsersModel, RouterModel, ArticleModel } from './model' // 用户api,构造函数应该是大写开头
+const router = Router()
 
 /**
  * @desc 密码加密模块
@@ -14,9 +16,6 @@ function encryptedPWD (password) {
     .update('beike')
     .digest('hex')
 }
-
-import UsersModel from './usersModel' // 用户api,构造函数应该是大写开头
-const router = Router()
 
 /**
  * @desc 配置数据库连接选项,访问数据库的通信证
@@ -111,23 +110,6 @@ function insertData () {
   })
 })()
 /** ***************************** Routes ****************************************/
-// Add USERS Routes
-// router.use(users)
-
-/**
- * @desc router console 路由控制台
- * */
-
-// router.all('*', function (req, res, next) {
-//   console.error('********************************')
-//   logger.error(req.session)
-//   console.error('********************************')
-//   if (!req.session) {
-//     res.sendStatus(403)
-//   }
-//   next()
-// })
-
 /**
  * @desc 用户登录
  * */
@@ -153,12 +135,12 @@ router.post('/login', async function (req, res, next) {
         isLogin: true
       }
       req.session.isAuth = true
-      logger.error(req.session)
+      // logger.error(req.session)
       res.json({
         errorCode: 0,
         msg: '登录成功'
       })
-      logger.error(findUser)// 登录成功后返回的数据
+      // logger.error(findUser)// 登录成功后返回的数据
     } else {
       res.json({
         errorCode: 1,
@@ -197,6 +179,7 @@ router.post('/register', function (req, res, next) {
     })
   }
 })
+
 /**
  * @desc 插入数据 路由
  * */
@@ -211,27 +194,138 @@ router.post('/insert', function (req, res, next) {
  * */
 
 /**
- * @desc 查询数据 路由
+ * @desc 查询用户 路由
  * */
-router.post('/find', function (req, res, next) {
-  res.json({loginStatus: 'success'})
-  db.openSet('connected', function () {
-    UsersModel.find({}, function (err, res) {
+// router.post('/find', function (req, res, next) {
+//   res.json({loginStatus: 'success'})
+//   db.openSet('connected', function () {
+//     UsersModel.find({}, function (err, res) {
+//       if (err) {
+//         logger.info('error:' + err)
+//       } else {
+//         logger.info('success:' + res)
+//       }
+//     })
+//   })
+// })
+
+/*******************************************************************
+ * @desc 查询路由的数据
+ * */
+router.get('/getRouterList', async function (req, res, next) {
+  let findRouter = await RouterModel.find({}).exec()
+  if (findRouter.length === 0) {
+    res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
+  } else {
+    res.json({errorCode: 0, data: findRouter, msg: 'success'})
+  }
+})
+
+/**
+ * @desc 添加路由操作
+ * */
+router.post('/addRouter', async function (req, res, next) {
+  console.info('添加路由')
+  let findRouter = await RouterModel.find({name: req.body.name})
+  // 1、已存在
+  if (findRouter.length > 0) {
+    res.json({
+      errorCode: 2,
+      msg: '已存在'
+    })
+  } else {
+    // 如果没有存在，则允许继续添加
+    logger.error(req.body)
+    // 插入数据
+    let saveRouter = new RouterModel(req.body, false)
+    saveRouter.save(function (err, resdb) {
       if (err) {
-        logger.info('error:' + err)
+        res.json({
+          errorCode: 4,
+          msg: 'error'
+        })
       } else {
-        logger.info('success:' + res)
+        logger.error(resdb)
+        res.json({
+          errorCode: 0,
+          msg: 'success'
+        })
       }
     })
-  })
+  }
 })
+
+/**
+ * @desc 删除路由操作
+ * */
+router.post('/deleteRouter', async function (req, res, next) {
+  console.info('删除路由')
+  let data = req.body
+  console.info(data)
+  if (data.length === 0) {
+    res.json({
+      errorCode: 4,
+      msg: '路由名称为为空'
+    })
+    return false
+  } else {
+    // 传递正常
+    // 1 先查询存在该路由名称
+    if (queryRouter(data)) {
+      // 开始删除操作
+      let delRouter = await RouterModel.remove(data).exec()
+      logger.error(delRouter)
+      if (delRouter.ok) {
+        res.json({
+          errorCode: 0,
+          msg: 'success'
+        }
+        )
+      } else {
+        res.json({
+          errorCode: 4,
+          msg: 'error 删除失败'
+        })
+      }
+    } else {
+      // 2、否则，不存在路由
+      res.json({
+        errorCode: 1,
+        msg: 'error 不存在该路由，无法删除路由'
+      })
+    }
+  }
+})
+
+/**
+ * @desc 查询路由名称
+ * */
+async function queryRouter (req, res, next) {
+  let findRouter = await RouterModel.find(req)
+  if (findRouter.length > 0) {
+    logger.error(findRouter)
+    return findRouter
+  } else {
+    logger.error(findRouter)
+    return findRouter
+  }
+}
+
+/*******************************************************************
+ * @desc 查询文章的数据
+ * */
+router.get('/article', async function (req, res, next) {
+  console.info('查询文章')
+  let findArticle = await ArticleModel.find({}).exec()
+  logger.error(findArticle)
+})
+
 /**
  * @desc 获取用户身份信息
  * */
 router.get('/user', function (req, res, text) {
   // 如果session 存在则判断用户在登录状态
   if (req.session && req.session.isAuth) {
-    // TODO 查询当前用户
     res.json({
       errorCode: 0,
       data: req.session.userInfo

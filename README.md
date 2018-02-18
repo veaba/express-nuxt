@@ -108,9 +108,18 @@
 ...
 	
 ``` 
-一级路由 beike.io/router
-二级路由 beike.io/router/router1
-三级路由 beike.io/router/router1/router2
+- 一级路由 
+```text
+beike.io/router
+```
+- 二级路由 
+```text
+beike.io/router/router1
+```
+- 三级路由 
+```text
+beike.io/router/router1/router2
+```
 	
 ``` mongodb desgined
 路由表：
@@ -125,11 +134,13 @@ type: org(organizations)    组织/团队/小队/工作室等
 	
 ```
 - 默认禁止的词汇 —— 前端+后端禁止写入到mongodb
-	0-999999 长度的字符串（比如年份之类）
+```text
+0-999999 长度的字符串（比如年份之类）
+```
 - status 0 被解禁的可重新申请出的词汇 【前端有专门的分配入口】
 - 站方保留词汇 
-	nuxt page的 基础路由
-	预设禁止的词汇
+	- nuxt page的 基础路由
+	- 预设禁止的词汇
 ```txt 
 about
 home
@@ -227,3 +238,5 @@ class
     "pug": "^2.0.0-beta6",
     "pug-loader": "^2.3.0",
     "sass-loader": "^6.0.6"
+
+添加 以下 支持less(可能用于更改iView 主题定制）
