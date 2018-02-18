@@ -214,7 +214,8 @@ router.post('/insert', function (req, res, next) {
  * */
 router.post('/getRouterList', async function (req, res, next) {
   let data = req.body.name ? ({name: req.body.name}) : {}
-  console.info(data)
+  // TODO 增加模糊查询，匹配 name status:{normal,keep,ban},type:{official,brand,user}
+  // todo sddsdsa
   let findRouter = await RouterModel.find(data).exec()
   if (findRouter.length === 0) {
     res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
