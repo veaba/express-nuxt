@@ -1,10 +1,10 @@
 /* eslint-disable import/first,no-unexpected-multiline,func-call-spacing,wrap-iife,new-cap,handle-callback-err,standard/object-curly-even-spacing */
-import { Router } from 'express'
+import {Router} from 'express'
 import mongoose from 'mongoose' // mongoose 库
 import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
-import { config } from '../config'
-import { UsersModel, RouterModel, ArticleModel } from './model' // 用户api,构造函数应该是大写开头
+import {config} from '../config'
+import {UsersModel, RouterModel, ArticleModel} from './model' // 用户api,构造函数应该是大写开头
 const router = Router()
 
 /**
@@ -212,8 +212,10 @@ router.post('/insert', function (req, res, next) {
 /*******************************************************************
  * @desc 查询路由的数据
  * */
-router.get('/getRouterList', async function (req, res, next) {
-  let findRouter = await RouterModel.find({}).exec()
+router.post('/getRouterList', async function (req, res, next) {
+  let data = req.body.name ? ({name: req.body.name}) : {}
+  console.info(data)
+  let findRouter = await RouterModel.find(data).exec()
   if (findRouter.length === 0) {
     res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
   } else {
@@ -332,4 +334,4 @@ router.get('/user', function (req, res, text) {
     })
   }
 })
-export { router }
+export {router}
