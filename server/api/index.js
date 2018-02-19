@@ -1,3 +1,7 @@
+/**
+ * @TODO 时候在后期对error的操作，同样写入到log中，从而追踪系统的运行状态
+ * @desc 数据库操作
+ * */
 /* eslint-disable import/first,no-unexpected-multiline,func-call-spacing,wrap-iife,new-cap,handle-callback-err,standard/object-curly-even-spacing */
 import {Router} from 'express'
 import mongoose from 'mongoose' // mongoose 库
@@ -5,6 +9,7 @@ import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
 import {config} from '../config'
 import {UsersModel, RouterModel, ArticleModel} from './model' // 用户api,构造函数应该是大写开头
+import {format} from 'date-fns'
 const router = Router()
 
 /**
@@ -41,30 +46,30 @@ let options = {
 
 mongoose.connect(config.base + ':' + config.port + '/' + config.database, options) // 连接
 let db = mongoose.connection
-
-/** *********************** 数据库链接周期函数 *****************************/
-
+/** *********************很诡异的报错，如果没有一个函数在db 后面，则报一个错误**************************/
 /**
- * @desc 插入数据
+ * @desc mongodb 操作失败函数
+ * @res res
+ * @err err
+ * @errorCode 错误代码
  * */
-function insertData () {
-  logger.info('------------- 插入数据 -------------')
-  let InitUser = {
-    username: 'admin',
-    password: '123456',
-    nick: 'admin',
-    email: ''
-  }
-  let contentInsert = new UsersModel(InitUser)
-  logger.info(contentInsert)
-  db.openSet('connected', function () {
-    contentInsert.save(function (err, res) {
-      if (err) {
-        // logger.info('error:' + err)
-      } else {
-        // logger.info('success' + res)
-      }
-    })
+function dbError (res, err, errorCode) {
+  return res.json({
+    errorCode: errorCode || 1,
+    msg: err || '服务端错误'
+  })
+}
+/**
+ * @desc mongodb 操作成功函数,返回到前端
+ * @res res
+ * @err err
+ * @errorCode 错误代码
+ * */
+function dbSuccess (res, data, errorCode, msg) {
+  return res.json({
+    errorCode: errorCode || 0,
+    data: data || [],
+    msg: msg || '操作成功'
   })
 }
 
@@ -72,7 +77,6 @@ function insertData () {
  * @desc 数据库链接初始化，管理员
  * @define  项目启动->找管理员用户->如果没有->查找失败->并开始初始化信息
  * */
-
 (function init () {
   // 初始化admin信息
   let InitAdministrator = {
@@ -86,13 +90,10 @@ function insertData () {
     // 先查找存不存在admin 这个管理员账号
     UsersModel.find({'username': InitAdministrator.username}, function (err, res) {
       if (err) {
-        // console.info('error:' + err)
+        dbError(res, err)
       }
       // 查询为空会返回空数组
-      if (res.length > 0) {
-        // logger.info('----------> 初始化时找到成功的数据 ^_^')
-        // logger.info(res)
-      } else {
+      if (res.length === 0) {
         // logger.info('----------> 初始化时没有找到 v_v')
         // 为数据库新建默认admin信息
         InitAdministrator.password = encryptedPWD(InitAdministrator.password) // 用户密码加密
@@ -155,7 +156,6 @@ router.post('/login', async function (req, res, next) {
  * */
 router.post('/logout', function (req, res, next) {
   req.session.isAuth = null
-  logger.error(req.session)
   res.json({
     errorCode: 0,
     msg: '退出成功'
@@ -180,42 +180,12 @@ router.post('/register', function (req, res, next) {
   }
 })
 
-/**
- * @desc 插入数据 路由
- * */
-router.post('/insert', function (req, res, next) {
-  insertData()
-})
-
-/**
- * @desc 查找用户是否存在函数
- * @return Boolean 查找到，返回密码，否则提示用户不存在
- * @param username
- * */
-
-/**
- * @desc 查询用户 路由
- * */
-// router.post('/find', function (req, res, next) {
-//   res.json({loginStatus: 'success'})
-//   db.openSet('connected', function () {
-//     UsersModel.find({}, function (err, res) {
-//       if (err) {
-//         logger.info('error:' + err)
-//       } else {
-//         logger.info('success:' + res)
-//       }
-//     })
-//   })
-// })
-
 /*******************************************************************
  * @desc 查询路由的数据
  * */
-router.post('/getRouterList', async function (req, res, next) {
-  let data = req.body.name ? ({name: req.body.name}) : {}
+router.get('/getRouterList', async function (req, res, next) {
+  let data = req.query.name ? ({name: req.query.name}) : {}
   // TODO 增加模糊查询，匹配 name status:{normal,keep,ban},type:{official,brand,user}
-  // todo sddsdsa
   let findRouter = await RouterModel.find(data).exec()
   if (findRouter.length === 0) {
     res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
@@ -225,6 +195,7 @@ router.post('/getRouterList', async function (req, res, next) {
 })
 
 /**
+ * @method POST
  * @desc 添加路由操作
  * */
 router.post('/addRouter', async function (req, res, next) {
@@ -241,14 +212,14 @@ router.post('/addRouter', async function (req, res, next) {
     logger.error(req.body)
     // 插入数据
     let saveRouter = new RouterModel(req.body, false)
-    saveRouter.save(function (err, resdb) {
+    saveRouter.save(function (err, resDB) {
       if (err) {
         res.json({
           errorCode: 4,
           msg: 'error'
         })
       } else {
-        logger.error(resdb)
+        logger.error(resDB)
         res.json({
           errorCode: 0,
           msg: 'success'
@@ -317,10 +288,40 @@ async function queryRouter (req, res, next) {
 /*******************************************************************
  * @desc 查询文章的数据
  * */
-router.get('/article', async function (req, res, next) {
-  console.info('查询文章')
-  let findArticle = await ArticleModel.find({}).exec()
+router.get('/getArticleList', async function (req, res, next) {
+  let data = req.query.name ? ({name: req.query.title}) : {}
+  // TODO 增加模糊查询
+  let findArticle = await ArticleModel.find(data).exec()
   logger.error(findArticle)
+  if (findArticle.length === 0) {
+    res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
+  } else {
+    res.json({errorCode: 0, data: findArticle, msg: 'success'})
+  }
+})
+
+/**
+ * @desc  发表新的文章
+ * */
+router.post('/publishArticle', async function (req, res, next) {
+  let data = req.body
+  // 补充新字段
+  data.comments_status = 'open' // 评论开放 * 后期
+  data.post_modified = '' // 修改时间 * 后期
+  data.post_author = req.session.userInfo.id
+  let saveArticle = new ArticleModel(data) // 创建构造函数，此时 增加_id
+  saveArticle.save()
+    .then(function (resDb) {
+      let id = mongoose.Types.ObjectId(resDb._id) // 构造id
+      let postDate = format(id.getTimestamp(), 'YYYY-MM-DD HH:mm:ss')
+      ArticleModel.findByIdAndUpdate(resDb, { post_date: postDate}, {upsert: true}, function (err, db1) {
+        if (err) {
+          dbError(res, err)
+        } else {
+          dbSuccess(res)
+        }
+      })
+    })
 })
 
 /**
@@ -335,4 +336,5 @@ router.get('/user', function (req, res, text) {
     })
   }
 })
+
 export {router}

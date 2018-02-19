@@ -114,7 +114,9 @@
        * @desc api
        * */
       getRouterAPI () {
-        this.$ajax.post('/api/getRouterList', {name: this.search_router})
+        this.$ajax.get('/api/getRouterList', {params: {
+          name: this.search_router
+        }})
           .then(res => {
             if (res.errorCode === 0) {
               this.routerData = res.data

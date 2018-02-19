@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * @desc user api Mongoose Model
  * @GET 使用req.params 来去到get过来的参数
@@ -52,12 +53,12 @@ let routerSchema = new Schema({
 let articleSchema = new Schema({
   id: Number, // 文章id
   comments_status: String, // 评论的开关状态
-  post_author: Number, // 文章的id
-  post_date: Date, // 发表的时间
+  post_author: String, // 文章的id
+  post_date: String, // 发表的时间
   post_content: String, // 文章内容
   post_title: String, // 文章标题
   post_password: String, // 文章如果加密的话
-  post_modified: Date, // 修改的时间
+  post_modified: String, // 修改的时间
   url: String // 生成的url 地址
 })
 

@@ -226,6 +226,8 @@ class
 ### 编辑器
 	mavon-editor
 ##　package.json
+### date-fns 
+	时间格式化工具，放弃moment.js 因为太大了
 ## 兼容特性
 	SSL
 	APM

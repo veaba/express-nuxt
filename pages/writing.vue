@@ -22,7 +22,7 @@
                     <i-col span="8" offset="8">
                         <!--文章计数-->
                         <div class="article-tips">
-                            <span>字数:</span><strong>{{content.length||0}}</strong>
+                            <span>字数:</span><strong>{{articleItem.post_content.length||0}}</strong>
                         </div>
                     </i-col>
 
@@ -36,8 +36,15 @@
                     <Button type="ghost" @click="saveArticle">保存文章</Button>
                 </Row>
             </div>
+          <div class="article-title">
+            <Row>
+              <i-col span="24">
+                <Input v-model="articleItem.post_title" size="large"></Input>
+              </i-col>
+            </Row>
+          </div>
             <mavon-editor
-                    v-model="content"
+                    v-model="articleItem.post_content"
                     class="article-editor"
                     style="height: 100%;">
             </mavon-editor>
@@ -50,7 +57,10 @@
     components: {},
     data () {
       return {
-        content: '',
+        articleItem: {
+          post_title: '22',
+          post_content: '222'
+        },
         msg: 'Hello world article VueJS',
         breadcrumb: [
           {path: '/settings', icon: 'settings', name: '设置'},
@@ -68,8 +78,18 @@
       saveArticle () {
         console.info('手动保存文章')
       },
+      /**
+       * @desc 提交文章发表
+       * */
       commitArticle () {
-        console.info('发布文章')
+        console.info(this.articleItem)
+        this.$ajax.post('/api/publishArticle', this.articleItem)
+          .then(res => {
+            console.info(res)
+          })
+          .catch(err => {
+            console.info(err)
+          })
       }
 
     }
@@ -88,6 +108,9 @@
         strong {
             font-size: 18px;
         }
+    }
+    .article-title{
+      margin-top: 20px;
     }
 
     .article-actions {

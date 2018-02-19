@@ -108,7 +108,7 @@
                         </template>
                         <MenuItem :name="$store.state.userInfo.nick">{{$store.state.userInfo.nick}}</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
-                        <MenuItem name="article">写文章</MenuItem>
+                        <MenuItem name="writing">写文章</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
                     </Submenu>
                 </div>
@@ -153,7 +153,7 @@
           .then(res => {
             if (res.errorCode === 0) {
               this.$Message.success(res.msg)
-              this.$router.push('login')
+              this.$router.push('/login')
             }
           })
           .catch(err => {

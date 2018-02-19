@@ -26,15 +26,6 @@
                     <Button type="ghost" @click="$store.commit('increment')" style="width: 100%">{{ $store.state.counter
                         }}
                     </Button>
-                    <br>
-                    <br>
-                    <Button type="ghost" @click="insertTest" style="width: 100%">插入测试 当前时间点</Button>
-                    <br>
-                    <br>
-                    <Button type="ghost" @click="findTest" style="width: 100%">查询测试 2017</Button>
-                    <br>
-                    <br>
-                    <Button type="ghost" @click="deleteTest" style="width: 100%">删除测试 当前时间点</Button>
                 </Form>
                 </i-col>
             </Row>
@@ -112,47 +103,6 @@
           })
           .catch(err => {
             console.info(err + '/api/logout')
-          })
-      },
-      /**
-       * @desc 插入测试
-       * */
-      insertTest () {
-        this.$ajax.post('/api/insert', {
-          username: 'insert',
-          password: 'insert'
-        })
-          .then(res => {
-            console.info(res + '/api/insert')
-          })
-          .catch(err => {
-            console.info(err + '/api/insert')
-          })
-      },
-
-      findTest () {
-        this.$ajax.post('/api/find', {
-          username: 'find',
-          password: 'find'
-        })
-          .then(res => {
-            console.info(res + '/api/find')
-          })
-          .catch(err => {
-            console.info(err + '/api/find')
-          })
-      },
-
-      deleteTest () {
-        this.$ajax.post('/api/delete', {
-          username: 'delete',
-          password: 'delete'
-        })
-          .then(res => {
-            console.info(res + '/api/delete')
-          })
-          .catch(err => {
-            console.info(err + '/api/delete')
           })
       }
     }
