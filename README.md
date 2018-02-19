@@ -222,23 +222,29 @@ class
 	vue-boostrap 在考虑中...	
 ### WebSocket
 	socket.io
-	
 ### 编辑器
 	mavon-editor
-##　package.json
+	
+## package.json
+包依赖解释
+	 
 ### date-fns 
-	时间格式化工具，放弃moment.js 因为太大了
-## 兼容特性
-	SSL
-	APM
-	PWA
+时间格式化工具，放弃moment.js ,原因是，moment.js太大了
 
+## 兼容特性
+	SSL/https
+	APM
+	PWA 渐进式
+	http2.0 
 
 添加以下 支持sass
 
-    "node-sass": "^4.5.3",
-    "pug": "^2.0.0-beta6",
-    "pug-loader": "^2.3.0",
-    "sass-loader": "^6.0.6"
+	"node-sass": "^4.5.3",
+	"pug": "^2.0.0-beta6",
+	"pug-loader": "^2.3.0",
+	"sass-loader": "^6.0.6"
 
 添加 以下 支持less(可能用于更改iView 主题定制）
+
+	less  
+	less-loader
