@@ -29,7 +29,11 @@ module.exports = {
     },
     {
       src: '~assets/scss/iViewFix.scss', lang: 'scss'// 修复iView缺陷
-    }],
+    },
+    {
+      src: '~assets/scss/markdown.scss', lang: 'scss'// markdown 渲染样式
+    }
+  ],
   /*
   ** Add axios globally
   */
@@ -55,7 +59,7 @@ module.exports = {
     PORT: '4000'
   },
   // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件
-  plugins: ['~plugins/axios', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
+  plugins: ['~plugins/axios', '~plugins/highlight', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
   // src: '~plugins/socket', ssr: false}
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件

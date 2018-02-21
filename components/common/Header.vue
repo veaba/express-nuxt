@@ -124,14 +124,15 @@
       return {
         msg: 'Hello world Header VueJS',
         userInfo: {
-          id: null,
-          username: null,
-          nick: null,
-          email: null
+          id: '',
+          username: '',
+          nick: '',
+          email: ''
         }
       }
     },
-    created () {
+    mounted () {
+      // todo 频繁localStorage is not defined
       if (localStorage.userInfo.length > 0) {
         this.userInfo = JSON.parse(localStorage.userInfo)
       } else {

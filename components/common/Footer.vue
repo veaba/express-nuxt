@@ -1,6 +1,7 @@
+
 <template>
   <footer>
-    &copy;{{year}} Admingod.com
+    &copy;{{year}} beiKe.io
   </footer>
 </template>
 <script>
