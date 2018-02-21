@@ -32,7 +32,20 @@
           articleCol: [
             {
               title: '内容',
-              key: 'post_title'
+              key: 'post_title',
+              render: (h, params) => {
+                return h('a', {
+                  attrs: {
+                    href: 'javascript:void(0)'
+                  },
+                  on: {
+                    click: () => {
+                      this.$router.push({path: '/article', query: {id: params.row._id}})
+                    }
+                  }
+
+                }, params.row.post_title)
+              }
             },
             {
               title: '更新时间',
@@ -41,115 +54,25 @@
             {
               title: '操作',
               key: 'actions',
-              render: (h, parmas) => {
-                return h('div', {}, [
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'ios-alarm-outline'
-                    },
-                    style: {
-                      'margin-right': '5px'
+              render: (h, params) => {
+                return h('a', {
+                  attrs: {
+                    href: 'javascript:void(0)'
+                  },
+                  on: {
+                    click: () => {
+                      this.$router.push({path: '/writing', query: {id: params.row._id}})
                     }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'trash-a'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'edit'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'wrench'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'thumbsup'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'thumbsdown'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'ios-chatboxes-outline'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'ios-pulse-strong'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'ios-eye'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'ios-locked'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  }),
-                  h('Icon', {
-                    props: {
-                      size: 20,
-                      type: 'ios-person'
-                    },
-                    style: {
-                      'margin-right': '5px'
-                    }
-                  })
-                ])
+                  }
+
+                }, '编辑')
               }
             }
           ]
         }
       },
       created () {
-        this.getArticleAPI()
+        this.getArticleListAPI()
       },
       methods: {
         onSearchEnter () {
@@ -158,7 +81,7 @@
         /**
          * @desc 拉取api
          * */
-        getArticleAPI () {
+        getArticleListAPI () {
           this.$ajax.get('/api/getArticleList', {name: this.search})
             .then(res => {
               if (res.errorCode === 0) {

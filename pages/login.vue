@@ -78,7 +78,6 @@
           })
           .catch(err => {
             console.info(err)
-            console.info('************** login error')
           })
       },
       /**

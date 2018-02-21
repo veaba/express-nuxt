@@ -10,6 +10,7 @@ const logger = require('tracer').console() // console追踪库
 import {config} from '../config'
 import {UsersModel, RouterModel, ArticleModel} from './model' // 用户api,构造函数应该是大写开头
 import {format} from 'date-fns'
+
 const router = Router()
 
 /**
@@ -46,6 +47,7 @@ let options = {
 
 mongoose.connect(config.base + ':' + config.port + '/' + config.database, options) // 连接
 let db = mongoose.connection
+
 /** *********************很诡异的报错，如果没有一个函数在db 后面，则报一个错误**************************/
 /**
  * @desc mongodb 操作失败函数
@@ -59,6 +61,7 @@ function dbError (res, err, errorCode) {
     msg: err || '服务端错误'
   })
 }
+
 /**
  * @desc mongodb 操作成功函数,返回到前端
  * @res res
@@ -301,27 +304,84 @@ router.get('/getArticleList', async function (req, res, next) {
 })
 
 /**
- * @desc  发表新的文章
+ * @desc  发表新的文章 ＋编辑文章
  * */
 router.post('/publishArticle', async function (req, res, next) {
   let data = req.body
-  // 补充新字段
-  data.comments_status = 'open' // 评论开放 * 后期
-  data.post_modified = '' // 修改时间 * 后期
-  data.post_author = req.session.userInfo.id
+  logger.error(data)
   let saveArticle = new ArticleModel(data) // 创建构造函数，此时 增加_id
-  saveArticle.save()
-    .then(function (resDb) {
-      let id = mongoose.Types.ObjectId(resDb._id) // 构造id
-      let postDate = format(id.getTimestamp(), 'YYYY-MM-DD HH:mm:ss')
-      ArticleModel.findByIdAndUpdate(resDb, { post_date: postDate}, {upsert: true}, function (err, db1) {
-        if (err) {
-          dbError(res, err)
-        } else {
-          dbSuccess(res)
-        }
-      })
+  if (data._id) {
+    logger.error('编辑 文章')
+    let objectId = mongoose.Types.ObjectId(data._id)
+    data.post_modified = format(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    data.editor_number = (data.editor_number || 0) + 1
+    ArticleModel.findByIdAndUpdate({_id: objectId}, data, {upsert: true}, function (err, db1) {
+      if (err) {
+        logger.error('编辑文章 失败')
+        dbError(res, err)
+      } else {
+        logger.error('编辑文章 成功')
+        dbSuccess(res)
+      }
     })
+  } else {
+    // 首次新增的文章,补充新字段
+    data.comments_status = 'open' // 评论开放 * 后期
+    data.post_modified = '' // 修改时间 * 后期
+    data.post_author = req.session.userInfo.id
+    data.editor_number = 0
+    saveArticle.save()
+      .then(function (resDb) {
+        logger.error('新增 文章')
+        let id = mongoose.Types.ObjectId(resDb._id) // 构造id
+        let postDate = format(id.getTimestamp(), 'YYYY-MM-DD HH:mm:ss')
+        ArticleModel.findByIdAndUpdate(resDb, {post_date: postDate}, {upsert: true}, function (err, db1) {
+          if (err) {
+            logger.error('新增文章 失败')
+            dbError(res, err)
+          } else {
+            logger.error('新增文章 成功')
+            dbSuccess(res)
+          }
+        })
+      })
+  }
+})
+
+/**
+ * @desc  编辑单篇文章
+ * */
+router.post('editArticle', async function (req, res, text) {
+  let data = req.body
+  dbSuccess(res, data)
+})
+/**
+ * @desc 拉取单篇文章
+ * */
+router.get('/getArticle', async function (req, res, text) {
+  let id = req.query.id
+  if (!id) {
+    dbError(res)
+    return false
+  } else {
+    let objectId = mongoose.Types.ObjectId(id)
+    ArticleModel.findOne({_id: objectId})
+      .then(function (resDb) {
+        dbSuccess(res, resDb)
+      })
+      .catch(function (err) {
+        dbError(res, err)
+      })
+  }
+})
+
+/**
+ * @desc 删除文章
+ * @desc 支持数组形式
+ * */
+router.post('/deletesArticle', async function (req, res, text) {
+  let data = req.bdoy
+  dbSuccess(res, data)
 })
 
 /**

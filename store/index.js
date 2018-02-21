@@ -2,6 +2,7 @@
  * @name JS
  * @author Jo.gel
  * @date 2017/11/19
+ * @desc 用户基本信息存储到localStorage
  ***********************/
 
 import Vue from 'vue'
@@ -50,11 +51,13 @@ const store = () => new Vuex.Store({
   actions: {
     /**
      * @desc 获取用户个人信息
+     * @desc 登录时候，登录信息储存到 localStorage
      * */
     getUserInfoAPI ({commit}, info) {
       axios.get('/api/user')
         .then(res => {
           if (res.errorCode === 0) {
+            localStorage.userInfo = JSON.stringify(res.data)
             commit('USER_INFO', res.data)
           }
         })

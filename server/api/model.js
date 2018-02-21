@@ -51,15 +51,18 @@ let routerSchema = new Schema({
  * @desc 文章
  * */
 let articleSchema = new Schema({
-  id: Number, // 文章id
-  comments_status: String, // 评论的开关状态
-  post_author: String, // 文章的id
+  comments_status: String, // 评论的开关状态 open closed
+  post_author: String, // 作者
   post_date: String, // 发表的时间
   post_content: String, // 文章内容
   post_title: String, // 文章标题
   post_password: String, // 文章如果加密的话
   post_modified: String, // 修改的时间
-  url: String // 生成的url 地址
+  post_url: String, // 生成的url 地址
+  copyright_type: String, // original 原创、reprint 转载
+  reprint_url: String, // 如果是转载的话，前端就有一个转载的url
+  original_date: String, // 原始发表的时间，
+  editor_number: Number // 被编辑过的次数
 })
 
 /***********************************************

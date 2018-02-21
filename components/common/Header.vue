@@ -106,7 +106,7 @@
                                 <Avatar icon="person"></Avatar>
                             </Badge>
                         </template>
-                        <MenuItem :name="$store.state.userInfo.nick">{{$store.state.userInfo.nick}}</MenuItem>
+                        <MenuItem :name="userInfo.nick">{{userInfo.nick}}</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
                         <MenuItem name="writing">写文章</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>
@@ -123,10 +123,21 @@
     data () {
       return {
         msg: 'Hello world Header VueJS',
-        userInfo: {}
+        userInfo: {
+          id: null,
+          username: null,
+          nick: null,
+          email: null
+        }
       }
     },
     created () {
+      if (localStorage.userInfo.length > 0) {
+        this.userInfo = JSON.parse(localStorage.userInfo)
+      } else {
+        // TODO
+        alert('error 没找到用户')
+      }
     },
     methods: {
       goRouter (name) {

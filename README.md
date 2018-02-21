@@ -40,6 +40,9 @@
 	头像
 	
 ## 色系设计	
+
+### github markdown 渲染方案
+
 ## 数据库设计
 ### [Collections] router 路由器，放置合法的路由表 {user、###路由保留、}
 ### [Collections] user
@@ -227,7 +230,7 @@ class
 	
 ## package.json
 包依赖解释
-	 
+### marked mk 格式文件渲染组件
 ### date-fns 
 时间格式化工具，放弃moment.js ,原因是，moment.js太大了
 

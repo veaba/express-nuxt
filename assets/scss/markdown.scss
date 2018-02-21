@@ -1,0 +1,88 @@
+@charset "UTF-8";
+/*!*********************
+ *@name style
+ *@author Jo.gel
+ *@date 2018/2/20
+ ***********************/
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+*, :before, :after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+ul {
+  -webkit-margin-before: 0;
+  -webkit-margin-after: 0;
+  -webkit-margin-start: 0;
+  -webkit-margin-end: 0;
+  -webkit-padding-start: 0;
+}
+
+/********special font*******/
+* {
+  font-family: "Microsoft Jhenghei", "serif", "sans-serif", "cursive", "fantasy", "monospace"
+}
+
+/**********root*************/
+html {
+}
+
+body {
+}
+
+/** ****************************************
+*
+*   *github markdown css style theme
+*
+*********************************************/
+
+.github_{
+
+}
+/** ****************************************
+*
+*   *vsCode markdown css style theme
+*
+*********************************************/
+.vsCode_{
+
+}
+
+/** ****************************************
+*
+*   *vueJS markdown css style theme
+*
+*********************************************/
+
+.vueJs_{
+
+}
+/** ****************************************
+*
+*   jetBrains markdown css style theme
+*
+*********************************************/
+
+/** ****************************************
+*
+*   sublime markdown css style theme
+*
+*********************************************/
+
+/** ****************************************
+*
+*   atom markdown css style theme
+*
+*********************************************/
+
+/** ****************************************
+*
+*   vim markdown css style theme
+*
+*********************************************/

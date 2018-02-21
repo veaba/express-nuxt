@@ -19,15 +19,19 @@
                         </Breadcrumb>
                     </i-col>
 
-                    <i-col span="8" offset="8">
+                  <i-col span="8" offset="8">
                         <!--文章计数-->
                         <div class="article-tips">
+                          <div class="tips-item">
                             <span>字数:</span><strong>{{articleItem.post_content.length||0}}</strong>
+                          </div>
+
+                          <div class="tips-item" v-if="articleItem.editor_number">
+                            <span  style="margin-left: 10px;">编辑次数:</span><strong>{{articleItem.editor_number||0}}</strong>
+                          </div>
                         </div>
                     </i-col>
-
                 </Row>
-
             </div>
 
             <div class="article-actions">
@@ -39,7 +43,7 @@
           <div class="article-title">
             <Row>
               <i-col span="24">
-                <Input v-model="articleItem.post_title" size="large"></Input>
+                <Input v-model="articleItem.post_title" size="large"v placeholder="标题"></Input>
               </i-col>
             </Row>
           </div>
@@ -58,8 +62,8 @@
     data () {
       return {
         articleItem: {
-          post_title: '22',
-          post_content: '222'
+          post_title: '',
+          post_content: ''
         },
         msg: 'Hello world article VueJS',
         breadcrumb: [
@@ -69,6 +73,12 @@
         ]
       }
     },
+    created () {
+      let articleId = this.$route.query.id
+      if (articleId) {
+        this.getArticleAPI(articleId)
+      }
+    },
     mounted () {
     },
     methods: {
@@ -76,19 +86,42 @@
        * @desc 手动保存文章
        * */
       saveArticle () {
+        // todo
         console.info('手动保存文章')
+      },
+
+      /**
+       * @desc 拉取文章api
+       * */
+      getArticleAPI (id) {
+        this.$ajax.get('/api/getArticle', {params: {
+          id: id
+        }})
+          .then(res => {
+            if (res.errorCode === 0) {
+              this.articleItem = res.data
+            }
+          })
+          .catch(err => {
+            console.info(err)
+          })
       },
       /**
        * @desc 提交文章发表
        * */
       commitArticle () {
-        console.info(this.articleItem)
         this.$ajax.post('/api/publishArticle', this.articleItem)
           .then(res => {
-            console.info(res)
+            if (res.errorCode === 0) {
+              this.$Message.success(res.msg || '发表成功')
+              this.$router.push('/settings/articles')
+            } else {
+              this.$Message.error(res.msg || 'errorCode大于0，发表失败')
+            }
           })
           .catch(err => {
             console.info(err)
+            this.$Message.error(err || 'errorCode大于0，发表失败')
           })
       }
 
