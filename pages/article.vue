@@ -62,16 +62,22 @@
   </article>
 </template>
 <script>
+  /* eslint-disable no-proto */
+
   import articleMenu from '../components/common/articleMenu'
   import marked from 'marked'
-
+  // marked 不支持 sub  a^2^b
+  // marked 不支持 sup  a~2~b
+  // marked 不支持 mark  ==ab==
+  // marked 不支持 emoJi
   let menusArray = []
-  const renderer = new marked.Renderer()
   // 默认的marked 对于中文会增加无意义的 id='-'
+  let renderer = new marked.Renderer()
   renderer.heading = function (text, level, raw) {
     let ob = {}
     ob.title = text
     ob.url = `#${text}`
+    ob.level = level
     menusArray.push(ob)
     return `<h${level} id="${text}"><a href="#${text}">${text}</a></h${level}>`
   }

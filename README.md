@@ -226,11 +226,23 @@ class
 ### WebSocket
 	socket.io
 ### 编辑器
-	mavon-editor
+mavon-editor
+- blockquote success写法
+	
+```html
+	> 我是引文导读我是引文导读我是引文导读我是引文导读
+```
+
+- blockquote error写法
+
+```html
+  >> 我是引文导读我是引文导读我是引文导读我是引文导读
+```
 	
 ## package.json
 包依赖解释
-### marked mk 格式文件渲染组件
+### *marked mk 格式文件渲染组件 发现无法渲染 ++文字++ 、sub 、sup 、==标记== 的操作
+### markdown-it ### 但 又不能自定义输出h 标签，而且需要安装很多
 ### date-fns 
 时间格式化工具，放弃moment.js ,原因是，moment.js太大了
 

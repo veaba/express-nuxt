@@ -46,9 +46,10 @@ body {
 .hljs {
   background: transparent !important;
 }
-pre{
-  code{
-    span{
+
+pre {
+  code {
+    span {
       line-height: 1.5;
     }
   }
@@ -79,14 +80,67 @@ pre{
 *
 *********************************************/
 $vue_strongColor: #2c3e50;
+$vue_bg: #f8f8f8;
 $vue_aColor: #42b983;
 $vue_codeBg: #f8f8f8;
 $vue_haColor: #2c3e50; //h标签下的a标签
 $vue_border: #ddd;
 $vue_keyword: #e96900;
-$vue_tagColor:#2973b7;
-$vue_function:#0092db;
+$vue_tagColor: #2973b7;
+$vue_function: #0092db;
+$vue_error: #f66;
 .vueJs_ {
+  /** success */
+  blockquote {
+    position: relative;
+    p {
+      position: relative;
+      border-left: 4px solid $vue_aColor;
+      padding: 12px 24px 12px 30px;
+      background: $vue_bg;
+      margin-bottom: .5em;
+      &:before {
+        display: block;
+        position: absolute;
+        content: '!';
+        top: 14px;
+        left: -12px;
+        padding-left: 2px;
+        background: $vue_aColor;
+        color: #fff;
+        width: 20px;
+        height: 20px;
+        border-radius: 100%;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+      }
+    }
+    blockquote {
+      p{
+        position: relative;
+        border-left: 4px solid $vue_error;
+        padding: 12px 24px 12px 30px;
+        &:before {
+          display: block;
+          position: absolute;
+          content: '!';
+          top: 14px;
+          left: -12px;
+          padding-left: 2px;
+          background: $vue_error;
+          color: #fff;
+          width: 20px;
+          height: 20px;
+          border-radius: 100%;
+          text-align: center;
+          font-weight: bold;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
   h1, h2, h3, h4, h5, strong {
     position: relative;
     font-weight: 600;
@@ -144,15 +198,15 @@ $vue_function:#0092db;
     line-height: 1.1em;
     border-radius: 2px;
   }
-  .hljs-tag{
+  .hljs-tag {
     color: $vue_tagColor;
 
   }
-  .hljs-string{
+  .hljs-string {
     color: $vue_aColor;
   }
   .javascript {
-    .hljs-function{
+    .hljs-function {
       .hljs-keyword {
         color: $vue_function;
       }

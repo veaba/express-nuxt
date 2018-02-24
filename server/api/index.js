@@ -166,7 +166,7 @@ router.post('/logout', function (req, res, next) {
 })
 
 /**
- * @desc 注册账号 路由
+ * @desc 注册账号 路由 TODO
  * */
 router.post('/register', function (req, res, next) {
   logger.error(req.session)
@@ -212,7 +212,6 @@ router.post('/addRouter', async function (req, res, next) {
     })
   } else {
     // 如果没有存在，则允许继续添加
-    logger.error(req.body)
     // 插入数据
     let saveRouter = new RouterModel(req.body, false)
     saveRouter.save(function (err, resDB) {
@@ -222,7 +221,6 @@ router.post('/addRouter', async function (req, res, next) {
           msg: 'error'
         })
       } else {
-        logger.error(resDB)
         res.json({
           errorCode: 0,
           msg: 'success'
@@ -251,7 +249,6 @@ router.post('/deleteRouter', async function (req, res, next) {
     if (queryRouter(data)) {
       // 开始删除操作
       let delRouter = await RouterModel.remove(data).exec()
-      logger.error(delRouter)
       if (delRouter.ok) {
         res.json({
           errorCode: 0,
@@ -279,13 +276,7 @@ router.post('/deleteRouter', async function (req, res, next) {
  * */
 async function queryRouter (req, res, next) {
   let findRouter = await RouterModel.find(req)
-  if (findRouter.length > 0) {
-    logger.error(findRouter)
-    return findRouter
-  } else {
-    logger.error(findRouter)
-    return findRouter
-  }
+  return findRouter
 }
 
 /*******************************************************************
@@ -295,7 +286,6 @@ router.get('/getArticleList', async function (req, res, next) {
   let data = req.query.name ? ({name: req.query.title}) : {}
   // TODO 增加模糊查询
   let findArticle = await ArticleModel.find(data).exec()
-  logger.error(findArticle)
   if (findArticle.length === 0) {
     res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
   } else {
@@ -308,7 +298,6 @@ router.get('/getArticleList', async function (req, res, next) {
  * */
 router.post('/publishArticle', async function (req, res, next) {
   let data = req.body
-  logger.error(data)
   let saveArticle = new ArticleModel(data) // 创建构造函数，此时 增加_id
   if (data._id) {
     logger.error('编辑 文章')
