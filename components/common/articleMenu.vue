@@ -7,7 +7,7 @@
   <div class="article-menu">
     <div class="menu-header">目录</div>
     <ul class="menu-ul">
-      <li v-for="(item,index) in menu" :style="{'margin-left':item.level*20+'px'}">
+      <li v-for="(item,index) in menu" :style="{'margin-left':item.level===1?0:item.level *10+'px'}">
         <a href="" :href="item.url">{{item.title}}</a>
       </li>
     </ul>

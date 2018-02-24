@@ -104,6 +104,8 @@
         marked.setOptions({
           renderer: renderer// 过滤中文不兼容无意义id="-" 字段
         })
+        // let lexer = marked.lexer(this.articleItem.post_content)
+        // console.log(lexer)
         return marked(this.articleItem.post_content)
       }
     },
