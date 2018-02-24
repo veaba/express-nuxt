@@ -90,6 +90,18 @@ $vue_tagColor: #2973b7;
 $vue_function: #0092db;
 $vue_error: #f66;
 .vueJs_ {
+  // 无序列表
+  ul{
+    li{
+      list-style-type: disc;
+    }
+  }
+  // 有序列表
+  ol{
+    li{
+      list-style-type: decimal;
+    }
+  }
   /** success */
   blockquote {
     position: relative;
@@ -185,8 +197,6 @@ $vue_error: #f66;
   }
   p {
     line-height: 1.6em;
-    margin: 1.2em 0 -1.2em;
-    padding-bottom: 1.2em;
     position: relative;
     z-index: 1;
   }
