@@ -1,4 +1,11 @@
 # 基于express 的nuxt服务端渲染网站
+
+## 控制台 [次要考虑]
+	mongodb config 表，作为全局控制台
+-  website: [true] 网站打开、[false] 网站关闭，301重新定向 
+-  register:[true] 开放用户注册，[false]不开放网站用户注册
+-  website_desc:{String} 网站描述
+   
 ## 需求分析
 ### 功能性
 ### 性能

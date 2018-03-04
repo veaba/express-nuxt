@@ -374,6 +374,15 @@ router.post('/deletesArticle', async function (req, res, text) {
 })
 
 /**
+ * @desc  test error
+ * */
+router.get('/test', function (req, res, next, error) {
+  // error({
+  //   message: 'You are not connected', statusCode: 408
+  // })
+  // next()
+})
+/**
  * @desc 获取用户身份信息
  * */
 router.get('/user', function (req, res, text) {

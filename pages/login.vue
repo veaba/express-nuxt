@@ -26,6 +26,9 @@
                     <Button type="ghost" @click="$store.commit('increment')" style="width: 100%">{{ $store.state.counter
                         }}
                     </Button>
+                    <br>
+                    <br>
+                    <Button typo="error" @click="getTest">testError</Button>
                 </Form>
                 </i-col>
             </Row>
@@ -51,6 +54,10 @@
     mounted () {
     },
     methods: {
+
+      getTest () {
+        console.info(1)
+      },
       /**
        * @desc login
        * */

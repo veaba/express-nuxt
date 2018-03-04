@@ -15,9 +15,13 @@
  * @desc 如果直接在组件中this.$router.push('/')，将不会有req、res产生
  */
 export default function ({store, redirect, error, route, req, res}) {
+  console.info(req)
   // TODO 此处条件??
   if (!req) {
     if (!store.state.isAuth) {
+      // error({
+      //   message: 'You are not connected', statusCode: 403
+      // })
       return redirect('/login')
     }
   } else {
@@ -27,6 +31,10 @@ export default function ({store, redirect, error, route, req, res}) {
       if (referer && referer !== '/login') {
         req.session.referer = referer
       }
+      //
+      // error({
+      //   message: 'You are not connected', statusCode: 403
+      // })
       return redirect('/login')
     }
   }
