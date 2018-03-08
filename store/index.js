@@ -76,12 +76,12 @@ const store = () => new Vuex.Store({
     nuxtServerInit ({commit}, {req}) {
       // 1未授权之前处理referer的路由跳转
       let referer = req.session.referer
-      // console.info(req.session.routerLock)
-      // if (req.session.routerLock) {
-      //   commit('ROUTER_LOCK', true)
-      // } else {
-      //   commit('ROUTER_LOCK', false)
-      // }
+      console.info('未授权之前处理referer的路由跳转' + req.session.routerLock)
+      if (req.session.routerLock) {
+        commit('ROUTER_LOCK', true)
+      } else {
+        commit('ROUTER_LOCK', false)
+      }
       if (referer && referer !== '/login') {
         commit('REFERER', referer)
       } else {

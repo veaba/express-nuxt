@@ -121,29 +121,46 @@ function dbSuccess (res, data, errorCode, msg) {
  * @desc 路由查询接口，查询路由是否有效
  * */
 router.get('/router', async function (req, res, next) {
-  let router = RouterModel.find({'name': req.query.router}).exec()
+  let router = await RouterModel.find({'name': req.query.router}).exec()
   logger.error(router)
-  if (router.length === 0) {
-    req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
-    // logger.error(req.session) //能拿到
-    dbError(res)
-  } else {
-    req.session.routerLock = false
-    dbSuccess(res)
-    // TODO拉取用户信息
-  }
+
+  next()
+  // if (router.length === 0) {
+  //   console.info('无效')
+  //   req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
+  //   // logger.error(req.session) //能拿到
+  //   res.json({
+  //     errorCode: 1,
+  //     msg: '服务端错误'
+  //   })
+  // } else {
+  //   console.info(' 有效')
+  //   req.session.routerLock = false
+  //   res.json({
+  //     errorCode: 0,
+  //     data: [],
+  //     msg: '操作成功'
+  //   })
+  //   // TODO拉取用户信息
+  // }
 })
 router.use(async function (req, res, next) {
   console.info('Time-----------:', Date.now())
+  logger.error('router 中间器件执行')
   // 管理routerLock
   if (req.query && req.query.router) {
     let router = await RouterModel.find({'name': req.query.router}).exec()
-    if (router) {
+    logger.error(router)
+    console.info('0000')
+    if (router.length === 0) {
+      console.info('1111')
       req.session.routerLock = true
     } else {
+      console.info('2222')
       req.session.routerLock = false
     }
   } else {
+    console.info('3333')
     req.session.routerLock = false
   }
   next()
@@ -157,7 +174,7 @@ router.post('/login', async function (req, res, next) {
   let inputPwd = await encryptedPWD(req.body.password)
   if (findUser.length === 0) {
     // TODO 频繁的操作
-    res.json({
+    return res.json({
       errorCode: 1,
       msg: '该用户尚未注册'
     })
@@ -174,13 +191,13 @@ router.post('/login', async function (req, res, next) {
       }
       req.session.isAuth = true
       // logger.error(req.session)
-      res.json({
+      return res.json({
         errorCode: 0,
         msg: '登录成功'
       })
       // logger.error(findUser)// 登录成功后返回的数据
     } else {
-      res.json({
+      return res.json({
         errorCode: 1,
         msg: '登录失败，密码错误'
       })
@@ -193,7 +210,7 @@ router.post('/login', async function (req, res, next) {
  * */
 router.post('/logout', function (req, res, next) {
   req.session.isAuth = null
-  res.json({
+  return res.json({
     errorCode: 0,
     msg: '退出成功'
   })
@@ -205,12 +222,12 @@ router.post('/logout', function (req, res, next) {
 router.post('/register', function (req, res, next) {
   logger.error(req.session)
   if (req.session.isAuth) {
-    res.json({
+    return res.json({
       errorCode: 0,
       msg: '你可以注册啦！'
     })
   } else {
-    res.json({
+    return res.json({
       errorCode: 3,
       msg: '你丫没人权！'
     })
@@ -225,9 +242,9 @@ router.get('/getRouterList', async function (req, res, next) {
   // TODO 增加模糊查询，匹配 name status:{normal,keep,ban},type:{official,brand,user}
   let findRouter = await RouterModel.find(data).exec()
   if (findRouter.length === 0) {
-    res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
+    return res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
   } else {
-    res.json({errorCode: 0, data: findRouter, msg: 'success'})
+    return res.json({errorCode: 0, data: findRouter, msg: 'success'})
   }
 })
 
@@ -240,7 +257,7 @@ router.post('/addRouter', async function (req, res, next) {
   let findRouter = await RouterModel.find({name: req.body.name})
   // 1、已存在
   if (findRouter.length > 0) {
-    res.json({
+    return res.json({
       errorCode: 2,
       msg: '已存在'
     })
@@ -250,12 +267,12 @@ router.post('/addRouter', async function (req, res, next) {
     let saveRouter = new RouterModel(req.body, false)
     saveRouter.save(function (err, resDB) {
       if (err) {
-        res.json({
+        return res.json({
           errorCode: 4,
           msg: 'error'
         })
       } else {
-        res.json({
+        return res.json({
           errorCode: 0,
           msg: 'success'
         })
@@ -272,11 +289,10 @@ router.post('/deleteRouter', async function (req, res, next) {
   let data = req.body
   console.info(data)
   if (data.length === 0) {
-    res.json({
+    return res.json({
       errorCode: 4,
       msg: '路由名称为为空'
     })
-    return false
   } else {
     // 传递正常
     // 1 先查询存在该路由名称
@@ -284,20 +300,20 @@ router.post('/deleteRouter', async function (req, res, next) {
       // 开始删除操作
       let delRouter = await RouterModel.remove(data).exec()
       if (delRouter.ok) {
-        res.json({
+        return res.json({
           errorCode: 0,
           msg: 'success'
         }
         )
       } else {
-        res.json({
+        return res.json({
           errorCode: 4,
           msg: 'error 删除失败'
         })
       }
     } else {
       // 2、否则，不存在路由
-      res.json({
+      return res.json({
         errorCode: 1,
         msg: 'error 不存在该路由，无法删除路由'
       })
@@ -321,9 +337,9 @@ router.get('/getArticleList', async function (req, res, next) {
   // TODO 增加模糊查询
   let findArticle = await ArticleModel.find(data).exec()
   if (findArticle.length === 0) {
-    res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
+    return res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
   } else {
-    res.json({errorCode: 0, data: findArticle, msg: 'success'})
+    return res.json({errorCode: 0, data: findArticle, msg: 'success'})
   }
 })
 
@@ -413,7 +429,7 @@ router.post('/deletesArticle', async function (req, res, text) {
 router.get('/user', function (req, res, text) {
   // 如果session 存在则判断用户在登录状态
   if (req.session && req.session.isAuth) {
-    res.json({
+    return res.json({
       errorCode: 0,
       data: req.session.userInfo
     })

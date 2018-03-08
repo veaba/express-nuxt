@@ -22,16 +22,20 @@
  * 3 匹配页面
  */
 export default function ({store, redirect, error, route, req, res}) {
+  if (error) {
+    console.info(error)
+    return
+  }
   console.info('auth.js 被调用')
   // 判断路由锁定，则直接跳到错误页 todo 可能需要考虑和login 的兼容情况
-  // if (req && req.session) {
-  //   if (req.session.routerLock) {
-  //     error({
-  //       message: 'You are not connected 抱歉，没有找到该用户~~~~~~~', statusCode: 404
-  //     })
-  //     return false
-  //   }
-  // }
+  if (req && req.session) {
+    if (req.session.routerLock) {
+      error({
+        message: 'You are not connected 抱歉，没有找到该用户~~~~~~~', statusCode: 404
+      })
+      return false
+    }
+  }
   if (!req) {
     if (!store.state.isAuth) {
       return redirect('/login')
