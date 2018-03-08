@@ -3,13 +3,13 @@
  * @desc 数据库操作
  * */
 /* eslint-disable import/first,no-unexpected-multiline,func-call-spacing,wrap-iife,new-cap,handle-callback-err,standard/object-curly-even-spacing */
-import {Router} from 'express'
+import { Router } from 'express'
 import mongoose from 'mongoose' // mongoose 库
 import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
-import {config} from '../config'
-import {UsersModel, RouterModel, ArticleModel} from './model' // 用户api,构造函数应该是大写开头
-import {format} from 'date-fns'
+import { config } from '../config'
+import { UsersModel, RouterModel, ArticleModel } from './model' // 用户api,构造函数应该是大写开头
+import { format } from 'date-fns'
 
 const router = Router()
 
@@ -114,6 +114,40 @@ function dbSuccess (res, data, errorCode, msg) {
   })
 })()
 /** ***************************** Routes ****************************************/
+/**
+ * @desc 每次进入 /xx 非页面路由都会调用这个接口，也就是后端路由
+ * @desc 这时，使用router 的中间器件，函数来判断是否存在,
+ * //todo 路由请求和mongodb 处理函数区分开
+ * @desc 路由查询接口，查询路由是否有效
+ * */
+router.get('/router', async function (req, res, next) {
+  let router = RouterModel.find({'name': req.query.router}).exec()
+  logger.error(router)
+  if (router.length === 0) {
+    req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
+    // logger.error(req.session) //能拿到
+    dbError(res)
+  } else {
+    req.session.routerLock = false
+    dbSuccess(res)
+    // TODO拉取用户信息
+  }
+})
+router.use(async function (req, res, next) {
+  console.info('Time-----------:', Date.now())
+  // 管理routerLock
+  if (req.query && req.query.router) {
+    let router = await RouterModel.find({'name': req.query.router}).exec()
+    if (router) {
+      req.session.routerLock = true
+    } else {
+      req.session.routerLock = false
+    }
+  } else {
+    req.session.routerLock = false
+  }
+  next()
+})
 /**
  * @desc 用户登录
  * */
@@ -374,15 +408,6 @@ router.post('/deletesArticle', async function (req, res, text) {
 })
 
 /**
- * @desc  test error
- * */
-router.get('/test', function (req, res, next, error) {
-  // error({
-  //   message: 'You are not connected', statusCode: 408
-  // })
-  // next()
-})
-/**
  * @desc 获取用户身份信息
  * */
 router.get('/user', function (req, res, text) {
@@ -395,4 +420,8 @@ router.get('/user', function (req, res, text) {
   }
 })
 
-export {router}
+/***********************************
+ * @desc express router 路由中间器件，用来判断是不是合法的路由，否则路由上锁 routerLock
+ * */
+
+export { router }

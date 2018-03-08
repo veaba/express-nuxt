@@ -25,7 +25,8 @@ const store = () => new Vuex.Store({
       nick: null,
       email: null
     }, // 存储用户基础信息
-    Referer: null // 存储来源页面地址
+    Referer: null, // 存储来源页面地址
+    routerLock: null // 锁定路由
   },
   // 变化。更改store的唯一方法是提交mutations，每个mutations都有一个字符串的事件类型和一个回调函数
   // 此时user为store.commit传入额外参数，即mutation的载荷（payload）
@@ -44,6 +45,10 @@ const store = () => new Vuex.Store({
     // 登录之前的引用页面
     REFERER (state, Referer) {
       state.Referer = Referer
+    },
+    // 锁定路由
+    ROUTER_LOCK (state, ROUTERLOCK) {
+      state.routerLock = ROUTERLOCK
     }
   },
   // action 提交的是mutation，不是直接更改状态
@@ -71,6 +76,12 @@ const store = () => new Vuex.Store({
     nuxtServerInit ({commit}, {req}) {
       // 1未授权之前处理referer的路由跳转
       let referer = req.session.referer
+      // console.info(req.session.routerLock)
+      // if (req.session.routerLock) {
+      //   commit('ROUTER_LOCK', true)
+      // } else {
+      //   commit('ROUTER_LOCK', false)
+      // }
       if (referer && referer !== '/login') {
         commit('REFERER', referer)
       } else {

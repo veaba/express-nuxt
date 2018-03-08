@@ -18,7 +18,7 @@ axios.interceptors.response.use(res => {
   if (res && res.data) {
     return res.data
   }
-  return {errorCode: -1, data: null, msg: 'service error'}
+  return {errorCode: -1, data: null, msg: 'service error'} // TODO 重复访问 /a url 会有此return
 }, error => {
   // 错误信息扶正，后续在请求时，不需要catch
   return Promise.resolve(error.response)

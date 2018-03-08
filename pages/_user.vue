@@ -12,24 +12,28 @@
         keyword: ''
       }
     },
-    asyncData (context) {
-      console.info(context)
-      // console.info(context)
-      // return { project: 'nuxt' }
-      return context.error()
-    },
-
     created () {
       console.info(this.$route.params.user)
       this.keyword = this.$route.params.user
       // TODO 去查询 该路由表存不存在
       // TODO * 被禁路由库
       // TODO * 用户路由库
+      this.getRouter(this.keyword)
     },
     methods: {
-      // getRouter () {
-      //   console.info(1)
-      // }
+      getRouter (router) {
+        this.$ajax.get('/api/router', {
+          params: {
+            router: router
+          }
+        })
+          .then(res => {
+            console.info(res)
+          })
+          .catch(err => {
+            console.info(err)
+          })
+      }
     }
   }
 </script>
