@@ -123,48 +123,45 @@ function dbSuccess (res, data, errorCode, msg) {
 router.get('/router', async function (req, res, next) {
   let router = await RouterModel.find({'name': req.query.router}).exec()
   logger.error(router)
-
-  next()
-  // if (router.length === 0) {
-  //   console.info('无效')
-  //   req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
-  //   // logger.error(req.session) //能拿到
-  //   res.json({
-  //     errorCode: 1,
-  //     msg: '服务端错误'
-  //   })
-  // } else {
-  //   console.info(' 有效')
-  //   req.session.routerLock = false
-  //   res.json({
-  //     errorCode: 0,
-  //     data: [],
-  //     msg: '操作成功'
-  //   })
-  //   // TODO拉取用户信息
-  // }
-})
-router.use(async function (req, res, next) {
-  console.info('Time-----------:', Date.now())
-  logger.error('router 中间器件执行')
-  // 管理routerLock
-  if (req.query && req.query.router) {
-    let router = await RouterModel.find({'name': req.query.router}).exec()
-    logger.error(router)
-    console.info('0000')
-    if (router.length === 0) {
-      console.info('1111')
-      req.session.routerLock = true
-    } else {
-      console.info('2222')
-      req.session.routerLock = false
-    }
+  if (router.length === 0) {
+    console.info('无效')
+    req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
+    res.json({
+      errorCode: 1,
+      msg: '404用户'
+    })
   } else {
-    console.info('3333')
+    console.info(' 有效')
     req.session.routerLock = false
+    res.json({
+      errorCode: 0,
+      data: [],
+      msg: '操作成功'
+    })
+    // TODO拉取用户信息
   }
-  next()
 })
+// router.use(async function (req, res, next) {
+//   console.info('Time-----------:', Date.now())
+//   logger.error('router 中间器件执行')
+//   // 管理routerLock
+//   if (req.query && req.query.router) {
+//     let router = await RouterModel.find({'name': req.query.router}).exec()
+//     logger.error(router)
+//     console.info('0000')
+//     if (router.length === 0) {
+//       console.info('1111')
+//       req.session.routerLock = true
+//     } else {
+//       console.info('2222')
+//       req.session.routerLock = false
+//     }
+//   } else {
+//     console.info('3333')
+//     req.session.routerLock = false
+//   }
+//   next()
+// })
 /**
  * @desc 用户登录
  * */

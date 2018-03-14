@@ -1,6 +1,12 @@
+
+<!--
+@desc 显示不及时的问题
+-->
 <template>
     <section class="user">
-        id
+        <H1 style="display: none" v-show="isFind"> 找到用户</H1>
+
+        <H2 style="display: none" v-show="!isFind">404</H2>
     </section>
 </template>
 
@@ -9,7 +15,9 @@
     name: 'v-user',
     data () {
       return {
-        keyword: ''
+        keyword: '',
+        userInfo: {},
+        isFind: true
       }
     },
     created () {
@@ -21,6 +29,9 @@
       this.getRouter(this.keyword)
     },
     methods: {
+      /**
+       * @desc 找该路由，有结果则返回用户数据
+       * */
       getRouter (router) {
         this.$ajax.get('/api/router', {
           params: {
@@ -28,7 +39,7 @@
           }
         })
           .then(res => {
-            console.info(res)
+            this.isFind = res.errorCode === 0
           })
           .catch(err => {
             console.info(err)

@@ -21,21 +21,9 @@
  * 2 匹配布局
  * 3 匹配页面
  */
+
+// redirect 重定向
 export default function ({store, redirect, error, route, req, res}) {
-  if (error) {
-    console.info(error)
-    return
-  }
-  console.info('auth.js 被调用')
-  // 判断路由锁定，则直接跳到错误页 todo 可能需要考虑和login 的兼容情况
-  if (req && req.session) {
-    if (req.session.routerLock) {
-      error({
-        message: 'You are not connected 抱歉，没有找到该用户~~~~~~~', statusCode: 404
-      })
-      return false
-    }
-  }
   if (!req) {
     if (!store.state.isAuth) {
       return redirect('/login')
@@ -45,8 +33,7 @@ export default function ({store, redirect, error, route, req, res}) {
       // 如果没有登录状态则跳转到login页面
       let referer = req.url
       if (referer && referer !== '/login') {
-        //   Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
-        // req.session.referer = referer
+        req.session.referer = referer
       }
       return redirect('/login')
     }

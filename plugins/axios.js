@@ -14,11 +14,10 @@ axios.interceptors.request.use(req => {
  * @desc res 拦截器
  * */
 axios.interceptors.response.use(res => {
-  // console.info(res)
   if (res && res.data) {
     return res.data
   }
-  return {errorCode: -1, data: null, msg: 'service error'} // TODO 重复访问 /a url 会有此return
+  return res // TODO 重复访问 /a url 会有此return
 }, error => {
   // 错误信息扶正，后续在请求时，不需要catch
   return Promise.resolve(error.response)

@@ -74,6 +74,7 @@ const store = () => new Vuex.Store({
      * @desc 此方法可以让服务端将一些数据传给客户端
      * */
     nuxtServerInit ({commit}, {req}) {
+      console.info(req.session)
       // 1未授权之前处理referer的路由跳转
       let referer = req.session.referer
       console.info('未授权之前处理referer的路由跳转' + req.session.routerLock)
