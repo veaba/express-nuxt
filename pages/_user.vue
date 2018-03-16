@@ -1,13 +1,23 @@
-
 <!--
 @desc 显示不及时的问题
 -->
 <template>
-    <section class="user">
-        <H1 style="display: none" v-show="isFind"> 找到用户</H1>
-
-        <H2 style="display: none" v-show="!isFind">404</H2>
-    </section>
+    <article>
+      <section class="view-section user-section">
+         <div class="person">
+             <div class="banner"></div>
+             <div class="avatar">
+                 <Icon type="person" size="100"></Icon>
+             </div>
+             <div class="profile">
+                <div class="profile-info">
+                    <strong>{{userInfo.nick}}</strong>
+                </div>
+             </div>
+         </div>
+          <div class="detail"></div>
+      </section>
+    </article>
 </template>
 
 <script>
@@ -16,8 +26,9 @@
     data () {
       return {
         keyword: '',
-        userInfo: {},
+        userInfo: {}, // 用户信息
         isFind: true
+
       }
     },
     created () {
@@ -27,6 +38,15 @@
       // TODO * 被禁路由库
       // TODO * 用户路由库
       this.getRouter(this.keyword)
+    },
+    mounted () {
+      // todo 频繁localStorage is not defined
+      if (localStorage.userInfo.length > 0) {
+        this.userInfo = JSON.parse(localStorage.userInfo)
+      } else {
+        // TODO
+        alert('error 没找到用户')
+      }
     },
     methods: {
       /**
@@ -42,13 +62,65 @@
             this.isFind = res.errorCode === 0
           })
           .catch(err => {
-            console.info(err)
+            console.detail(err)
           })
       }
     }
   }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+    .user-section{
+        /*background: #fff;*/
+    }
+    .person{
+        position: relative;
+        height: 300px;
+        .banner{
+            width: 100%;
+            height: 200px;
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+            background: linear-gradient(to right bottom, rgb(53, 73, 94), rgb(79, 192, 141));
+
+        }
+        .avatar{
+            position: absolute;
+            background: rgb(255, 255, 255);
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            overflow: hidden;
+            padding: 5px;
+            transform: translate(-50%, 0%);
+            left: 50%;
+            top: 50%;
+            text-align: center;
+            border: 4px solid rgba(84, 153, 118, 0.4);
+            z-index: 10;
+        }
+
+        .profile{
+            height: 100px;
+            background: #fff;
+            .profile-info{
+                width: 400px;
+                height: 100%;
+                margin: 0 auto;
+                text-align: center;
+                padding: 61px;
+                font-weight: bold;
+                font-size: 16px;
+            }
+        }
+    }
+    .detail{
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        height: 100%;
+        margin-top: 10px;
+        background: #fff;
+    }
 
 </style>

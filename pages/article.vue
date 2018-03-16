@@ -138,10 +138,6 @@
   }
 </script>
 <style lang="scss" scoped>
-  article {
-    background: #fff;
-  }
-
   .section {
     background: #fff;
   }
