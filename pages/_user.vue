@@ -3,20 +3,40 @@
 -->
 <template>
     <article>
-      <section class="view-section user-section">
-         <div class="person">
-             <div class="banner"></div>
-             <div class="avatar">
-                 <Icon type="person" size="100"></Icon>
-             </div>
-             <div class="profile">
-                <div class="profile-info">
-                    <strong>{{userInfo.nick}}</strong>
+        <section class="view-section user-section">
+            <div class="person">
+                <div class="banner"></div>
+                <div class="avatar">
+                    <Icon type="person" size="100"></Icon>
                 </div>
-             </div>
-         </div>
-          <div class="detail"></div>
-      </section>
+                <div class="profile">
+                    <div class="profile-info">
+                        <strong>{{userInfo.nick}}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="detail">
+                <Row>
+                    <i-col span="18">
+                        <div class="content">
+                            <div class="column">
+                                <Tabs :animated="false" @on-click="getTabName">
+                                    <TabPane label="全部" name="all"></TabPane>
+                                    <TabPane label="文章" name="article"></TabPane>
+                                    <TabPane label="回复" name="comment"></TabPane>
+                                </Tabs>
+                                <div class="content-all" v-show="tabName==='all'">全部全部全部</div>
+                                <div class="content-article" v-show="tabName==='article'">文章文章</div>
+                                <div class="content-comment" v-show="tabName==='comment'">回复回复</div>
+                            </div>
+                        </div>
+                    </i-col>
+                    <i-col span="6" style="padding-left: 10px;">
+                        <div class="sidebar">sd</div>
+                    </i-col>
+                </Row>
+            </div>
+        </section>
     </article>
 </template>
 
@@ -27,8 +47,9 @@
       return {
         keyword: '',
         userInfo: {}, // 用户信息
-        isFind: true
-
+        isFind: true,
+        name1: '',
+        tabName: 'all'
       }
     },
     created () {
@@ -50,6 +71,14 @@
     },
     methods: {
       /**
+       * @desc tab Name
+       * */
+      getTabName (name) {
+        this.tabName = name
+        console.info(name)
+      },
+
+      /**
        * @desc 找该路由，有结果则返回用户数据
        * */
       getRouter (router) {
@@ -70,13 +99,14 @@
 </script>
 
 <style scoped lang="scss">
-    .user-section{
+    .user-section {
         /*background: #fff;*/
     }
-    .person{
+
+    .person {
         position: relative;
         height: 300px;
-        .banner{
+        .banner {
             width: 100%;
             height: 200px;
             border-top-left-radius: 2px;
@@ -84,43 +114,57 @@
             background: linear-gradient(to right bottom, rgb(53, 73, 94), rgb(79, 192, 141));
 
         }
-        .avatar{
+        .avatar {
             position: absolute;
             background: rgb(255, 255, 255);
             width: 110px;
             height: 110px;
-            border-radius: 50%;
+            border-radius: 4px;
             overflow: hidden;
             padding: 5px;
-            transform: translate(-50%, 0%);
-            left: 50%;
+            left: 20px;
             top: 50%;
             text-align: center;
             border: 4px solid rgba(84, 153, 118, 0.4);
             z-index: 10;
         }
 
-        .profile{
+        .profile {
             height: 100px;
             background: #fff;
-            .profile-info{
-                width: 400px;
+            .profile-info {
+                width: 100%;
                 height: 100%;
-                margin: 0 auto;
-                text-align: center;
-                padding: 61px;
+                padding-left: 140px;
                 font-weight: bold;
-                font-size: 16px;
+                font-size: 18px;
+                padding-top: 10px;
             }
         }
     }
-    .detail{
-        display: flex;
-        flex: 1;
-        flex-direction: column;
+
+    .detail {
         height: 100%;
         margin-top: 10px;
-        background: #fff;
+        .content {
+            border: 1px solid green;
+            background: #fff;
+        }
+        .sidebar {
+            border: 1px solid red;
+            background: #fff;
+        }
     }
+    .content {
+      .column{
+          height: 48px;
+      }
+    }
+
+    .sidebar {
+
+    }
+
+
 
 </style>
