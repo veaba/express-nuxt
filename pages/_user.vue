@@ -21,13 +21,26 @@
                         <div class="content">
                             <div class="column">
                                 <Tabs :animated="false" @on-click="getTabName">
-                                    <TabPane label="全部" name="all"></TabPane>
+                                    <!--<TabPane label="全部" name="all"></TabPane>-->
                                     <TabPane label="文章" name="article"></TabPane>
-                                    <TabPane label="回复" name="comment"></TabPane>
+                                    <!--<TabPane label="回复" name="comment"></TabPane>-->
                                 </Tabs>
-                                <div class="content-all" v-show="tabName==='all'">全部全部全部</div>
-                                <div class="content-article" v-show="tabName==='article'">文章文章</div>
-                                <div class="content-comment" v-show="tabName==='comment'">回复回复</div>
+                                <!--<div class="content-all" v-show="tabName==='all'">-->
+                                    <!--div.content-->
+                                <!--</div>-->
+                                <div class="content-article" v-show="tabName==='article'">
+                                    <div class="article-view" v-for="item of articleLists" :key="item._id">
+                                        <div class="view-item">
+                                            <div class="view-title">{{item.title}}</div>
+                                            <div class="view-content">{{item.abstract}}</div>
+                                        </div>
+                                        <div class="view-sidebar">
+                                            {{item.createdTime}}
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!--<div class="content-comment" v-show="tabName==='comment'">回复回复</div>-->
                             </div>
                         </div>
                     </i-col>
@@ -49,7 +62,13 @@
         userInfo: {}, // 用户信息
         isFind: true,
         name1: '',
-        tabName: 'all'
+        tabName: 'article'
+      }
+    },
+    computed: {
+      articleLists: function () {
+        let data = this.$store.state.articleList
+        return data || []
       }
     },
     created () {
@@ -147,7 +166,6 @@
         height: 100%;
         margin-top: 10px;
         .content {
-            border: 1px solid green;
             background: #fff;
         }
         .sidebar {
@@ -157,7 +175,23 @@
     }
     .content {
       .column{
-          height: 48px;
+          /*height: 48px;*/
+          .content-article{
+              display: flex;
+              flex: 1;
+              flex-direction: column;
+              height: 100%;
+              background: #fff;
+              .article-view{
+                  display: flex;
+                  justify-content:space-between;
+                  padding: 0 10px 10px;
+                  &+.article-view{
+                      padding-top: 10px;
+                      border-top: 1px dotted #ddd;
+                  }
+              }
+          }
       }
     }
 

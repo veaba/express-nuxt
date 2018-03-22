@@ -26,7 +26,26 @@ const store = () => new Vuex.Store({
       email: null
     }, // 存储用户基础信息
     Referer: null, // 存储来源页面地址
-    routerLock: null // 锁定路由
+    routerLock: null, // 锁定路由
+    articleList: [ // 用于_user 文章标题、摘要、发表时间
+      {_id: 'ijdsjjijoij',
+        title: '我是标题我是标题我是标题我是标题我是标题我是标题我是标题',
+        abstract: '我的abstractabstractabstractabstractabstractabstractabstract',
+        createdTime: '2018-3-22 20:56:20',
+        updateTime: '2018年3月22日20:56:33',
+        comment: '我的评论评论',
+        likes: '我的评论评论'
+      },
+      {_id: 'dsadsadsad',
+        title: '阿看得开大数据时代 ',
+        abstract: '撒旦教撒娇撒旦教撒娇',
+        createdTime: '2018-3-22 20:56:20',
+        updateTime: '2018年3月22日20:56:33',
+        comment: '我的评论评论',
+        likes: '我的评论评论'
+
+      }
+    ]
   },
   // 变化。更改store的唯一方法是提交mutations，每个mutations都有一个字符串的事件类型和一个回调函数
   // 此时user为store.commit传入额外参数，即mutation的载荷（payload）
