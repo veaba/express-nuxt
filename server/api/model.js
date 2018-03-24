@@ -56,6 +56,7 @@ let articleSchema = new Schema({
   post_date: String, // 发表的时间
   post_content: String, // 文章内容
   post_title: String, // 文章标题
+  post_abstract: String, // 文章摘要，默认摘录50字
   post_password: String, // 文章如果加密的话
   post_modified: String, // 修改的时间
   post_url: String, // 生成的url 地址

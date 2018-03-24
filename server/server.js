@@ -14,7 +14,7 @@ import session from 'express-session'
 const logger = require('tracer').console()
 
 const app = express()
-const host = process.env.HOST || '127.0.0.1'
+const host = process.env.HOST || '0.0.0.0'
 const port = process.env.PORT || 4000
 
 // 创建socket服务

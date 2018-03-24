@@ -21,9 +21,32 @@
  * 2 匹配布局
  * 3 匹配页面
  */
-
+//   if (route.name === 'user') {
+//     // 如果是_user 页面，取消鉴权
+//     console.info('_________________')
+//     console.info('这是user页面，请放过他')
+//     console.info('_________________')
+//     return redirect(route.fullPath)
+//   } else {
+//     if (!req) {
+//       if (!store.state.isAuth) {
+//         return redirect('/login')
+//       }
+//     } else {
+//       if (!req.session.isAuth) {
+//         // 如果没有登录状态则跳转到login页面
+//         let referer = req.url
+//         if (referer && referer !== '/login') {
+//           req.session.referer = referer
+//         }
+//         return redirect('/login')
+//       }
+//     }
+//   }
+// }
 // redirect 重定向
 export default function ({store, redirect, error, route, req, res}) {
+  console.info(route)
   if (!req) {
     if (!store.state.isAuth) {
       return redirect('/login')

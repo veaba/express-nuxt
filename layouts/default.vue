@@ -27,7 +27,7 @@
     .container {
         margin: 0;
         width: 100%;
-        background: #f7f7f7;
+        /*background: #f7f7f7;*/
     }
     .button, .button:visited {
         display: inline-block;

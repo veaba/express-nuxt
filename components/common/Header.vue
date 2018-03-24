@@ -86,21 +86,22 @@
                 <div class="layout-nav clear">
                     <MenuItem name="home">
                         <Icon type="ios-navigate"></Icon>
-                        Home
+                        首页
                     </MenuItem>
-                    <MenuItem name="canvas">
-                        <Icon type="ios-navigate"></Icon>
-                        canvas
-                    </MenuItem>
-                    <MenuItem name="about">
-                        <Icon type="ios-keypad"></Icon>
-                        about
-                    </MenuItem>
-                    <MenuItem name="register">
-                        <Icon type="ios-paper"></Icon>
-                        register
-                    </MenuItem>
-                    <Submenu name="avatar">
+                    <!--<MenuItem name="canvas">-->
+                        <!--<Icon type="ios-navigate"></Icon>-->
+                        <!--canvas-->
+                    <!--</MenuItem>-->
+                    <!--<MenuItem name="about">-->
+                        <!--<Icon type="ios-keypad"></Icon>-->
+                        <!--about-->
+                    <!--</MenuItem>-->
+                    <!--<MenuItem name="register">-->
+                        <!--<Icon type="ios-paper"></Icon>-->
+                        <!--register-->
+                    <!--</MenuItem>-->
+                    <!--todo-->
+                    <Submenu name="avatar" v-if="$store.state.userInfo.nick">
                         <template slot="title">
                             <Badge count="1">
                                 <Avatar icon="person"></Avatar>
@@ -128,19 +129,32 @@
           username: '',
           nick: '',
           email: ''
-        }
+        },
+        project: 'default'
       }
+    },
+    created () {
+      this.getUserInfo()
     },
     mounted () {
-      // todo 频繁localStorage is not defined
-      if (localStorage.userInfo.length > 0) {
-        this.userInfo = JSON.parse(localStorage.userInfo)
-      } else {
-        // TODO
-        alert('error 没找到用户')
-      }
     },
     methods: {
+
+      /**
+       * @desc 获取用户信息
+       * */
+      getUserInfo () {
+        this.$ajax.get('/api/user')
+          .then(res => {
+            console.info(res)
+            if (res.errorCode === 0) {
+              this.$store.commit('USER_INFO', res.data)
+            }
+          })
+          .catch(err => {
+            console.info(err)
+          })
+      },
       goRouter (name) {
         switch (name) {
           case 'logout':

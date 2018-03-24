@@ -55,7 +55,7 @@ module.exports = {
   },
   env: {
     baseUrl: process.env.BASE_URL || 'http://localhost:4000',
-    HOST: '127.0.0.1',
+    HOST: '0.0.0.0',
     PORT: '4000'
   },
   // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件
@@ -63,7 +63,7 @@ module.exports = {
   // src: '~plugins/socket', ssr: false}
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件
-  // router: {
-  //   middleware: ['auth']
-  // }
+  router: {
+    // middleware: ['auth'] //鉴权
+  }
 }

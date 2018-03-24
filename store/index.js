@@ -28,22 +28,45 @@ const store = () => new Vuex.Store({
     Referer: null, // 存储来源页面地址
     routerLock: null, // 锁定路由
     articleList: [ // 用于_user 文章标题、摘要、发表时间
-      {_id: 'ijdsjjijoij',
-        title: '我是标题我是标题我是标题我是标题我是标题我是标题我是标题',
-        abstract: '我的abstractabstractabstractabstractabstractabstractabstract',
+      {_id: 'ijdsjjijoij1',
+        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
+        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
         createdTime: '2018-3-22 20:56:20',
         updateTime: '2018年3月22日20:56:33',
         comment: '我的评论评论',
         likes: '我的评论评论'
       },
-      {_id: 'dsadsadsad',
-        title: '阿看得开大数据时代 ',
-        abstract: '撒旦教撒娇撒旦教撒娇',
+      {_id: 'dsadsadsad2',
+        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
+        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
         createdTime: '2018-3-22 20:56:20',
         updateTime: '2018年3月22日20:56:33',
         comment: '我的评论评论',
         likes: '我的评论评论'
-
+      },
+      {_id: 'dsadsadsad3',
+        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
+        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
+        createdTime: '2018-3-22 20:56:20',
+        updateTime: '2018年3月22日20:56:33',
+        comment: '我的评论评论',
+        likes: '我的评论评论'
+      },
+      {_id: 'dsadsadsad4',
+        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
+        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
+        createdTime: '2018-3-22 20:56:20',
+        updateTime: '2018年3月22日20:56:33',
+        comment: '我的评论评论',
+        likes: '我的评论评论'
+      },
+      {_id: 'dsadsadsad5',
+        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
+        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
+        createdTime: '2018-3-22 20:56:20',
+        updateTime: '2018年3月22日20:56:33',
+        comment: '我的评论评论',
+        likes: '我的评论评论'
       }
     ]
   },
@@ -81,7 +104,7 @@ const store = () => new Vuex.Store({
       axios.get('/api/user')
         .then(res => {
           if (res.errorCode === 0) {
-            localStorage.userInfo = JSON.stringify(res.data)
+            // localStorage.userInfo = JSON.stringify(res.data)
             commit('USER_INFO', res.data)
           }
         })

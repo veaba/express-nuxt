@@ -6,7 +6,6 @@
 </template>
 <script>
   /* eslint-disable quotes */
-
   export default {
     name: 'settings',
     components: {

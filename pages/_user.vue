@@ -12,6 +12,7 @@
                 <div class="profile">
                     <div class="profile-info">
                         <strong>{{userInfo.nick}}</strong>
+                        <p>骑乘龙首的蝼蚁传说，长生不死的武林神话！</p>
                     </div>
                 </div>
             </div>
@@ -20,23 +21,21 @@
                     <i-col span="18">
                         <div class="content">
                             <div class="column">
-                                <Tabs :animated="false" @on-click="getTabName">
-                                    <!--<TabPane label="全部" name="all"></TabPane>-->
-                                    <TabPane label="文章" name="article"></TabPane>
-                                    <!--<TabPane label="回复" name="comment"></TabPane>-->
-                                </Tabs>
-                                <!--<div class="content-all" v-show="tabName==='all'">-->
-                                    <!--div.content-->
-                                <!--</div>-->
+                                <div class="tabs">
+                                    <div class="tabs-item">文章</div>
+                                </div>
                                 <div class="content-article" v-show="tabName==='article'">
                                     <div class="article-view" v-for="item of articleLists" :key="item._id">
                                         <div class="view-item">
                                             <div class="view-title">{{item.title}}</div>
-                                            <div class="view-content">{{item.abstract}}</div>
+                                            <div class="view-content">
+                                                <div class="thread_text">{{item.abstract}}</div>
+                                                <div class="thread_time">{{item.createdTime}}</div>
+                                            </div>
                                         </div>
-                                        <div class="view-sidebar">
-                                            {{item.createdTime}}
-                                        </div>
+                                        <!--<div class="view-sidebar">-->
+                                            <!--{{item.createdTime}}-->
+                                        <!--</div>-->
 
                                     </div>
                                 </div>
@@ -45,7 +44,22 @@
                         </div>
                     </i-col>
                     <i-col span="6" style="padding-left: 10px;">
-                        <div class="sidebar">sd</div>
+                        <div class="sidebar">
+                            <div class="total-sidebar">
+                                <div class="total-item">
+                                    <div class="icon-item"><Icon type="person" size="48">作品数目</Icon></div>
+                                    <strong>7</strong>
+                                </div>
+                                <div class="total-item">
+                                    <div class="icon-item"><Icon type="headphone" color="#fff" size="48">作品数目</Icon></div>
+                                    <strong>7</strong>
+                                </div>
+                                <div class="total-item">
+                                    <div class="icon-item"><Icon type="cube" size="48">作品数目</Icon></div>
+                                    <strong>7</strong>
+                                </div>
+                            </div>
+                        </div>
                     </i-col>
                 </Row>
             </div>
@@ -55,6 +69,9 @@
 
 <script>
   export default {
+    meta: {
+      page: 'user'
+    },
     name: 'v-user',
     data () {
       return {
@@ -81,11 +98,11 @@
     },
     mounted () {
       // todo 频繁localStorage is not defined
-      if (localStorage.userInfo.length > 0) {
+      if (localStorage.userInfo && localStorage.userInfo.length) {
         this.userInfo = JSON.parse(localStorage.userInfo)
       } else {
         // TODO
-        alert('error 没找到用户')
+        // alert('error 没找到用户')
       }
     },
     methods: {
@@ -118,8 +135,9 @@
 </script>
 
 <style scoped lang="scss">
+    $color1:#eadca6;
+    $color2:#c56d69;
     .user-section {
-        /*background: #fff;*/
     }
 
     .person {
@@ -142,39 +160,98 @@
             overflow: hidden;
             padding: 5px;
             left: 20px;
-            top: 50%;
+            bottom: 20px;
             text-align: center;
             border: 4px solid rgba(84, 153, 118, 0.4);
             z-index: 10;
         }
 
         .profile {
-            height: 100px;
-            background: #fff;
+            height: 70px;
+            background: #f7f7f7;
             .profile-info {
                 width: 100%;
                 height: 100%;
                 padding-left: 140px;
-                font-weight: bold;
-                font-size: 18px;
                 padding-top: 10px;
+                strong{
+                    font-weight: bold;
+                    font-size: 18px;
+                }
+                p{
+                    font-size: 13px;
+                }
             }
         }
     }
 
     .detail {
         height: 100%;
-        margin-top: 10px;
+        border-top: 1px solid #f6f5f0;
         .content {
             background: #fff;
         }
         .sidebar {
-            border: 1px solid red;
-            background: #fff;
+            /*background: #fff;*/
+            padding-top: 20px;
+            /*background: #f6f5f0;*/
+            .total-sidebar{
+                display: flex;
+                .total-item{
+                    text-align: center;
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    .icon-item{
+                        display: flex;
+                        flex: 1;
+                        align-items: center;
+                        justify-content: center;
+                        width: 64px;
+                        height: 64px;
+                        background: red;
+                        border-radius: 50%;
+
+                    }
+                    &:nth-child(odd) .icon-item{
+                        background: $color1;
+                    }
+                    &:nth-child(even) .icon-item{
+                        background: $color2;
+                    }
+
+                    strong{
+                        display: block;
+                        font-size: 18px;
+                    }
+                }
+                &:after{
+                    display: block;
+                    content: '';
+                    clear: both;
+                    width: 0;
+                    height: 0;
+                }
+            }
         }
     }
     .content {
       .column{
+          .tabs{
+              border-bottom: 1px solid #dddee1;
+              .tabs-item{
+                  height: 48px;
+                  color: #2b85e4;
+                  line-height: 48px;
+                  font-size: 18px;
+                  border-bottom: 1px solid #2b85e4;
+                  display: inline-block;
+                  margin-bottom: -1px;
+                  box-sizing: border-box;
+                  letter-spacing: 1em;
+              }
+          }
           /*height: 48px;*/
           .content-article{
               display: flex;
@@ -186,6 +263,39 @@
                   display: flex;
                   justify-content:space-between;
                   padding: 0 10px 10px;
+                  .view-item{
+                      flex: 1;
+                      overflow: hidden;
+                     .view-title{
+                         font-size: 16px;
+                         font-weight: bold;
+                         flex: 1;
+                         white-space: nowrap;
+                         text-overflow: ellipsis;
+                         overflow: hidden;
+                         color: #2b85e4;
+                         padding-top: 5px;
+                         padding-right: 11em;
+                     }
+                      .view-content{
+                          font-size: 13px;
+                          display: flex;
+                          justify-content:space-between;
+                          .thread_text{
+                              flex: 1;
+                              padding-right: 2em;
+                              white-space: nowrap;
+                              text-overflow: ellipsis;
+                              overflow: hidden;
+                          }
+                          .thread_time{
+                              flex-basis: 150px;
+                              text-align: right;
+                          }
+
+                      }
+                  }
+
                   &+.article-view{
                       padding-top: 10px;
                       border-top: 1px dotted #ddd;

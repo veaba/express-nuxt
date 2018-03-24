@@ -120,6 +120,21 @@ function dbSuccess (res, data, errorCode, msg) {
  * //todo 路由请求和mongodb 处理函数区分开
  * @desc 路由查询接口，查询路由是否有效
  * */
+/**
+ * @swagger
+ * /api/puppies:
+ *   get:
+ *     tags:
+ *       - Puppies
+ *     description: Returns all puppies
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: An array of puppies
+ *         schema:
+ *           $ref: '#/definitions/Puppy'
+ */
 router.get('/router', async function (req, res, next) {
   let router = await RouterModel.find({'name': req.query.router}).exec()
   logger.error(router)
@@ -341,11 +356,10 @@ router.get('/getArticleList', async function (req, res, next) {
 })
 
 /**
- * @desc  发表新的文章 ＋编辑文章
+ * @desc  发表新的文章 ＋编辑文章 //todo 没有login 时候，无法发表，或无返回
  * */
 router.post('/publishArticle', async function (req, res, next) {
   let data = req.body
-  let saveArticle = new ArticleModel(data) // 创建构造函数，此时 增加_id
   if (data._id) {
     logger.error('编辑 文章')
     let objectId = mongoose.Types.ObjectId(data._id)
@@ -366,6 +380,12 @@ router.post('/publishArticle', async function (req, res, next) {
     data.post_modified = '' // 修改时间 * 后期
     data.post_author = req.session.userInfo.id
     data.editor_number = 0
+
+    // 摘要处理
+    if (!data.post_abstract) {
+      data.post_abstract = (data.post_content || '').slice(0, 50) || ''
+    }
+    let saveArticle = new ArticleModel(data) // 创建构造函数，此时 增加_id
     saveArticle.save()
       .then(function (resDb) {
         logger.error('新增 文章')
@@ -421,7 +441,7 @@ router.post('/deletesArticle', async function (req, res, text) {
 })
 
 /**
- * @desc 获取用户身份信息
+ * @desc 获取用户身份信
  * */
 router.get('/user', function (req, res, text) {
   // 如果session 存在则判断用户在登录状态
@@ -430,6 +450,8 @@ router.get('/user', function (req, res, text) {
       errorCode: 0,
       data: req.session.userInfo
     })
+  } else {
+    dbError(res, '你尚未登录，无权限获取用户信息，', 403)
   }
 })
 
