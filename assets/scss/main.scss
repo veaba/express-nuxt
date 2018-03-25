@@ -54,5 +54,11 @@ html, body {
   flex-direction: column;
   width: 1200px;
   margin: 10px auto;
-  //border: 1px solid red;
+}
+
+/** iPad pro 横向 1024 */
+@media screen and (max-width: 1200px) {
+  .view-section{
+    width: 100%;
+  }
 }

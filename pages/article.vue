@@ -7,7 +7,7 @@
   <article>
     <div class="view-section" :class="styles">
       <Row>
-        <i-col span="16">
+        <i-col span="16" style="padding-left: 30px;">
           <!--文章header-->
           <section class="section section-header">
             <h1>{{articleItem.post_title}}</h1>

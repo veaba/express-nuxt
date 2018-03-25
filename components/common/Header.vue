@@ -107,7 +107,7 @@
                                 <Avatar icon="person"></Avatar>
                             </Badge>
                         </template>
-                        <MenuItem :name="userInfo.nick">{{userInfo.nick}}</MenuItem>
+                        <MenuItem :name="$store.state.userInfo.nick">{{$store.state.userInfo.nick}}</MenuItem>
                         <MenuItem name="settings">设置</MenuItem>
                         <MenuItem name="writing">写文章</MenuItem>
                         <MenuItem name="logout">退出登录</MenuItem>

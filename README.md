@@ -50,7 +50,19 @@
 	头像
 	
 ## 色系设计	
-
+## server目录结构
+	/server
+	----/functions
+		----functions.js
+	----/model
+		----modle.js mongodb 操作模型
+	----/router
+		----index.js api请求入口
+	----config.js 一些数据库配置参数
+	----server.js 服务端
+## mongodb 语法
+## mongoose 语法
+## 函数		
 ### github markdown 渲染方案
 
 ## 数据库设计
@@ -93,6 +105,9 @@
 	...
 ## 后端
 ### 翻页接口函数
+### mongodb 语法
+	db.getCollection('articles').find({}).limit(10).skip(10) // 假如有20条，则从第10开始，截取10条结果返回
+	db.getCollection('articles').find({}).limit(10) // 从1 到10条截取
 ### 文章
 	- 文章预览（标题、时间、）
 	- 

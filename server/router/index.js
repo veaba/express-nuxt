@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 /**
  * @TODO 时候在后期对error的操作，同样写入到log中，从而追踪系统的运行状态
  * @desc 数据库操作
@@ -8,9 +9,12 @@ import mongoose from 'mongoose' // mongoose 库
 import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
 import { config } from '../config'
-import { UsersModel, RouterModel, ArticleModel } from './model' // 用户api,构造函数应该是大写开头
+import { UsersModel, RouterModel, ArticleModel } from '../model/model' // 用户api,构造函数应该是大写开头
 import { format } from 'date-fns'
-
+// _PageSuccess
+// _isAuth,
+import {_dbError} from '../functions/functions'
+import _article from '../controllers/articles' // 文章操作函数
 const router = Router()
 
 /**
@@ -49,18 +53,6 @@ mongoose.connect(config.base + ':' + config.port + '/' + config.database, option
 let db = mongoose.connection
 
 /** *********************很诡异的报错，如果没有一个函数在db 后面，则报一个错误**************************/
-/**
- * @desc mongodb 操作失败函数
- * @res res
- * @err err
- * @errorCode 错误代码
- * */
-function dbError (res, err, errorCode) {
-  return res.json({
-    errorCode: errorCode || 1,
-    msg: err || '服务端错误'
-  })
-}
 
 /**
  * @desc mongodb 操作成功函数,返回到前端
@@ -93,7 +85,7 @@ function dbSuccess (res, data, errorCode, msg) {
     // 先查找存不存在admin 这个管理员账号
     UsersModel.find({'username': InitAdministrator.username}, function (err, res) {
       if (err) {
-        dbError(res, err)
+        _dbError(res, err)
       }
       // 查询为空会返回空数组
       if (res.length === 0) {
@@ -156,27 +148,7 @@ router.get('/router', async function (req, res, next) {
     // TODO拉取用户信息
   }
 })
-// router.use(async function (req, res, next) {
-//   console.info('Time-----------:', Date.now())
-//   logger.error('router 中间器件执行')
-//   // 管理routerLock
-//   if (req.query && req.query.router) {
-//     let router = await RouterModel.find({'name': req.query.router}).exec()
-//     logger.error(router)
-//     console.info('0000')
-//     if (router.length === 0) {
-//       console.info('1111')
-//       req.session.routerLock = true
-//     } else {
-//       console.info('2222')
-//       req.session.routerLock = false
-//     }
-//   } else {
-//     console.info('3333')
-//     req.session.routerLock = false
-//   }
-//   next()
-// })
+
 /**
  * @desc 用户登录
  * */
@@ -344,16 +316,27 @@ async function queryRouter (req, res, next) {
 /*******************************************************************
  * @desc 查询文章的数据
  * */
-router.get('/getArticleList', async function (req, res, next) {
-  let data = req.query.name ? ({name: req.query.title}) : {}
-  // TODO 增加模糊查询
-  let findArticle = await ArticleModel.find(data).exec()
-  if (findArticle.length === 0) {
-    return res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
-  } else {
-    return res.json({errorCode: 0, data: findArticle, msg: 'success'})
-  }
-})
+
+console.info(_article)
+router.get('/getArticleList', _article.getArticleList)
+
+// router.get('/getArticleList', async function (req, res, next) {
+//   let session = (req.session && req.session.isAuth) ? req.session.isAuth : false
+//   _isAuth(res, session)
+//   let data = req.query.name ? ({name: req.query.title}) : {}
+//   let page = req.query.page ? req.query.page : 1
+//   // page 与 skip的关系 1->0、2->10、3->20 page*10-10
+//   // TODO 增加模糊查询
+//   let finArticleAll = await ArticleModel.find(data).count()// 总长度
+//   let findArticle = await ArticleModel.find(data).limit(10).skip(page * 10 - 10).exec()
+//   if (findArticle.length === 0) {
+//     return res.json({errorCode: 1, data: [], msg: '查询为空数据'})
+//   } else {
+//     let totals = finArticleAll.length
+//     let pages = Math.ceil((totals / 10))
+//     _PageSuccess (res, findArticle, 0, null, {totals, pages, currentPage: page})
+//   }
+// })
 
 /**
  * @desc  发表新的文章 ＋编辑文章 //todo 没有login 时候，无法发表，或无返回
@@ -368,7 +351,7 @@ router.post('/publishArticle', async function (req, res, next) {
     ArticleModel.findByIdAndUpdate({_id: objectId}, data, {upsert: true}, function (err, db1) {
       if (err) {
         logger.error('编辑文章 失败')
-        dbError(res, err)
+        _dbError(res, err)
       } else {
         logger.error('编辑文章 成功')
         dbSuccess(res)
@@ -394,7 +377,7 @@ router.post('/publishArticle', async function (req, res, next) {
         ArticleModel.findByIdAndUpdate(resDb, {post_date: postDate}, {upsert: true}, function (err, db1) {
           if (err) {
             logger.error('新增文章 失败')
-            dbError(res, err)
+            _dbError(res, err)
           } else {
             logger.error('新增文章 成功')
             dbSuccess(res)
@@ -417,7 +400,7 @@ router.post('editArticle', async function (req, res, text) {
 router.get('/getArticle', async function (req, res, text) {
   let id = req.query.id
   if (!id) {
-    dbError(res)
+    _dbError(res)
     return false
   } else {
     let objectId = mongoose.Types.ObjectId(id)
@@ -426,7 +409,7 @@ router.get('/getArticle', async function (req, res, text) {
         dbSuccess(res, resDb)
       })
       .catch(function (err) {
-        dbError(res, err)
+        _dbError(res, err)
       })
   }
 })
@@ -451,7 +434,7 @@ router.get('/user', function (req, res, text) {
       data: req.session.userInfo
     })
   } else {
-    dbError(res, '你尚未登录，无权限获取用户信息，', 403)
+    _dbError(res, '你尚未登录，无权限获取用户信息，', 403)
   }
 })
 

@@ -8,7 +8,7 @@
 import express from 'express'
 import { Nuxt, Builder } from 'nuxt'
 import bodyParser from 'body-parser' // 必须，需要解析
-import { router } from './api'
+import { router } from './router/index'
 import session from 'express-session'
 
 const logger = require('tracer').console()
