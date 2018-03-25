@@ -3,11 +3,11 @@ import axios from 'axios'
 /**
  * @desc 重定向登录页面
  * */
-// function redirectLogin () {
-//   console.info(3322)
-//   // console.info(location)
-//   location.href = '/login'
-// }
+function redirectLogin () {
+  console.info(3322)
+  // console.info(location)
+  location.href = '/login'
+}
 
 /**
 * @desc req 拦截器
@@ -22,12 +22,14 @@ axios.interceptors.request.use(req => {
  * @desc res 拦截器
  * */
 axios.interceptors.response.use(res => {
+  // console.info(res)
   if (res && res.data) {
     if (res.data.errorCode === 0 || res.data.errorCode === 1) {
       return res.data
     } else {
-      console.info(22222)
-      return Promise.reject(res.data)
+      // 4003 等状态则跳回login 页面
+      redirectLogin()
+      // return Promise.reject(res.data)
     }
   }
   return res

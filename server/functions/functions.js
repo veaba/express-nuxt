@@ -38,14 +38,14 @@ function _isAuth (res, session) {
  * @errorCode
  * @{total总条数,pageTotal总页数,pageNumber当前页数}
  * */
-function _flipPage (res, data, errorCode, msg, {totals, pages, currentPage}) {
+async function _flipPage (res, data, errorCode, msg, {totals, pages, pageCurrent}) {
   return res.json({
     errorCode: errorCode || 0,
     data: data || [],
     msg: msg || '操作成功',
-    totals,
-    pages,
-    currentPage
+    totals: totals,
+    pages: pages,
+    pageCurrent: pageCurrent
   })
 }
 

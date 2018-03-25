@@ -16,8 +16,9 @@
     </Row>
 
     <Table :data="articleData" :columns="articleCol"></Table>
-
-
+     <Row class="pageBox" type="flex" justify="end">
+         <Page :total="pageData.total" :current.sync="pageData.page" show-total on-change @on-change="getArticleListAPI"></Page>
+     </Row>
   </div>
 </template>
 <script>
@@ -68,7 +69,11 @@
                 }, '编辑')
               }
             }
-          ]
+          ],
+          pageData: {
+            page: 1,
+            total: 1
+          }
         }
       },
       created () {
@@ -82,16 +87,23 @@
          * @desc 拉取api
          * */
         getArticleListAPI () {
-          this.$ajax.get('/api/getArticleList', {name: this.search})
+          this.$ajax.get('/api/getArticleList', {
+            params: {
+              name: this.search,
+              page: this.pageData.page
+            }
+          })
             .then(res => {
               if (res.errorCode === 0) {
                 this.articleData = res.data
+                this.pageData.total = res.totals || 1
               } else {
                 this.articleData = []
               }
             })
             .catch(err => {
               console.info(err)
+              this.pageData.total = err.total || 1
             })
         }
       }
