@@ -1,12 +1,12 @@
 import Vue from 'vue'
 import axios from 'axios'
+
 /**
  * @desc 重定向登录页面
  * */
 function redirectLogin () {
-  console.info(3322)
-  // console.info(location)
-  location.href = '/login'
+  let path = Vue.prototype.$nuxt._router.history.fullPath || ''
+  location.href = '/login?ref=' + path
 }
 
 /**
@@ -22,7 +22,6 @@ axios.interceptors.request.use(req => {
  * @desc res 拦截器
  * */
 axios.interceptors.response.use(res => {
-  // console.info(res)
   if (res && res.data) {
     if (res.data.errorCode === 0 || res.data.errorCode === 1) {
       return res.data
@@ -49,3 +48,7 @@ Vue.prototype.$ajax = axios
 
 // 暴露出去给vuex 使用
 export default axios
+
+// export default (ctx) => {
+//   console.info(ctx)
+// }

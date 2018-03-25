@@ -62,7 +62,6 @@
        * @desc login
        * */
       login () {
-        console.info('点击 登录')
         this.$ajax.post('/api/login', {
           username: this.username,
           password: this.password
@@ -74,8 +73,12 @@
               // 2、为store 下发用户信息
               this.$store.dispatch('getUserInfoAPI')
               // 3、跳转 -跳到来源地
+              let path = ''
               this.$nextTick(() => {
-                this.$router.push(this.$store.state.Referer || '/')
+                if (this.$route.query.ref) {
+                  path = this.$route.query.ref.replace(/%2/, '/')
+                }
+                this.$router.push(path || this.$store.state.Referer)
                 // TODO 后续需要判断是不是在本域内的url
               })
             }
