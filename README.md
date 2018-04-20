@@ -215,7 +215,7 @@ account       | 账号
 - 用户路由 （默认用户名，至少大于5个词汇，除非特殊，注册时候，优先级最高！！）
 `http://beike.io/username`
 
-####　保留的路由词汇
+### 保留的路由词汇
 
 - 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
 
