@@ -49,4 +49,18 @@ async function _flipPage (res, data, errorCode, msg, {totals, pages, pageCurrent
   })
 }
 
-export {_isAuth, _dbError, _flipPage}
+/**
+ * @desc mongodb 操作成功函数,返回到前端
+ * @res res
+ * @err err
+ * @errorCode 错误代码
+ * */
+async function _dbSuccess (res, data, errorCode, msg) {
+  return res.json({
+    errorCode: errorCode || 0,
+    data: data || [],
+    msg: msg || '操作成功'
+  })
+}
+
+export {_isAuth, _dbError, _dbSuccess, _flipPage}

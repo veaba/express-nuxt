@@ -78,7 +78,7 @@
                 if (this.$route.query.ref) {
                   path = this.$route.query.ref.replace(/%2/, '/')
                 }
-                this.$router.push(path || this.$store.state.Referer)
+                this.$router.push(path || this.$store.state.Referer || '/')
                 // TODO 后续需要判断是不是在本域内的url
               })
             }

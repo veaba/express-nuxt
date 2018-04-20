@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 // _isAuth,
 import {_dbError} from '../functions/functions'
 import _article from '../controllers/articles' // 文章操作函数
+import _novel from '../controllers/novels' // 小说下载操作函数
 const router = Router()
 
 /**
@@ -112,21 +113,6 @@ function dbSuccess (res, data, errorCode, msg) {
  * //todo 路由请求和mongodb 处理函数区分开
  * @desc 路由查询接口，查询路由是否有效
  * */
-/**
- * @swagger
- * /api/puppies:
- *   get:
- *     tags:
- *       - Puppies
- *     description: Returns all puppies
- *     produces:
- *       - application/json
- *     responses:
- *       200:
- *         description: An array of puppies
- *         schema:
- *           $ref: '#/definitions/Puppy'
- */
 router.get('/router', async function (req, res, next) {
   let router = await RouterModel.find({'name': req.query.router}).exec()
   logger.error(router)
@@ -314,29 +300,15 @@ async function queryRouter (req, res, next) {
 }
 
 /*******************************************************************
+ * @desc novel 模块
+ * */
+router.get('/novel/getNovel', _novel.getNovel)
+
+/*******************************************************************
  * @desc 查询文章的数据
  * */
 
-console.info(_article)
 router.get('/getArticleList', _article.getArticleList)
-
-// router.get('/getArticleList', async function (req, res, next) {
-//   let session = (req.session && req.session.isAuth) ? req.session.isAuth : false
-//   _isAuth(res, session)
-//   let data = req.query.name ? ({name: req.query.title}) : {}
-//   let page = req.query.page ? req.query.page : 1
-//   // page 与 skip的关系 1->0、2->10、3->20 page*10-10
-//   // TODO 增加模糊查询
-//   let finArticleAll = await ArticleModel.find(data).count()// 总长度
-//   let findArticle = await ArticleModel.find(data).limit(10).skip(page * 10 - 10).exec()
-//   if (findArticle.length === 0) {
-//     return res.json({errorCode: 1, data: [], msg: '查询为空数据'})
-//   } else {
-//     let totals = finArticleAll.length
-//     let pages = Math.ceil((totals / 10))
-//     _PageSuccess (res, findArticle, 0, null, {totals, pages, currentPage: page})
-//   }
-// })
 
 /**
  * @desc  发表新的文章 ＋编辑文章 //todo 没有login 时候，无法发表，或无返回
@@ -441,5 +413,4 @@ router.get('/user', function (req, res, text) {
 /***********************************
  * @desc express router 路由中间器件，用来判断是不是合法的路由，否则路由上锁 routerLock
  * */
-
 export { router }

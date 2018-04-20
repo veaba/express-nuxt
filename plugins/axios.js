@@ -26,6 +26,7 @@ axios.interceptors.response.use(res => {
     if (res.data.errorCode === 0 || res.data.errorCode === 1) {
       return res.data
     } else {
+      alert(11)
       // 4003 等状态则跳回login 页面
       redirectLogin()
       // return Promise.reject(res.data)

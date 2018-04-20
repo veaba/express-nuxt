@@ -46,19 +46,19 @@
 // }
 // redirect 重定向
 export default function ({store, redirect, error, route, req, res}) {
-  console.info(route)
-  if (!req) {
-    if (!store.state.isAuth) {
-      return redirect('/login')
-    }
-  } else {
-    if (!req.session.isAuth) {
-      // 如果没有登录状态则跳转到login页面
-      let referer = req.url
-      if (referer && referer !== '/login') {
-        req.session.referer = referer
-      }
-      return redirect('/login')
-    }
-  }
+  alert(11)
+  // if (!req) {
+  //   if (!store.state.isAuth) {
+  //     return redirect('/login')
+  //   }
+  // } else {
+  //   if (!req.session.isAuth) {
+  //     // 如果没有登录状态则跳转到login页面
+  //     let referer = req.url
+  //     if (referer && referer !== '/login') {
+  //       req.session.referer = referer
+  //     }
+  //     return redirect('/login')
+  //   }
+  // }
 }

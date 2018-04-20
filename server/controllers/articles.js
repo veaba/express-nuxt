@@ -4,10 +4,9 @@
  * @date 2018/3/25
  * @desc 文章操作函数
  ***********************/
-// import mongoose from 'mongoose'
 import { ArticleModel } from '../model/model'
 import {_flipPage, _isAuth, _dbError} from '../functions/functions'
-// async
+
 const _article = {
   /**
    * @desc 拉去文章列表函数，正文内容，两百字
