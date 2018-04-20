@@ -13,5 +13,5 @@
 ## mongodb 语法
 ## mongoose 语法
 ## 函数		
- 
+## errorCode 返回约定 
 

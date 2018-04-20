@@ -144,7 +144,7 @@
        * @desc 获取用户信息
        * */
       getUserInfo () {
-        this.$ajax.get('/api/user')
+        this.$ajax.get('/api/getUser')
           .then(res => {
             console.info(res)
             if (res.errorCode === 0) {

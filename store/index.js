@@ -101,7 +101,7 @@ const store = () => new Vuex.Store({
      * @desc 登录时候，登录信息储存到 localStorage
      * */
     getUserInfoAPI ({commit}, info) {
-      axios.get('/api/user')
+      axios.get('/api/getUser')
         .then(res => {
           if (res.errorCode === 0) {
             // localStorage.userInfo = JSON.stringify(res.data)

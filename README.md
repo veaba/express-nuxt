@@ -77,32 +77,37 @@
 	user_status 用户状态
 	display_name  显示的名称
 	
-### [待完善]API封装 
+### API封装规范设计 
 	（“*” 可选）
 	
-#### [待完善]API 正常
-	normal：
+#### API response响应结果 包装
 	{
-		errorCode:0
-		data:[],
-		*msg:'success'
+		errorCode:errror  //状态码，必须会返回
+		data:[]           //返回结果，可选，默认数组
+		msg:'error'       //返回消息，可选，默认success:操作成功||erorr:操作失败
 	}
-#### [待完善]API 错误
-	error：没有找到
-	{
-		errorCode:1
-		data:[]
-		*msg:'error'
-	}
-##### [待完善]errorCode 错误代码设计,加上业务代码	
-	errorCode:0 正常/成功
-	errorCode:1 没有找到
-	errorCode:2 method方式错误
-	errorCode:3 访问授权
-	errorCode:4 尚未注册
-	errorCode:5 查询超时
-	errorCode:-1 服务器错误
-	...
+#### 服务端通信API返回http状态代码设计
+2000是通信基础代码，错误逻辑等同于2000+http状态错误码，加上业务代码	
+- default
+	- 0 `表示正常	/成功`
+	
+- 2xx *
+	
+- 3xx 重定向	
+	- 2301 `永久重定向`
+  - 2302 `临时重定向`
+  - 2304 `没有更改，304客户端缓存代码`
+  
+- 4xx 客户端错误
+	- 2401 `*需要用户验证，响应包含询问用户信息，Unauthorized`
+	- 2403 `(访问授权,禁止访问)`
+	- 2404 `4xx尚未注册(可能后端找不到，可能前端找不到) `
+	- 2405 `method方式错误`
+
+- 5xx 服务端错误
+	- 2500 `服务器错误（数据库操作失败所致）`
+	- 2504 `服务器查询超时`
+
 ## 后端
 ### 翻页接口函数
 ### mongodb 语法
@@ -113,6 +118,10 @@
 	- 
 	- 文章统计接口		
 ## 系统设计
+
+### 小说下载模块
+迫于npm安装组件失败，开发暂停
+
 ### 翻译组件
 	express 
 	express-session
@@ -139,21 +148,14 @@
 	status: 1,
 	type: 'official' 
 }
-...
-	
 ``` 
 - 一级路由 
-```text
-beike.io/router
-```
+`beike.io/router`
 - 二级路由 
-```text
-beike.io/router/router1
-```
+`beike.io/router/router1`
+
 - 三级路由 
-```text
-beike.io/router/router1/router2
-```
+`beike.io/router/router1/router2`
 	
 ``` mongodb desgined
 路由表：
@@ -161,77 +163,84 @@ status:0    原来属于（1、2）类的词汇——被解禁的词汇
 status:1    已注册的路由词汇——站方路由，用户
 stauts:2    保留的路由词汇——品牌词汇、特殊、国家、组织 **
 
-type：official   官方词汇
+type: official   官方词汇
 type: brand     品牌词汇
 type: user      已注册的词汇
 type: org(organizations)    组织/团队/小队/工作室等
 	
 ```
 - 默认禁止的词汇 —— 前端+后端禁止写入到mongodb
-```text
-0-999999 长度的字符串（比如年份之类）
-```
+`0-999999 长度的字符串（比如年份之类）`
+
 - status 0 被解禁的可重新申请出的词汇 【前端有专门的分配入口】
+
 - 站方保留词汇 
 	- nuxt page的 基础路由
 	- 预设禁止的词汇
-```txt 
-about
-home
-route
-router
-user
-users
-manage
-us
-organizations
-my
-your
-Community
-book
-app
-store
-mall
-shop
-marker
-server
-service
-active
-login
-register
-logout
-api
-article 文章
-...
-```
-- 用户路由 （默认用户名，至少大于5个词汇，除非特殊，注册时候，优先级最高！！）
+	
+name|desc
+-|-
+about         | 关于
+home          | 主页
+route         | 路由
+router        | 路由
+user          | 用户
+users         | 用户
+manage        | 管理
+us            | 我们
+organizations | 组织
+my            | 我的
+your          | 你的
+Community     | 社区
+book          | 书
+app           | 应用
+store         | 商店
+mall          | 购物中心
+shop          | 商店
+marker        | 标记
+server        | 服务器
+service       | 服务
+active        | 积极
+activation    | 激活
+login         | 登录
+ssl           | ssl证书
+register      | 注册
+logout        | 注销
+api           | api，接口
+article       | 文章
+articles      | 文章
+account       | 账号
 
-```text
-http://beike.io/username
-``` 
+
+- 用户路由 （默认用户名，至少大于5个词汇，除非特殊，注册时候，优先级最高！！）
+`http://beike.io/username`
+
 ####　保留的路由词汇
 
 - 品牌词(大部分词汇来自[Brand Icons](http://fontawesome.io/icons/) )
-```
-baidu
-qihoo
-microsoft
-netease
-360
-sun
-adobe
-		
-```
+
+brand | desc
+-|-
+baidu       | 百度
+microsoft   | 微软
+netease     | 网易
+adobe       | 奥多比
+……          | ……
+
 - 国家
-```
-china
-```
+
+country | desc
+-|-
+china     | 中国
+……        | ……
+
 - 专业术语
 
-```text
-js
-class
-```
+term| desc
+-|-
+js        | javaScript
+class     | 类
+
 - More [【Official】：站点路由路径保留词——品牌词（brand words）](https://github.com/veaba/express-nuxt/issues/1)
 	
 ## 系统架构

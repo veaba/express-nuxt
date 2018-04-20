@@ -4,71 +4,36 @@
  * @desc 数据库操作
  * */
 /* eslint-disable import/first,no-unexpected-multiline,func-call-spacing,wrap-iife,new-cap,handle-callback-err,standard/object-curly-even-spacing */
-import { Router } from 'express'
+import {Router} from 'express'
 import mongoose from 'mongoose' // mongoose 库
-import crypto from 'crypto' // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
-import { config } from '../config'
-import { UsersModel, RouterModel, ArticleModel } from '../model/model' // 用户api,构造函数应该是大写开头
-import { format } from 'date-fns'
-// _PageSuccess
-// _isAuth,
-import {_dbError} from '../functions/functions'
+import {config} from '../config'
+import {UsersModel} from '../model/model' // 用户api,构造函数应该是大写开头
+import {_dbError, _encryptedPWD} from '../functions/functions'
 import _article from '../controllers/articles' // 文章操作函数
 import _novel from '../controllers/novels' // 小说下载操作函数
+import _router from '../controllers/routers' // 路由相关操作函数
+import _public from '../controllers/publics' // 公开相关操作函数
+import _user from '../controllers/users' // 用户相关操作函数
 const router = Router()
-
-/**
- * @desc 密码加密模块
- * @desc 加盐'beike'，十六进制,加密算法sha256
- * */
-function encryptedPWD (password) {
-  return crypto.createHmac('sha256', password)
-    .update('beike')
-    .digest('hex')
-}
 
 /**
  * @desc 配置数据库连接选项,访问数据库的通信证
  * */
 let options = {
-  // useMongoClient: true,
   db: {native_parser: true},
   server: {
-    // ssl: true, // ssl
     poolSize: 5, // 线程池是什么鬼
     socketOptions: {
       keepAlive: 30000
-      // connectTimeoutMS: 30000 // 链接超时
     }
-    // auto_reconnect: true, // 自动链接
-    // reconnectTries: 300000, // 重新链接
-    // reconnectInterval: 5000 // 重新连接间隔
   },
-  // promiseLibrary: global.Promise,
   user: 'admin',
   pass: 'admin'
 }
 
 mongoose.connect(config.base + ':' + config.port + '/' + config.database, options) // 连接
 let db = mongoose.connection
-
-/** *********************很诡异的报错，如果没有一个函数在db 后面，则报一个错误**************************/
-
-/**
- * @desc mongodb 操作成功函数,返回到前端
- * @res res
- * @err err
- * @errorCode 错误代码
- * */
-function dbSuccess (res, data, errorCode, msg) {
-  return res.json({
-    errorCode: errorCode || 0,
-    data: data || [],
-    msg: msg || '操作成功'
-  })
-}
-
 /**********************************
  * @desc 数据库链接初始化，管理员
  * @define  项目启动->找管理员用户->如果没有->查找失败->并开始初始化信息
@@ -92,325 +57,98 @@ function dbSuccess (res, data, errorCode, msg) {
       if (res.length === 0) {
         // logger.info('----------> 初始化时没有找到 v_v')
         // 为数据库新建默认admin信息
-        InitAdministrator.password = encryptedPWD(InitAdministrator.password) // 用户密码加密
+        InitAdministrator.password = _encryptedPWD(InitAdministrator.password) // 用户密码加密
         let adminModel = new UsersModel(InitAdministrator)
         adminModel.save(function (err, res) {
           if (err) {
-            // logger.info('----------> 初始化admin账号失败 v_v')
+            logger.info('----------> 初始化admin账号失败 v_v')
           } else {
-            // logger.info('----------> 初始化admin账号成功 ^_^')
-            // logger.info(res)
+            logger.info('----------> 初始化admin账号成功 ^_^')
           }
         })
       }
     })
   })
 })()
-/** ***************************** Routes ****************************************/
+/** ---------------------------------------------------------------------------
+ * ================================= Routes ===================================
+ *-----------------------------------------------------------------------------**/
 /**
- * @desc 每次进入 /xx 非页面路由都会调用这个接口，也就是后端路由
- * @desc 这时，使用router 的中间器件，函数来判断是否存在,
- * //todo 路由请求和mongodb 处理函数区分开
  * @desc 路由查询接口，查询路由是否有效
  * */
-router.get('/router', async function (req, res, next) {
-  let router = await RouterModel.find({'name': req.query.router}).exec()
-  logger.error(router)
-  if (router.length === 0) {
-    console.info('无效')
-    req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
-    res.json({
-      errorCode: 1,
-      msg: '404用户'
-    })
-  } else {
-    console.info(' 有效')
-    req.session.routerLock = false
-    res.json({
-      errorCode: 0,
-      data: [],
-      msg: '操作成功'
-    })
-    // TODO拉取用户信息
-  }
-})
+router.get('/router', _router.getRouter)
 
 /**
- * @desc 用户登录
- * */
-router.post('/login', async function (req, res, next) {
-  let findUser = await UsersModel.find({username: req.body.username}).exec()
-  let checkPwd = findUser[0] ? findUser[0].password : ''
-  let inputPwd = await encryptedPWD(req.body.password)
-  if (findUser.length === 0) {
-    // TODO 频繁的操作
-    return res.json({
-      errorCode: 1,
-      msg: '该用户尚未注册'
-    })
-  } else {
-    // 密码正确
-    if (checkPwd === inputPwd) {
-      // TODO 配置用户的到session
-      req.session.userInfo = {
-        id: findUser[0]._id,
-        username: findUser[0].username, // 用户名
-        nick: findUser[0].nick || null, // 用户名
-        email: findUser[0].email || null, // 用户名
-        isLogin: true
-      }
-      req.session.isAuth = true
-      // logger.error(req.session)
-      return res.json({
-        errorCode: 0,
-        msg: '登录成功'
-      })
-      // logger.error(findUser)// 登录成功后返回的数据
-    } else {
-      return res.json({
-        errorCode: 1,
-        msg: '登录失败，密码错误'
-      })
-    }
-  }
-})
-
-/**
- * @desc 注销登录 路由
- * */
-router.post('/logout', function (req, res, next) {
-  req.session.isAuth = null
-  return res.json({
-    errorCode: 0,
-    msg: '退出成功'
-  })
-})
-
-/**
- * @desc 注册账号 路由 TODO
- * */
-router.post('/register', function (req, res, next) {
-  logger.error(req.session)
-  if (req.session.isAuth) {
-    return res.json({
-      errorCode: 0,
-      msg: '你可以注册啦！'
-    })
-  } else {
-    return res.json({
-      errorCode: 3,
-      msg: '你丫没人权！'
-    })
-  }
-})
-
-/*******************************************************************
  * @desc 查询路由的数据
  * */
-router.get('/getRouterList', async function (req, res, next) {
-  let data = req.query.name ? ({name: req.query.name}) : {}
-  // TODO 增加模糊查询，匹配 name status:{normal,keep,ban},type:{official,brand,user}
-  let findRouter = await RouterModel.find(data).exec()
-  if (findRouter.length === 0) {
-    return res.json({errorCode: 1, data: [], msg: '尚无路由数据'})
-  } else {
-    return res.json({errorCode: 0, data: findRouter, msg: 'success'})
-  }
-})
+router.get('/getRouterList', _router.getRouterList)
 
 /**
  * @method POST
  * @desc 添加路由操作
  * */
-router.post('/addRouter', async function (req, res, next) {
-  console.info('添加路由')
-  let findRouter = await RouterModel.find({name: req.body.name})
-  // 1、已存在
-  if (findRouter.length > 0) {
-    return res.json({
-      errorCode: 2,
-      msg: '已存在'
-    })
-  } else {
-    // 如果没有存在，则允许继续添加
-    // 插入数据
-    let saveRouter = new RouterModel(req.body, false)
-    saveRouter.save(function (err, resDB) {
-      if (err) {
-        return res.json({
-          errorCode: 4,
-          msg: 'error'
-        })
-      } else {
-        return res.json({
-          errorCode: 0,
-          msg: 'success'
-        })
-      }
-    })
-  }
-})
+router.post('/addRouter', _router.addRouter)
 
 /**
  * @desc 删除路由操作
  * */
-router.post('/deleteRouter', async function (req, res, next) {
-  console.info('删除路由')
-  let data = req.body
-  console.info(data)
-  if (data.length === 0) {
-    return res.json({
-      errorCode: 4,
-      msg: '路由名称为为空'
-    })
-  } else {
-    // 传递正常
-    // 1 先查询存在该路由名称
-    if (queryRouter(data)) {
-      // 开始删除操作
-      let delRouter = await RouterModel.remove(data).exec()
-      if (delRouter.ok) {
-        return res.json({
-          errorCode: 0,
-          msg: 'success'
-        }
-        )
-      } else {
-        return res.json({
-          errorCode: 4,
-          msg: 'error 删除失败'
-        })
-      }
-    } else {
-      // 2、否则，不存在路由
-      return res.json({
-        errorCode: 1,
-        msg: 'error 不存在该路由，无法删除路由'
-      })
-    }
-  }
-})
+router.post('/deleteRouter', _router.deleteRouter)
+
+/** ---------------------------------------------------------------------------
+ * ================================= public ===================================
+ *-----------------------------------------------------------------------------**/
 
 /**
- * @desc 查询路由名称
+ * @desc 用户登录
  * */
-async function queryRouter (req, res, next) {
-  let findRouter = await RouterModel.find(req)
-  return findRouter
-}
+router.post('/login', _public.login)
+
+/**
+ * @desc 注销登录 路由
+ * */
+router.post('/logout', _public.logout)
+
+/**
+ * @desc 注册账号
+ * */
+router.post('/register', _public.register)
 
 /*******************************************************************
  * @desc novel 模块
  * */
 router.get('/novel/getNovel', _novel.getNovel)
 
-/*******************************************************************
+/** ---------------------------------------------------------------------------
+ * ================================= article ===================================
+ *-----------------------------------------------------------------------------**/
+/**
  * @desc 查询文章的数据
  * */
-
 router.get('/getArticleList', _article.getArticleList)
 
 /**
- * @desc  发表新的文章 ＋编辑文章 //todo 没有login 时候，无法发表，或无返回
+ * @desc 发表新的文章 ＋编辑文章
  * */
-router.post('/publishArticle', async function (req, res, next) {
-  let data = req.body
-  if (data._id) {
-    logger.error('编辑 文章')
-    let objectId = mongoose.Types.ObjectId(data._id)
-    data.post_modified = format(new Date(), 'YYYY-MM-DD HH:mm:ss')
-    data.editor_number = (data.editor_number || 0) + 1
-    ArticleModel.findByIdAndUpdate({_id: objectId}, data, {upsert: true}, function (err, db1) {
-      if (err) {
-        logger.error('编辑文章 失败')
-        _dbError(res, err)
-      } else {
-        logger.error('编辑文章 成功')
-        dbSuccess(res)
-      }
-    })
-  } else {
-    // 首次新增的文章,补充新字段
-    data.comments_status = 'open' // 评论开放 * 后期
-    data.post_modified = '' // 修改时间 * 后期
-    data.post_author = req.session.userInfo.id
-    data.editor_number = 0
+router.post('/publishArticle', _article.publishArticle)
 
-    // 摘要处理
-    if (!data.post_abstract) {
-      data.post_abstract = (data.post_content || '').slice(0, 50) || ''
-    }
-    let saveArticle = new ArticleModel(data) // 创建构造函数，此时 增加_id
-    saveArticle.save()
-      .then(function (resDb) {
-        logger.error('新增 文章')
-        let id = mongoose.Types.ObjectId(resDb._id) // 构造id
-        let postDate = format(id.getTimestamp(), 'YYYY-MM-DD HH:mm:ss')
-        ArticleModel.findByIdAndUpdate(resDb, {post_date: postDate}, {upsert: true}, function (err, db1) {
-          if (err) {
-            logger.error('新增文章 失败')
-            _dbError(res, err)
-          } else {
-            logger.error('新增文章 成功')
-            dbSuccess(res)
-          }
-        })
-      })
-  }
-})
-
-/**
- * @desc  编辑单篇文章
- * */
-router.post('editArticle', async function (req, res, text) {
-  let data = req.body
-  dbSuccess(res, data)
-})
 /**
  * @desc 拉取单篇文章
  * */
-router.get('/getArticle', async function (req, res, text) {
-  let id = req.query.id
-  if (!id) {
-    _dbError(res)
-    return false
-  } else {
-    let objectId = mongoose.Types.ObjectId(id)
-    ArticleModel.findOne({_id: objectId})
-      .then(function (resDb) {
-        dbSuccess(res, resDb)
-      })
-      .catch(function (err) {
-        _dbError(res, err)
-      })
-  }
-})
+router.get('/getArticle', _article.getArticle)
 
 /**
  * @desc 删除文章
  * @desc 支持数组形式
+ * @todo no dev
  * */
-router.post('/deletesArticle', async function (req, res, text) {
-  let data = req.bdoy
-  dbSuccess(res, data)
-})
+router.post('/deletesArticle', _article.deleteArticle)
 
+/** ---------------------------------------------------------------------------
+ * ================================= user ===================================
+ *-----------------------------------------------------------------------------**/
 /**
- * @desc 获取用户身份信
+ * @desc 获取用户身份信息
  * */
-router.get('/user', function (req, res, text) {
-  // 如果session 存在则判断用户在登录状态
-  if (req.session && req.session.isAuth) {
-    return res.json({
-      errorCode: 0,
-      data: req.session.userInfo
-    })
-  } else {
-    _dbError(res, '你尚未登录，无权限获取用户信息，', 403)
-  }
-})
+router.get('/getUser', _user.getUser)
 
-/***********************************
- * @desc express router 路由中间器件，用来判断是不是合法的路由，否则路由上锁 routerLock
- * */
-export { router }
+export {router}

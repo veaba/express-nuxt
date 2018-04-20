@@ -118,7 +118,7 @@
        * @desc 找该路由，有结果则返回用户数据
        * */
       getRouter (router) {
-        this.$ajax.get('/api/router', {
+        this.$ajax.get('/api/getRouter', {
           params: {
             router: router
           }
