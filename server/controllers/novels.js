@@ -11,6 +11,7 @@
  ***********************/
 import {NovelModel} from '../model/model'
 import { _dbError, _dbSuccess } from '../functions/functions'
+import { format } from 'date-fns' // 时间格式工具
 // import fs from 'fs' // 文件读写模块
 import charset from 'superagent-charset' // 转移模块
 import cheerio from 'cheerio' // 解析字符
@@ -160,7 +161,6 @@ async function gbkCharset (url) {
       .set(htmlHeader.baidu)
       .charset('gbk')
       .end(async (err, res) => {
-        console.info('~~~~~~~~~~~start~~~~~~~~~~~~~')
         const $1 = await cheerio.load(res.text)
         let objArr = Array.from($1('*'))
         for (let item of objArr) {
@@ -182,8 +182,6 @@ async function gbkCharset (url) {
           }
           catalogsArr.push(obj)
         })
-        logger.error(catalogsArr)
-        console.info('~~~~~~~~~~~end~~~~~~~~~~~~~')
         resolve(catalogsArr)
         if (err) {
           logger.error(err)
@@ -209,13 +207,12 @@ async function dealNovel (obj, name) {
           await gbkCharset(obj.url) // gbk 走此部分
             // 得到目录数组
             .then(async catalog => {
-              logger.error(catalog)
               // for 循环批量处理单章
-              // http://www.biquge.com.tw/16_16279/6516764.html
               for (let i of catalog) {
                 await singleNovel(i.href, host)
                 // 得到单章文章
-                  .then(single => {
+                  .then(async single => {
+                    logger.error('~~~~~~~~~~得到单章文章 Start~~~~~~~~~~')
                     let singleData = {
                       name: name || '',
                       content: single || '',
@@ -225,18 +222,23 @@ async function dealNovel (obj, name) {
                       title: i['title'] || ''
                     }
                     let saveNovel = new NovelModel(singleData) // 建立小说章节模型
-                    // saveNovel.save() // 写入数据库
-                    logger.error('~~~~~~~~~~得到单章文章 Start~~~~~~~~~~')
-                    logger.error(single)
+                    // 先判断是否存在
+                    let isHas = await NovelModel.findOne({title: i['title'], content: single}).count()
+                    if (isHas) {
+                      logger.error('~~~~~~~~~~已存在该章节~~~~~~~~~~')
+                      return
+                    } else {
+                      logger.error('~~~~~~~~~~正在写入该章节~~~~~~~~~~')
+                      saveNovel.save() // 写入数据库
+                    }
                     logger.error('~~~~~~~~~~得到单章文章 End~~~~~~~~~~~~')
                   })
                   .catch(singleErr => {
                     logger.error(singleErr)
                   })
+                break
               }
-            })
-            .then(item => {
-              logger.error(item)
+              resolve(true)
             })
         }
       })
@@ -251,7 +253,6 @@ async function dealNovel (obj, name) {
  * @params url host 主机
  * */
 async function singleNovel (url, host) {
-  logger.error(url, host)
   return new Promise((resolve, reject) => {
     superAgentTo
       .get('http://' + host + url)
@@ -259,14 +260,10 @@ async function singleNovel (url, host) {
       .charset('gbk')
       .end(async (err, res) => {
         // TODO 假如res 为空的时候
-        console.info('~~~~~~~~~~单章Start~~~~~~~~~~')
         const $ = await cheerio.load(res.text)
-        console.info('~~~~~~~~~~单章 End~~~~~~~~~~')
         // TODO 自动判断那个节点是章节内容的
         let content = $('#content').text()
-        logger.error(content)
         resolve(content)
-        // todo 为什么这是被加速了给禁止了
         if (err) {
           logger.error(err.text)
         }
@@ -296,24 +293,19 @@ const _novel = {
       _dbError(res)
       return
     }
-    // let msg = '正在下载...'
+    let msg = '已收到下载任务，由于该任务比较耗时，请耐心等待，完成后系统会通知你。'
+    let resData = {
+      start: format(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    }
+    console.info(444)
+    // 异步任务
     await searchNovel(req.query.keyword)
       .then(async data => {
         await dealNovel(data[0], req.query.keyword)
-          // resolve 到主机名称
           .then(catalog1 => {
-            logger.error(catalog1)
-            // 先对一个数组的url 去搜小说
-            // if (data.length > 0) {
-            //   return _dbSuccess(res, msg, url || '~~~~~~~name')
-            //   // return url
-            // } else {
-            //   return []
-            // }
+            console.info(3333)
+            return _dbSuccess(res, msg, resData)
           })
-      })
-      .then(catalog => {
-        logger.error(catalog)
       })
   }
 }

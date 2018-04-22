@@ -16,7 +16,7 @@
 </template>
 <script>
   /* eslint-disable handle-callback-err */
-
+// todo 下载任务完成后，会通过webSocket通知客户端。
   export default {
     name: 'novel',
     components: {},
@@ -40,10 +40,18 @@
           }
         })
           .then(res => {
-            console.info(res)
+            if (res.errorCode === 0) {
+              this.$Notice.success({
+                title: res.data.start + '开始处理',
+                desc: res.msg
+              })
+            }
           })
           .catch(err => {
-            console.info(err)
+            this.$Notice.error({
+              title: '无法处理你的请求',
+              desc: err.msg
+            })
           })
       }
     }
