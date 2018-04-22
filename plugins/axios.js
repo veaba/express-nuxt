@@ -4,10 +4,10 @@ import axios from 'axios'
 /**
  * @desc 重定向登录页面
  * */
-function redirectLogin () {
-  let path = Vue.prototype.$nuxt._router.history.fullPath || ''
-  location.href = '/login?ref=' + path
-}
+// function redirectLogin () {
+//   let path = Vue.prototype.$nuxt._router.history.fullPath || ''
+//   location.href = '/login?ref=' + path
+// }
 
 /**
 * @desc req 拦截器
@@ -26,10 +26,9 @@ axios.interceptors.response.use(res => {
     if (res.data.errorCode === 0 || res.data.errorCode === 1) {
       return res.data
     } else {
-      alert(11)
       // 4003 等状态则跳回login 页面
-      redirectLogin()
-      // return Promise.reject(res.data)
+      // redirectLogin()
+      return Promise.reject(res.data)
     }
   }
   return res

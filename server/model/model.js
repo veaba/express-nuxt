@@ -66,10 +66,24 @@ let articleSchema = new Schema({
   editor_number: Number // 被编辑过的次数
 })
 
+/**
+ * @desc 小说Novel
+ * */
+let novelSchema = new Schema({
+  name: String, // 小说名称
+  author: String, // 作者
+  title: String, // 章节名称
+  content: String, // 内容
+  length: Number, // 字数
+  domain: String, // 所在主机,
+  url: String, // 所在章节的url，半截
+  end: Boolean // 是否完结，如果同本小说，存在该状态 true，则说明小说完结，默认false
+})
 /***********************************************
  * @desc 构建表模型，model(CollectionName,Model)
  * **********************************************/
 let UsersModel = mongoose.model('users', usersSchema)
 let RouterModel = mongoose.model('routers', routerSchema)
 let ArticleModel = mongoose.model('articles', articleSchema)
-export {UsersModel, RouterModel, ArticleModel}
+let NovelModel = mongoose.model('novels', novelSchema)
+export {UsersModel, RouterModel, ArticleModel, NovelModel}
