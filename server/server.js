@@ -10,9 +10,8 @@ import { Nuxt, Builder } from 'nuxt'
 import bodyParser from 'body-parser' // 必须，需要解析
 import { router } from './router/index'
 import session from 'express-session'
-
+import {_webSocket} from 'functions/functions' // 功能函数库
 const logger = require('tracer').console()
-
 const app = express()
 const host = process.env.HOST || '0.0.0.0'
 const port = process.env.PORT || 4000
@@ -24,26 +23,39 @@ const io = require('socket.io')(server)
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 app.set('port', port)
-
 // Session 创建req.session
 app.use(session({
   secret: 'super-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: {maxAge: 60000}
+  cookie: {maxAge: 6000000}
 }))
+/***************************************************
+ * @desc webSocket Start Start Start Start Start ~~~
+ * *************************************************/
+
+// socket 连接
+io.on('connection', _webSocket)
+// 向所有用户发送消息
+io.sockets.emit('isConnectSocketStatus', {msg: 'WebSocket is connected!'})
+// todo 授权连接
+
+/**
+ * @desc 小说下载完成，通知客户端,该方法为对server提供export
+ * @param name novel {String}
+ * @param data 消息 {Object}
+ * */
+async function _io (name, data) {
+  logger.warn('小说下载完成，通知客户端!')
+  return io.sockets.emit(name, data)
+}
+/***************************************************
+ * @desc webSocket End End End End End End End End~~
+ * *************************************************/
 
 // Import API Routes
 app.use('/api', router)
 
-/*********************
- * @desc webSocket
- * *******************/
-io.on('connection', function (socket) {
-  socket.volatile.emit('an event', {some: 'data'})
-  logger.info('socketl 链接了吗')
-})
-io.volatile.emit('an event', {some: 'data'})
 // Import and Set Nuxt.js options
 let config = require('../nuxt.config.js')
 config.dev = !(process.env.NODE_ENV === 'production')
@@ -96,3 +108,6 @@ function errorHandler (err, req, res, next) {
 // Listen the server
 app.listen(port, host)
 console.log('Server listening on ' + host + ':' + port) // eslint-disable-line no-console
+console.log('webSocket Server listening on ' + host + ':' + port + 1.0) // eslint-disable-line no-console
+
+export default _io

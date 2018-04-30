@@ -25,7 +25,7 @@
     "marked": "^0.3.16",
     "mavon-editor": "^2.4.16",
     "mongoose": "^5.0.6",
-    "nuxt": "^1.3.0",
+    "nuxt": "^1.4.0",
     "socket.io": "^2.0.4",
     "socket.io-client": "^2.0.4",
     "source-map-support": "^0.4.15",

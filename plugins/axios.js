@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import axios from 'axios'
-
+import { Notice } from 'iview'
 /**
  * @desc 重定向登录页面
  * */
@@ -19,12 +19,17 @@ axios.interceptors.request.use(req => {
   return Promise.reject(err)
 })
 /**
- * @desc res 拦截器
+ * @desc res 拦截器 Axios 和socket没什么卵关系~~
  * */
 axios.interceptors.response.use(res => {
   if (res && res.data) {
     if (res.data.errorCode === 0 || res.data.errorCode === 1) {
       return res.data
+    } else if (res.data.errorCode === 2403) {
+      Notice.error({
+        title: '你有一条错误警告消息',
+        desc: res.data.msg || '未经授权'
+      })
     } else {
       // 4003 等状态则跳回login 页面
       // redirectLogin()

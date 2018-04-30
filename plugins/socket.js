@@ -8,11 +8,7 @@
  ***********************/
 import Vue from 'vue'
 import io from 'socket.io-client'
-// process.env.HOST
 const socket = io('http://' + '127.0.0.1' + ':' + (process.env.PORT * 1.0 + 1))
-// if (process.server) {
-//   console.info('你是服务器端吗?')
-// } else {
-//   console.info(process.env)
-// }
 Vue.use(socket)
+Vue.prototype.$socket = socket
+export default socket

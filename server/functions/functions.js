@@ -6,6 +6,7 @@
  ***********************/
 import cryPto from 'crypto'
 import {RouterModel} from '../model/model' // node 中的加密模块
+const logger = require('tracer').console() // console追踪库
 
 /**
  * @desc mongodb 操作成功函数,返回到前端
@@ -81,4 +82,20 @@ async function _queryRouter (req, res, next) {
   let findRouter = await RouterModel.find(req)
   return findRouter
 }
-export {_isAuth, _dbError, _dbSuccess, _flipPage, _encryptedPWD, _queryRouter}
+
+/**
+ * @desc webSocket连接函数，io.on 连接的回调函数
+ * */
+async function _webSocket (socket) {
+  // emit 向所有连接的客户端发送消息
+
+  // 收到消息
+  socket.on('receive', (data) => {
+    socket.emit('receive1', {lala: 'lalallala'})
+    logger.error(data)
+  })
+  // novel 向前端通信
+  console.info('novel 向前端通信')
+  logger.warn('\n~~~~Websocket已连接~~~~\n')
+}
+export {_isAuth, _dbError, _dbSuccess, _flipPage, _encryptedPWD, _queryRouter, _webSocket}

@@ -10,12 +10,14 @@
  * @updateLog2 准备全用promise 来实现正 流程控制，当然需要注意的是对性能的影响
  ***********************/
 import {NovelModel} from '../model/model'
-import { _dbError, _dbSuccess } from '../functions/functions'
-import { format } from 'date-fns' // 时间格式工具
+import { _dbError, _dbSuccess, _webSocket } from '../functions/functions'
+import {format} from 'date-fns' // 时间格式工具
 // import fs from 'fs' // 文件读写模块
 import charset from 'superagent-charset' // 转移模块
 import cheerio from 'cheerio' // 解析字符
 import superAgent from 'superagent'
+import _io from '../server'
+import socket from '../../plugins/socket'
 const superAgentTo = charset(superAgent) // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
 const logger = require('tracer').console() // console追踪库
 
@@ -208,6 +210,7 @@ async function dealNovel (obj, name) {
             // 得到目录数组
             .then(async catalog => {
               // for 循环批量处理单章
+              // todo 不是用for 而是用reduce 来处理
               for (let i of catalog) {
                 await singleNovel(i.href, host)
                 // 得到单章文章
@@ -222,7 +225,7 @@ async function dealNovel (obj, name) {
                       title: i['title'] || ''
                     }
                     let saveNovel = new NovelModel(singleData) // 建立小说章节模型
-                    // 先判断是否存在
+                    // 先判断该部小说是否存在
                     let isHas = await NovelModel.findOne({title: i['title'], content: single}).count()
                     if (isHas) {
                       logger.error('~~~~~~~~~~已存在该章节~~~~~~~~~~')
@@ -238,7 +241,7 @@ async function dealNovel (obj, name) {
                   })
                 break
               }
-              resolve(true)
+              resolve(catalog.length)
             })
         }
       })
@@ -295,16 +298,32 @@ const _novel = {
     }
     let msg = '已收到下载任务，由于该任务比较耗时，请耐心等待，完成后系统会通知你。'
     let resData = {
-      start: format(new Date(), 'YYYY-MM-DD HH:mm:ss')
+      start: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
+      now: new Date()
     }
-    console.info(444)
+
+    await _dbSuccess(res, msg, resData)
     // 异步任务
     await searchNovel(req.query.keyword)
       .then(async data => {
         await dealNovel(data[0], req.query.keyword)
-          .then(catalog1 => {
-            console.info(3333)
-            return _dbSuccess(res, msg, resData)
+          .then(async count => {
+            console.info(count)
+            // todo 完成的标志 如果完成后，会告诉我！
+            logger.error('完成的标志 done~~~~~~~')
+            const ob = {
+              msg: '《' + req.query.keyword + '》,已下载完成!',
+              data: {
+                name: req.query.keyword,
+                url: 'http://www.baidu.com/1.text',
+                startTime: resData.start || '',
+                timeConsuming: '',
+                endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
+                count: count
+              },
+              errorCode: 0
+            }
+            await _io('novel', ob)
           })
       })
   }
