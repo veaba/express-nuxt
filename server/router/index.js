@@ -1,4 +1,4 @@
-/* eslint-disable no-dupe-keys */
+/* eslint-disable no-dupe-keys,no-unused-vars */
 /**
  * @TODO 时候在后期对error的操作，同样写入到log中，从而追踪系统的运行状态
  * @desc 数据库操作
@@ -33,43 +33,45 @@ let options = {
 }
 
 mongoose.connect(config.base + ':' + config.port + '/' + config.database, options) // 连接
-let db = mongoose.connection
 /**********************************
  * @desc 数据库链接初始化，管理员
  * @define  项目启动->找管理员用户->如果没有->查找失败->并开始初始化信息
  * */
-(function init () {
-  // 初始化admin信息
-  let InitAdministrator = {
-    username: 'admin',
-    password: '123456',
-    nick: 'admin',
-    email: ''
-  }
-  db.once('connected', function () {
-    logger.info('----------> 连接成功 ^_^------------')
-    // 先查找存不存在admin 这个管理员账号
-    UsersModel.find({'username': InitAdministrator.username}, function (err, res) {
-      if (err) {
-        _dbError(res, err)
-      }
-      // 查询为空会返回空数组
-      if (res.length === 0) {
-        // logger.info('----------> 初始化时没有找到 v_v')
-        // 为数据库新建默认admin信息
-        InitAdministrator.password = _encryptedPWD(InitAdministrator.password) // 用户密码加密
-        let adminModel = new UsersModel(InitAdministrator)
-        adminModel.save(function (err, res) {
-          if (err) {
-            logger.info('----------> 初始化admin账号失败 v_v')
-          } else {
-            logger.info('----------> 初始化admin账号成功 ^_^')
-          }
-        })
-      }
+const connect = async function () {
+  let db = await mongoose.connection
+  if (db) {
+    let InitAdministrator = {
+      username: 'admin',
+      password: '123456',
+      nick: 'admin',
+      email: ''
+    }
+    db.once('connected', function () {
+      logger.info('----------> 连接成功 ^_^------------')
+      // 先查找存不存在admin 这个管理员账号
+      UsersModel.find({'username': InitAdministrator.username}, function (err, res) {
+        if (err) {
+          _dbError(res, err)
+        }
+        // 查询为空会返回空数组
+        if (res.length === 0) {
+          // logger.info('----------> 初始化时没有找到 v_v')
+          // 为数据库新建默认admin信息
+          InitAdministrator.password = _encryptedPWD(InitAdministrator.password) // 用户密码加密
+          let adminModel = new UsersModel(InitAdministrator)
+          adminModel.save(function (err, res) {
+            if (err) {
+              logger.info('----------> 初始化admin账号失败 v_v')
+            } else {
+              logger.info('----------> 初始化admin账号成功 ^_^')
+            }
+          })
+        }
+      })
     })
-  })
-})()
+  }
+}
+connect()
 /** ---------------------------------------------------------------------------
  * ================================= Routes ===================================
  *-----------------------------------------------------------------------------**/

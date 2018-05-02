@@ -10,7 +10,7 @@ const _user = {
     if (req.session && req.session.isAuth) {
       return _dbSuccess(res, null, req.session.userInfo)
     } else {
-      _dbError(res, '你尚未登录，无权限获取用户信息', null, 403)
+      _dbError(res, '你尚未登录，无权限获取用户信息', null, 2403)
     }
   }
 }

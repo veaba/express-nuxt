@@ -15,4 +15,5 @@ dist
 build
 .idea/
 static/img/
-server/config.js
+/server/config.js
+.vscode/

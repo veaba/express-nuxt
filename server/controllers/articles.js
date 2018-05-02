@@ -20,8 +20,8 @@ const _article = {
     _isAuth(res, session)
     let data = req.query.name ? ({name: req.query.title}) : {}
     let page = req.query.page ? req.query.page : 1
-    let finArticleAll = await ArticleModel.find(data).count()// 总长度
-    let articleArr = await ArticleModel.find(data).limit(10).skip(page * 10 - 10).exec()
+    let finArticleAll = await ArticleModel.find(data).count()// 总长度 sort() -1，倒叙,1默认升序
+    let articleArr = await ArticleModel.find(data).limit(10).skip(page * 10 - 10).sort({_id: -1}).exec()
     let findArticle = []
     for (let item of articleArr) {
       item.post_content = item.post_content.slice(0, 200)

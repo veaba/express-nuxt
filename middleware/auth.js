@@ -46,7 +46,6 @@
 // }
 // redirect 重定向
 export default function ({store, redirect, error, route, req, res}) {
-  alert(11)
   // if (!req) {
   //   if (!store.state.isAuth) {
   //     return redirect('/login')
