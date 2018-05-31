@@ -94,6 +94,7 @@
             }
           })
             .then(res => {
+              console.info(res)
               if (res.errorCode === 0) {
                 this.articleData = res.data
                 this.pageData.total = res.totals || 1

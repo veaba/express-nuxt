@@ -8,6 +8,11 @@
  * @desc 权限检查——>先检查数据库——>如果没有，到网络上查找，并组织，上传到数据库中，同时下载到用户
  * @updateLog1 无法安装 charset + superAgent +cheerio +superagent-charset(转译模块)  模块，无法进行下一步开发
  * @updateLog2 准备全用promise 来实现正 流程控制，当然需要注意的是对性能的影响
+ * @todo // 提供webscoket 倒计时下载时间
+ * @todo // 正在下载的问题，先要比较长度，如果相同，则提示不要再去下载
+ * @todo // 为了减少服务器的压力，存在执行的问题，不在提供下载服务，需要等待任务完成
+ * @todo // 并在前端展示服务器当前压力，是否空闲状态，或者繁忙状态
+ * @todo // 写入库，应该异步操作，不需要await 等待顺序写入库
  ***********************/
 import {NovelModel} from '../model/model'
 import { _dbError, _dbSuccess, _webSocket } from '../functions/functions'
@@ -215,7 +220,7 @@ async function dealNovel (obj, name) {
                 await singleNovel(i.href, host)
                 // 得到单章文章
                   .then(async single => {
-                    logger.error('~~~~~~~~~~得到单章文章 Start~~~~~~~~~~')
+                    logger.error('~~~~~~~~~~得到《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
                     let singleData = {
                       name: name || '',
                       content: single || '',
@@ -225,21 +230,21 @@ async function dealNovel (obj, name) {
                       title: i['title'] || ''
                     }
                     let saveNovel = new NovelModel(singleData) // 建立小说章节模型
-                    // 先判断该部小说是否存在
+                    // 先判断该部小说是否存在,todo 应该在此之前，查出全部，并放在变量里面，下次就不需要到数据库去查到了
                     let isHas = await NovelModel.findOne({title: i['title'], content: single}).count()
                     if (isHas) {
-                      logger.error('~~~~~~~~~~已存在该章节~~~~~~~~~~')
+                      logger.error('~~~~~~~~~~已存在《' + name + '》该章节' + i.title + '~~~~~~~~~~')
                       return
                     } else {
-                      logger.error('~~~~~~~~~~正在写入该章节~~~~~~~~~~')
+                      logger.error('~~~~~~~~~~正在写入《' + name + '》该章节' + i.title + '~~~~~~~~~~')
                       saveNovel.save() // 写入数据库
                     }
-                    logger.error('~~~~~~~~~~得到单章文章 End~~~~~~~~~~~~')
+                    logger.error('~~~~~~~~~~得到《' + name + '》单章文章' + i.title + ' End~~~~~~~~~~~~')
                   })
                   .catch(singleErr => {
                     logger.error(singleErr)
                   })
-                break
+                // break
               }
               resolve(catalog.length)
             })
@@ -256,6 +261,7 @@ async function dealNovel (obj, name) {
  * @params url host 主机
  * */
 async function singleNovel (url, host) {
+  logger.error(url)
   return new Promise((resolve, reject) => {
     superAgentTo
       .get('http://' + host + url)
@@ -270,6 +276,7 @@ async function singleNovel (url, host) {
         if (err) {
           logger.error(err.text)
         }
+        // todo 如果超时，则打断当前的流水线，catch之后，从当前章节开始进行
       })
   })
 }
@@ -306,16 +313,18 @@ const _novel = {
     // 异步任务
     await searchNovel(req.query.keyword)
       .then(async data => {
+        logger.error(data)
+        // todo 默认是采取第一个url，但依然存在潜在问题
         await dealNovel(data[0], req.query.keyword)
           .then(async count => {
-            console.info(count)
+            logger.error('总章节' + count)
             // todo 完成的标志 如果完成后，会告诉我！
             logger.error('完成的标志 done~~~~~~~')
             const ob = {
               msg: '《' + req.query.keyword + '》,已下载完成!',
               data: {
                 name: req.query.keyword,
-                url: 'http://www.baidu.com/1.text',
+                url: 'http://www.baidu.com/1.text', // todo
                 startTime: resData.start || '',
                 timeConsuming: '',
                 endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
@@ -323,7 +332,7 @@ const _novel = {
               },
               errorCode: 0
             }
-            await _io('novel', ob)
+            await _io('novel', ob) // 通过websocket告诉客户端已完成下载的消息
           })
       })
   }

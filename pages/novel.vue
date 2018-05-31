@@ -48,6 +48,7 @@
           console.info(json)
           if (json.errorCode === 0) {
             this.$Notice.success({
+              duration: 0,
               title: json.msg || '',
               render: h => {
                 return h('div',
@@ -93,6 +94,7 @@
           }
         })
           .then(res => {
+            console.info(res)
             if (res.errorCode === 0) {
               this.$Notice.success({
                 title: res.data.start + '开始处理',
