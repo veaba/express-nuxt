@@ -46,7 +46,7 @@ io.sockets.emit('isConnectSocketStatus', {msg: 'WebSocket is connected!'})
  * @param data 消息 {Object}
  * */
 async function _io (name, data) {
-  logger.warn('小说下载完成，通知客户端!')
+  // logger.warn('小说下载完成，通知客户端!', name)
   return io.sockets.emit(name, data)
 }
 /***************************************************

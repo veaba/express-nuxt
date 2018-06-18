@@ -11,10 +11,10 @@
                 <i-col>
                 <Form :model="formItem" :label-width="80">
                     <FormItem label="username">
-                        <Input v-model="username" placeholder="请输入..."></Input>
+                        <i-input v-model="username" placeholder="请输入..."></i-input>
                     </FormItem>
                     <FormItem label="password">
-                        <Input v-model="password" placeholder="password"></Input>
+                        <i-input v-model="password" placeholder="password"></i-input>
                     </FormItem>
                     <br>
                     <Button type="primary" @click="login" style="width: 100%">Login</Button>
@@ -46,7 +46,7 @@
         formItem: {},
         msg: 'Hello world login VueJS',
         username: 'admin',
-        password: '123456'
+        password: 'admin'
       }
     },
     created () {

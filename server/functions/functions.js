@@ -61,7 +61,7 @@ async function _flipPage (res, data, errorCode, msg, {totals, pages, pageCurrent
     msg: msg || '操作成功',
     totals: totals,
     pages: pages,
-    pageCurrent: pageCurrent
+    pageCurrent: Number(pageCurrent)
   })
 }
 

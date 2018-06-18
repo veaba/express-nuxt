@@ -11,7 +11,7 @@ import { format } from 'date-fns' // 时间格式工具
 const logger = require('tracer').console() // console追踪库
 const _article = {
   /**
-   * @desc 拉去文章列表函数，正文内容，两百字
+   * @desc 拉取文章列表函数，正文内容，两百字
    * @desc page 与 skip的关系 1->0、2->10、3->20 page*10-10
    * @TODO 增加模糊查询
    * */

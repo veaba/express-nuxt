@@ -72,12 +72,15 @@ let articleSchema = new Schema({
 let novelSchema = new Schema({
   name: String, // 小说名称
   author: String, // 作者
-  title: String, // 章节名称
+  title: String, // 章节标题
+  uuid: Number, // 章节序号，起点获取，真正的章节序号，放置有卷数干扰，为唯一id
+  preview: String, // 内容预览200字以下，起点获取
   content: String, // 内容
   length: Number, // 字数
   domain: String, // 所在主机,
   url: String, // 所在章节的url，半截
-  end: Boolean // 是否完结，如果同本小说，存在该状态 true，则说明小说完结，默认false
+  end: Boolean, // 是否完结，如果同本小说，存在该状态 true，则说明小说完结，默认false
+  timeout: Boolean // 超时爬取true,default flase
 })
 /***********************************************
  * @desc 构建表模型，model(CollectionName,Model)
