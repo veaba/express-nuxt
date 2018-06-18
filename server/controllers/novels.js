@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable no-unused-vars,no-const-assign */
 /***********************
  * @name JS
  * @author Jo.gel
@@ -17,6 +17,7 @@
  * @todo 所以需要去抓取起点的目录，然后拿到目录名称，再去对比章节名，但依然有错漏的问题
  * @todo https://read.qidian.com/ajax/book/category?_csrfToken=trKplZoIC9MzizIxq8JxJvQWPCAJxU9VAbW6ERKr&bookId=3657207 起点拿到章节接口
  * @todo race 有一个resolve或者reject都会返回
+ * @todo 唯一章节id，uuid 由起点uuid接口写入
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
 import {NovelModel} from '../model/model'
@@ -85,7 +86,7 @@ const ELEMENT = {
 // element key值数组
 const ELEMENTKeys = Object.keys(ELEMENT)
 
-const arrUrls = []// 存储百度搜索的url数组
+let arrUrls = []// 存储百度搜索的url数组
 
 let ParentNodesMap = {}// 存储查到到的父级标签
 // 小说下载进程，后续去判断是否存在下载任务，有的话，将需要等待，否则会影响性能
@@ -95,6 +96,7 @@ let loopIndex = 0// 递归loop函数执行此处判断，同样是选取值的�
 let loopHeader = 0 // 递归loop函数执行此处判断，用于更换header头部参数
 let loopHeaderStatus = true// header状态
 let loopUrlsStatus = true// url 状态
+let gbkCharsetIndex = 0// gbk 函数的次数
 let isInit = 0
 /**
  * @desc 百度搜索并找到解析的小说站点
@@ -115,25 +117,40 @@ async function searchNovel (keyword) {
         getTitle.each(async (item) => {
           let url = $(getTitle[item]).attr('href')
           let title = $(getTitle[item]).text()
-          await realUrl(url)// 因为异步获取了url，导致数据回来的顺序不一样
+          // 因为异步获取了url，导致数据回来的顺序不一样
+          // 且成功或失败都会处理数组组装
+          await realUrl(url)
             .then(async (realUrlData) => {
+              logger.warn('真实数据 then', realUrlData)
               let obj = {
                 title, url: realUrlData
               }
               await arrUrls.push(obj)
+              return realUrlData
             })
             .catch(async errUrl => {
+              logger.warn('真实数据 catch', errUrl)
               let obj = {
                 title, url: errUrl
               }
               await arrUrls.push(obj)
+              return errUrl
             })
+          // 过滤数组，排除空url，每次循环都会
+          let arr = []
+          for (let item of arrUrls) {
+            if (item.url) {
+              arr.push(item)
+            }
+          }
+          arrUrls = arr
+          logger.warn('++++ 第四步/2，过滤空url数组')
         })
 
         let t = 0
         // todo 通过定时器，来大致判断异步任务结束，如果不结束的，强制reject
         let InterTime = setInterval(function () {
-          if (t > 9) {
+          if (t > 4) {
             t = 0
             // 倒计时，发送通知
             clearInterval(InterTime)
@@ -160,9 +177,9 @@ async function realUrl (url) {
   let errorReject = ''
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
-      logger.warn('\n++++ 第三步：再次去异步获取真实url地址，设置10s超时')
+      logger.warn('\n++++ 第三步：再次去异步获取真实url地址，设置5s超时')
       reject(errorReject)
-    }, 10000)
+    }, 5000)
     superAgent
       .get(url)
       .set(htmlHeader[0])
@@ -330,14 +347,20 @@ async function utf8Charset (url) {
  * @params url
  * @todo
  * */
-async function gbkCharset (url) {
+async function gbkCharset (url, header = htmlHeader[1]) {
+  gbkCharsetIndex++
   return new Promise((resolve, reject) => {
     superAgentTo
       .get(url)
-      .set(htmlHeader[0])
+      .set(header)
       .charset('gbk')
       .end(async (err, res) => {
         if (err) {
+          // 判断是由于header引起的错误，此处的处理方式应该更换heander
+          if (err && err.status === 400) {
+            logger.warn('\n++++ 第七步/C-error 更换heander次数', gbkCharsetIndex)
+            await gbkCharset(url, htmlHeader[gbkCharsetIndex])
+          }
           logger.warn('\n++++ 第七步/B-error', err.status || err)
           reject(err || 'error')
         } else {
@@ -398,14 +421,15 @@ async function dealNovel (obj, name) {
                       content: single || '',
                       url: i.href || '',
                       host: host || '',
-                      uuid: index,
+                      uuid: index, // todo 由起点写入
                       length: single.length || 0,
                       title: i['title'] || '',
                       timeout: false
                     }
                     let saveNovel = new NovelModel(singleData) // 建立小说章节模型
                     // 先判断该部小说是否存在,todo 应该在此之前，查出全部，并放在变量里面，下次就不需要到数据库去查到了
-                    let isHas = await NovelModel.findOne({title: i['title'], uuid: index}).count()
+                    let tenString = new RegExp(single.substr(0, 20))
+                    let isHas = await NovelModel.findOne({title: i['title'], content: tenString}).count()
                     if (!isHas) {
                       if ((single.trim())) {
                         await saveNovel.save() // 写入数据库
@@ -427,7 +451,8 @@ async function dealNovel (obj, name) {
                     }
                     let saveNovel = new NovelModel(singleData) // 建立小说章节模型
                     // 先判断该部小说是否存在,todo 应该在此之前，查出全部，并放在变量里面，下次就不需要到数据库去查到了
-                    let isHas = await NovelModel.findOne({title: i['title'], uuid: errObj.index}).count()
+                    let tenString = new RegExp(errObj.content.substr(0, 20))
+                    let isHas = await NovelModel.findOne({title: i['title'], content: tenString}).count()
                     if (!isHas) {
                       if ((errObj.content.trim())) {
                         await saveNovel.save() // 写入数据库
@@ -618,7 +643,7 @@ const _novel = {
     // 异步任务
     await searchNovel(req.query.keyword)
       .then(async data => {
-        logger.warn('\n++++ 第四步：得到真实url地址数组10个，超时url为空')
+        logger.warn('\n++++ 第四步/1：得到真实url地址数组10个，超时url为空')
         logger.warn(data)// 打印url数据
         // todo 过滤为空的url，因为并发，可能失败，此处采取同步处理
         for (let item of data) {
