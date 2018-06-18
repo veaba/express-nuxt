@@ -691,6 +691,7 @@ async function notifyClient (obj) {
 }
 /**
  * @desc 返回小说数据
+ * @todo 由于爬取无法判断章节是否正确，所以还是需要起点uuid以及空内容过滤
  * */
 async function getNovel (novel) {
   logger.warn('++++ 第十步/2：将数据查询后通过webSocket渲染到前端')
