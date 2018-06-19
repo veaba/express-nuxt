@@ -15,9 +15,12 @@
  * @finish 写入库，应该异步操作，不需要await 等待顺序写入库 √并发写入 完成
  * @todo 有些小说，比如纯阳武神，有卷名，比较难办。！！！，章节名可能重叠，且每卷的章节次序需要重新开始计算->用爬取与起点API的对比章节名+预览，并设置uuid来实现唯一id
  * @todo 所以需要去抓取起点的目录，然后拿到目录名称，再去对比章节名，但依然有错漏的问题
- * @todo https://read.qidian.com/ajax/book/category?_csrfToken=trKplZoIC9MzizIxq8JxJvQWPCAJxU9VAbW6ERKr&bookId=3657207 起点拿到章节接口
+ * @todo https://read.qidian.com/ajax/book/category?_csrfToken=trKplZoIC9MzizIxq8JxJvQWPCAJxU9VAbW6ERKr&bookId=3657207 起点拿到章节接口，卷名
  * @todo race 有一个resolve或者reject都会返回
  * @todo 唯一章节id，uuid 由起点uuid接口写入
+ * @todo 哨兵变量，用于是否终止异步任务的依据,去中断执行异步、同步任务的执行流水线
+ * @todo https://www.qidian.com/search?kw=%E7%BA%AF%E9%98%B3%E6%AD%A6%E7%A5%9E 起点搜索 拿到书id值，将id 传递给查询书的目录
+ * @todo 参考1  可以在https://book.qidian.com/info/3657207 拿到目录的数目
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
 import {NovelModel} from '../model/model'
@@ -88,6 +91,7 @@ const ELEMENTKeys = Object.keys(ELEMENT)
 
 let arrUrls = []// 存储百度搜索的url数组
 
+let SentinelVariable = false // todo 哨兵变量，用于是否终止异步任务的依据
 let ParentNodesMap = {}// 存储查到到的父级标签
 // 小说下载进程，后续去判断是否存在下载任务，有的话，将需要等待，否则会影响性能
 let processTask = []
@@ -102,6 +106,7 @@ let isInit = 0
  * @desc 百度搜索并找到解析的小说站点
  * @todo 需要做进一步的判断是否存在目录链接的页面，并排除搜索引擎吸引的网站主页
  * @todo 而非是网站主页，需要是小说主页
+ * @todo 如果promise 里面有两个异步怎么办?
  * */
 async function searchNovel (keyword) {
   return new Promise((resolve, reject) => {
@@ -284,6 +289,10 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
           logger.warn('要抛出的catch', loopUrlsStatus, loopIndex, loopHeader, arrUrls.length)
         }
         logger.warn('\n++++ 第七步/1-success：对该url进行爬取，判断何种编码', url, '状态编码：' + res.status)
+        // todo 以下部分，循环的时候会循环多少次？而且要明确resolve+reject 的抛出!!!!!
+        // todo reject 是耍了很多次手段换header+换url 都失败都，reject，此时，下一个流水线，理应终止程序进行！！！
+        // todo resolve 只要一个成功，则将流水线继续下去。！！！！
+        logger.warn('---- 你猜我要执行多少次？', isCharsetDecodeIndex)
         // 站方的主机名称
         let host = res.request.host
         const $1 = await cheerio.load(res.text)
@@ -303,7 +312,7 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
 /**
  * @desc 如果编码是utf-8此走此部分解析
  * @params url
- * @todo
+ * @todo utf8Charset 与 gbkCharset 合走一个方法
  * */
 async function utf8Charset (url) {
   return new Promise((resolve, reject) => {
@@ -347,6 +356,7 @@ async function utf8Charset (url) {
  * @params url
  * @todo
  * */
+
 async function gbkCharset (url, header = htmlHeader[1]) {
   gbkCharsetIndex++
   return new Promise((resolve, reject) => {
@@ -406,6 +416,7 @@ async function dealNovel (obj, name) {
       .then(async (resobj) => {
         logger.warn('哔了狗。为什么没有收到then:', resobj)
         let {status, host} = resobj// 状态和主机解构
+        // 9 todo todo  todo 所以需要在此部分执行起点的爬虫方式，并将结果给下面的爬取单章做对比！！！！
         // todo utf-8走此部分
         if (status) {
           await utf8Charset(obj.url)
@@ -593,7 +604,8 @@ async function singleNovel (url, host, title, index, len, charset) {
       logger.warn('\n++++第九步/2：爬取单章超时30s等待完成')
       reject(errObj)
     }, 30000)
-    superAgentTo
+    let superAgentChart = charset ? superAgent : superAgentTo
+    superAgentChart
       .get('http://' + host + url)
       .set(htmlHeader[1])
       .charset(isChartSet)
