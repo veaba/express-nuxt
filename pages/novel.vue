@@ -82,6 +82,7 @@
        * @desc setProgress
        * */
       setProgress () {
+        this.percent = 0
         let setTime = setInterval(() => {
           // 进行中的话，++，但最大99
           if (this.percent < 99) {
@@ -94,6 +95,7 @@
           if (this.percent > 99) {
             clearInterval(setTime)
           }
+          console.log(this.percent)
         }, 300)
       },
       // 发送消息 client -> server
@@ -111,7 +113,6 @@
          * */
         this.$socket.on('novel', (json) => {
           if (json.errorCode === 0) {
-            this.setProgress()// 设置进度条
             this.loading = false
             // 如果本卡有上一次通知，则在开始后，4.5s关闭本卡
             if (this.newNovelDownload) {
@@ -159,6 +160,19 @@
           this.loading = false
           this.percent = 100
         })
+
+        /**
+         * @desc 大兄弟，任务失败了
+         * */
+        this.$socket.on('missionFail', (json) => {
+          console.info(json)
+          if (json.errorCode) {
+            this.$Notice.warning({
+              title: '任务失败',
+              desc: json.msg || 'error'
+            })
+          }
+        })
         this.$socket.on('receive1', (data) => {
           console.info(data)
         })
@@ -182,6 +196,8 @@
             this.loading = false
             this.novelData = []
             if (res.errorCode === 0) {
+              // 开始执行进度条
+              this.setProgress()// 设置进度条
               this.$Notice.success({
                 title: res.data.start + '开始处理',
                 desc: res.msg
