@@ -57,7 +57,7 @@ const htmlHeader = [
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Host': 'www.biquge.com.tw', // 导致失败
+    // 'Host': 'www.biquge.com.tw', // 导致失败
     'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36'
@@ -69,7 +69,7 @@ const htmlHeader = [
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Host': 'www.biqukan.com', // 导致失败
+    // 'Host': 'www.biqukan.com', // 导致失败
     'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
@@ -233,16 +233,14 @@ async function loopCharsetDecodeHeader () {
             logger.warn(dealRes)
           })
           .catch(async dealErr => {
-            // todo
-            await _io('missionFail', {msg: '任务失败，更换了源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
-            logger.warn(dealErr.status)
+            await missionFail('任务失败，更换了源header之后，还是失败，实在没办法了')
           })
       })
       .catch(async errobj => {
         logger.warn('\n更换源url递归处理,catch')
         logger.warn(errobj)
         logger.warn('\n++++ 更换源url递归处理，catch：通知客户端无法进行下去', errobj.status)
-        await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
+        await missionFail('任务失败，更换了源url、源header之后，还是失败，实在没办法了')
       })
   }
 }
@@ -384,6 +382,12 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
   catalogsCharsetIndex++
   let {url, header = htmlHeader[1]} = urlAndHeaderObj
   let superAgentCharset = charset ? superAgent : superAgentTo
+  let endSuperStatus = false
+  let errStatus = 0
+  if (endSuperStatus) {
+    await missionFail('目录更换源header后，还是失败,错误代码:' + errStatus)
+    return false
+  }
   return new Promise((resolve, reject) => {
     superAgentCharset
       .get(url)
@@ -396,14 +400,17 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
             // logger.warn('\n++++ 第七步/C-error 更换heander次数', catalogsCharsetIndex)
             await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex]})// todo 没有charset
             logger.warn('\n++++ 第七步/B-error', err.status || err)
-            // todo
+            // await missionFail('由于header引起的错误,错误代码:' + err.status)
           }
           if (err && err.status === 403) {
             logger.warn('目录被禁用了！')
+            await missionFail('由于目录被禁用了,错误代码:' + err.status)
           }
           // 目录更换源header后，还是失败
           if (catalogsCharsetIndex === htmlHeader.length) {
             reject(err || 'error')
+            errStatus = err.status
+            endSuperStatus = true
           }
         } else {
           logger.warn('\n++++ 第七步/B-success：爬取目录页面状态：' + res.status)
@@ -462,6 +469,7 @@ async function getQiDianNovel (bookName) {
 async function dealNovel (resObj, url, name) {
   logger.warn('dealNoveldealNoveldealNovel', url)
   let {status, host} = resObj// 状态和主机解构
+  let breakErrObj = {}
   return new Promise(async (resolve, reject) => {
     // 9 todo todo  todo 所以需要在此部分执行起点的爬虫方式，并将结果给下面的爬取单章做对比！！！！
     // await getQiDianNovel(name)// 获取起点数据
@@ -473,12 +481,21 @@ async function dealNovel (resObj, url, name) {
     //   })
     // 交叉爬取章节和对比起点数据写入到数据库
     thisCharsetStatus = status// 先存储当前是何种编码的状态 true utf-8,false gbk
+    let catalogErr = false// 如果抓取单章，则跳出抓取目录循环
     await getCatalogs({url}, status)
       .then(async catalog => {
         logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************')
+        // 同步
+        // for (let i = 0; i < catalog.length; i++) {
+        //   if (catalogErr) {
+        //     logger.warn('\n++++ 第九步/4,爬取单章失败,跳出循环')
+        //     // await missionFail('爬取单章失败,跳出循环', breakErrObj.status === undefined ? '' : breakErrObj.status)
+        //     break
+        //   }
+        // }
         // 并发处理
         catalog.forEach(async (i, index) => {
-          await singleNovel(i.href, host, i.title, index, catalog.length || 0, status)
+          await singleNovel(i.href, host, i.title, i, catalog.length || 0, status)
             .then(async single => {
               await logger.warn('~~~~~~~~~~then抓取《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
               let singleData = {
@@ -503,6 +520,12 @@ async function dealNovel (resObj, url, name) {
               await logger.warn('~~~~~~~~~~then得到《' + name + '》单章文章' + i.title + ' End~~~~~~~~~~~~')
             })
             .catch(async errObj => {
+              breakErrObj = errObj
+              // 404/403报错
+              if (errObj && errObj.status) {
+                catalogErr = true
+                return false
+              }
               await logger.warn('~~~~~~~~~~catch得到《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
               let singleData = {
                 name: name || '',
@@ -510,7 +533,7 @@ async function dealNovel (resObj, url, name) {
                 url: i.href || '',
                 host: errObj.host || '',
                 uuid: errObj.index,
-                length: errObj.content.length || 0,
+                length: errObj.content ? errObj.content.length : 0,
                 title: errObj.title || '',
                 timeout: true
               }
@@ -543,8 +566,11 @@ async function dealNovel (resObj, url, name) {
           t++
           logger.warn('\n++++ 第九步/1：并发计时开始:' + t + 's')
         }, 1000)
+        if (catalogErr) {
+          clearInterval(InterTime)
+        }
       })
-    // 假如catch 或者实在是解析章节情况下，将会通知客户端
+      // 假如catch 或者实在是解析章节情况下，将会通知客户端
       .catch(async utf8Error => {
         reject(utf8Error || '爬取章节没有错误？？')
         logger.warn('\n 爬取目录的之后，内容', utf8Error.text)
@@ -609,6 +635,7 @@ async function singleNovel (url, host, title, index, len, charset) {
     const rejectTime = setTimeout(() => {
       logger.warn('\n++++第九步/2：爬取单章超时30s等待完成')
       reject(errObj)
+      clearTimeout(rejectTime)
     }, 30000)
     let superAgentChart = charset ? superAgent : superAgentTo
     superAgentChart
@@ -618,7 +645,9 @@ async function singleNovel (url, host, title, index, len, charset) {
       .end(async (err, res) => {
         if (err && err.status && err.response) {
           logger.warn('\n++++第九步/3：爬取单章获取内容和失败，状态:' + err.status)
-          reject(err)
+          clearTimeout(rejectTime)
+          reject(err)// 如果错误404/403则抛出err
+          await missionFail('爬取章节失败，状态码' + err.status)
         } else {
           const $ = await cheerio.load(res.text)
           content = await $('#content').text() || ''
@@ -644,6 +673,7 @@ const _novel = {
       _dbError(res)
       return false
     }
+    logger.warn(processTask)
     // 存储任务栈，存在的时候，不再进行
     if (Array.isArray(processTask) && processTask.length) {
       _dbError(res, '已有任务进行中，无法进行', processTask)
@@ -672,7 +702,7 @@ const _novel = {
                 obj.bookName = req.query.keyword
                 notifyClient(obj) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
                 getNovel(req.query.keyword)// webSocket返回小说数据，异步任务，不需要await
-                logger.warn('\n++++ 第十一步：完成流程')
+                logger.warn('\n++++ 第十一步 A/succees：完成流程')
               })
               .catch(async errObj => {
                 logger.warn(errObj)
@@ -727,10 +757,13 @@ async function getNovel (novel) {
   await _io('novelData', ob)
 }
 
-async function missionFail () {
-  // 成功执行任务之后，清空任务栈
-  processTask = []
-  await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
+async function missionFail (msg) {
+  await _io('missionFail', {msg: msg || '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
+    .then(res => {
+      // 成功执行任务之后，清空任务栈
+      processTask = []
+      logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程')
+    })
 }
 
 /**
