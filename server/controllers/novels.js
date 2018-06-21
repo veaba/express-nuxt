@@ -572,7 +572,7 @@ async function novelControl (obj, name) {
     logger.warn('\n++++ 第六步：开始对爬取的url处理', obj.url)
     await isCharsetDecode(obj.url)
       .then(async (resobj) => {
-        logger.warn('\n++++ 第七步/1-A-解析编码成功了，then：通知客户端无法进行下去', resobj)
+        logger.warn('\n++++ 第七步/1-A-解析编码成功了，then入参参数：', resobj)
         await dealNovel(resobj, obj.url, name)
           .then(dealRes => {
             // todo
