@@ -9,7 +9,7 @@
  * @updateLog1 无法安装 charset + superAgent +cheerio +superagent-charset(转译模块)  模块，无法进行下一步开发
  * @updateLog2 准备全用promise 来实现正 流程控制，当然需要注意的是对性能的影响
  * @finish 提供webScoket 倒计时下载时间。√，进度条
- * @todo 正在下载的问题，先要比较长度，如果相同，则提示不要再去下载，×
+ * @todo 正在下载的问题，先要比较长度，如果相同，则提示不要再去下载，先去爬取起点的数据，如果查到库里面和起点的数据一样，则直接从库里面返回，不需要去百度查到
  * @finish 为了减少服务器的压力，存在执行的问题，不在提供下载服务，需要等待任务完成。√，完成
  * @todo 并在前端展示服务器当前压力，是否空闲状态，或者繁忙状态，×，仅仅警告无法处理处理已有的请求
  * @finish 写入库，应该异步操作，不需要await 等待顺序写入库 √并发写入 完成
@@ -23,9 +23,9 @@
  * @todo 参考1  可以在https://book.qidian.com/info/3657207 拿到目录的数目
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
-import { NovelModel } from '../model/model'
-import { _dbError, _dbSuccess, _webSocket } from '../functions/functions'
-import { format } from 'date-fns' // 时间格式工具
+import {NovelModel} from '../model/model'
+import {_dbError, _dbSuccess, _webSocket} from '../functions/functions'
+import {format} from 'date-fns' // 时间格式工具
 // import fs from 'fs' // 文件读写模块
 import charset from 'superagent-charset' // 转移模块
 import cheerio from 'cheerio' // 解析字符
@@ -104,7 +104,7 @@ let loopIndex = 0// 递归loop函数执行此处判断，同样是选取值的�
 let loopHeader = 0 // 递归loop函数执行此处判断，用于更换header头部参数
 let loopHeaderStatus = true// header状态
 let loopUrlsStatus = true// url 状态
-let gbkCharsetIndex = 0// gbk 函数的次数
+let catalogsCharsetIndex = 0// gbk 函数的次数
 let isInit = 0
 
 /**
@@ -226,11 +226,7 @@ async function loopCharsetDecodeHeader () {
     await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
     // 此时resobj含有 编码状态、主机、url
       .then(async resobj => {
-        logger.warn('\n更换源url递归处理,then')
-        logger.warn(resobj)
-
         logger.warn('\n++++ 第七步/1-A-解析编码成功了，then：可以进行下去', resobj)
-        logger.warn('resobjresobjresobj', resobj.url)
         dealNovel(resobj, resobj.url)
           .then(dealRes => {
             // todo
@@ -240,8 +236,6 @@ async function loopCharsetDecodeHeader () {
             // todo
             await _io('missionFail', {msg: '任务失败，更换了源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
             logger.warn(dealErr.status)
-            // 成功执行任务之后，清空任务栈
-            processTask = []
           })
       })
       .catch(async errobj => {
@@ -265,7 +259,7 @@ async function loopCharsetDecodeUrl () {
   } else {
     loopUrlsStatus = true
     await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
-      // 此时resobj含有 编码状态、主机、url
+    // 此时resobj含有 编码状态、主机、url
       .then(async resobj => {
         logger.warn('\n更换源url递归处理,then')
         logger.warn(resobj)
@@ -367,7 +361,6 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
           const $1 = await cheerio.load(res.text)
           let objMeta = await Array.from($1('meta'))
           // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
-          logger.warn(typeof objMeta)
           // todo 这里到底干了什么？为什么卡住?？？
           for (let item in objMeta) {
             if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($1(objMeta[item]).attr('content'))) {
@@ -388,7 +381,7 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
  * */
 
 async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
-  gbkCharsetIndex++
+  catalogsCharsetIndex++
   let {url, header = htmlHeader[1]} = urlAndHeaderObj
   let superAgentCharset = charset ? superAgent : superAgentTo
   return new Promise((resolve, reject) => {
@@ -400,14 +393,18 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
         if (err) {
           // todo判断是由于header引起的错误，此处的处理方式应该更换heander
           if (err && err.status === 400) {
-            // logger.warn('\n++++ 第七步/C-error 更换heander次数', gbkCharsetIndex)
-            // getCatalogs({url: url, header: htmlHeader[gbkCharsetIndex]})// todo 没有charset
+            // logger.warn('\n++++ 第七步/C-error 更换heander次数', catalogsCharsetIndex)
+            await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex]})// todo 没有charset
             logger.warn('\n++++ 第七步/B-error', err.status || err)
+            // todo
           }
           if (err && err.status === 403) {
             logger.warn('目录被禁用了！')
           }
-          reject(err || 'error')
+          // 目录更换源header后，还是失败
+          if (catalogsCharsetIndex === htmlHeader.length) {
+            reject(err || 'error')
+          }
         } else {
           logger.warn('\n++++ 第七步/B-success：爬取目录页面状态：' + res.status)
           const $1 = await cheerio.load(res.text)
@@ -464,10 +461,6 @@ async function getQiDianNovel (bookName) {
  * */
 async function dealNovel (resObj, url, name) {
   logger.warn('dealNoveldealNoveldealNovel', url)
-  if (!url) {
-    logger.warn('不再执行！！！！')
-    return false
-  }
   let {status, host} = resObj// 状态和主机解构
   return new Promise(async (resolve, reject) => {
     // 9 todo todo  todo 所以需要在此部分执行起点的爬虫方式，并将结果给下面的爬取单章做对比！！！！
@@ -480,15 +473,14 @@ async function dealNovel (resObj, url, name) {
     //   })
     // 交叉爬取章节和对比起点数据写入到数据库
     thisCharsetStatus = status// 先存储当前是何种编码的状态 true utf-8,false gbk
-    logger.warn('urlurlurlurl', url)
     await getCatalogs({url}, status)
       .then(async catalog => {
-        logger.warn('\n++++ 第八步/1：检测到是 utf-8 编码****************')
+        logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************')
         // 并发处理
         catalog.forEach(async (i, index) => {
           await singleNovel(i.href, host, i.title, index, catalog.length || 0, status)
             .then(async single => {
-              await logger.warn('then抓取《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
+              await logger.warn('~~~~~~~~~~then抓取《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
               let singleData = {
                 name: name || '',
                 content: single || '',
@@ -552,7 +544,7 @@ async function dealNovel (resObj, url, name) {
           logger.warn('\n++++ 第九步/1：并发计时开始:' + t + 's')
         }, 1000)
       })
-      // 假如catch 或者实在是解析章节情况下，将会通知客户端
+    // 假如catch 或者实在是解析章节情况下，将会通知客户端
       .catch(async utf8Error => {
         reject(utf8Error || '爬取章节没有错误？？')
         logger.warn('\n 爬取目录的之后，内容', utf8Error.text)
@@ -560,6 +552,7 @@ async function dealNovel (resObj, url, name) {
       })
   })
 }
+
 /**
  * @desc 目录抓取和文章抓取主控中心
  * @params obj
@@ -574,18 +567,21 @@ async function novelControl (obj, name) {
       .then(async (resobj) => {
         logger.warn('\n++++ 第七步/1-A-解析编码成功了，then入参参数：', resobj)
         await dealNovel(resobj, obj.url, name)
+        // ob={count,failureTotal}
           .then(dealRes => {
             // todo
             logger.warn(dealRes)
+            resolve(dealRes)
           })
           .catch(dealErr => {
             // todo
+            reject(dealErr)
             logger.warn(dealErr)
           })
       })
       .catch(async reje => {
         logger.warn('\n++++ 第七步/1-B-解析编码失败了，catch：通知客户端无法进行下去', reje.status)
-        await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
+        await missionFail()
       })
   })
 }
@@ -663,7 +659,8 @@ const _novel = {
     // 异步任务
     await searchNovel(req.query.keyword)
       .then(async data => {
-        logger.warn('\n++++ 第四步/1：得到真实url地址数组' + arrUrls.length + '个', data)// 打印url数据
+        logger.warn('\n++++ 第四步/1：得到真实url地址数组' + arrUrls.length + '个')
+        console.table(data)// 打印url数据
         // 过滤为空的url，因为并发，可能失败，此处采取同步处理
         // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
         for (let item of data) {
@@ -676,6 +673,10 @@ const _novel = {
                 notifyClient(obj) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
                 getNovel(req.query.keyword)// webSocket返回小说数据，异步任务，不需要await
                 logger.warn('\n++++ 第十一步：完成流程')
+              })
+              .catch(async errObj => {
+                logger.warn(errObj)
+                await missionFail()
               })
             break
           }
@@ -724,6 +725,12 @@ async function getNovel (novel) {
     errorCode: 0
   }
   await _io('novelData', ob)
+}
+
+async function missionFail () {
+  // 成功执行任务之后，清空任务栈
+  processTask = []
+  await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
 }
 
 /**
