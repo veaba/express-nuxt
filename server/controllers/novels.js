@@ -35,6 +35,31 @@ import _io from '../server'
 const superAgentTo = charset(superAgent) // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
 const logger = require('tracer').console() // console追踪库
 
+// search 起点
+const qiDianHeader = [{
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Accept-Language': 'zh-CN,zh;q=0.9',
+  'Cache-Control': 'no-cache',
+  'Connection': 'keep-alive',
+  'Host': 'www.qidian.com',
+  'Pragma': 'no-cache',
+  'Upgrade-Insecure-Requests': 1,
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+},
+{
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Accept-Language': 'zh-CN,zh;q=0.9',
+  'Cache-Control': 'no-cache',
+  'Connection': 'keep-alive',
+  'Cookie': '_csrfToken=qy4Rd0tr9OeOPGeTbBmP5wFM4mwEehh4nArJXzap; newstatisticUUID=1529775060_1919789918',
+  'Host': 'read.qidian.com',
+  'Pragma': 'no-cache',
+  'Upgrade-Insecure-Requests': 1,
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+}
+]
 /**
  * @desc 自定义的请求头参数，status400/403的时候去变更这个索引值，重新set header 的源，一般是由于host 不对所致
  * */
@@ -440,22 +465,110 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
       })
   })
 }
-
 /**
- * @desc 获取起点数据
+ * @desc 查到起点数据
+ * @param name 书名
  * */
-async function getQiDianNovel (bookName) {
+async function searchQiDianBook (name) {
   return new Promise((resolve, reject) => {
     superAgent
-      .get()
-      .set()
+      .get('https://www.qidian.com/search?kw=' + encodeURI(name))
+      .set(qiDianHeader[0])
       .end(async (err, res) => {
         if (err) {
-          const a = 'error'
-          logger.warn(err.status)
-          reject(a)
+          logger.warn(err)
+        } else {
+          logger.warn('https://www.qidian.com/search?kw=' + encodeURI(name))
+          // logger.warn(res.text)
+          const $ = await cheerio.load(res.text)
+          let theBookElement = $('#result-list li:nth-child(1) > div.book-mid-info > h4 > a')
+          let ob = {
+            bookId: '',
+            bookUrl: ''
+          }
+          if ($(theBookElement).children().text() === name) {
+            ob.bookId = $(theBookElement).attr('data-bid')
+            ob.bookUrl = $(theBookElement).attr('href')
+            resolve(ob)
+          } else {
+            // 如果找到还是跳出空对象
+            reject(ob)
+          }
         }
-        resolve(1)
+      })
+  })
+}
+/**
+ * @desc 获取起点章节目录+uuid数据
+ * */
+async function getQiDianNovel (bookName) {
+  let bookObj = {}
+  await searchQiDianBook(bookName)
+    .then(resObj => {
+      bookObj = resObj
+    })
+    .catch(errObj => {
+      bookObj = errObj
+    })
+  logger.warn(bookObj)
+  // 如果没找到，则跳出，不会在继续执行了
+  if (!bookObj.bookId) {
+    await missionFail('抱歉，起点无法搜到该小说')
+    return false
+  }
+
+  logger.warn(bookObj)
+  // 构造起点数据
+  let novelObj = {
+    chapterTotalCnt: 0, // 总章数
+    data: [
+    ]
+  }
+  return new Promise(async (resolve, reject) => {
+    superAgent
+      .get('https://read.qidian.com/ajax/book/category?bookId=' + bookObj.bookId)
+      .set(qiDianHeader[1])
+      .end(async (err, res) => {
+        if (err) {
+          logger.warn(err.status)
+          reject(err)
+        } else {
+          let sourceDataText = await res.text// 原始起点章节数据
+          let sourceDataJson = {}
+          try {
+            sourceDataJson = await JSON.parse(sourceDataText)// new 可能会有解析失败的bug
+          } catch (e) {
+            reject(e)
+          }
+          // logger.warn(typeof sourceDataJson)
+          // logger.warn(sourceDataJson.data)
+          let sourceData = sourceDataJson.data
+          logger.warn(sourceData.vs.length)
+          // logger.warn(sourceData)
+          console.time('testForEach')
+          sourceData.vs.forEach(async (items, indexs) => {
+            items.cs.forEach(async (item, index) => {
+              // 构造起点小说目录对象
+              let novelCatalogOb = {
+                uuid: item.uuid, // uuid
+                qiDianUrl: item.cU, // cU url
+                title: item.cN, // cN 标题
+                updateTime: item.uT, // uT 更新时间
+                reel: items.vN, // 卷名vN
+                isVip: item.sS ? 0 : 1, // 起点：sS 1为免费 0为vip，数据库 1vip、0免费
+                length: item.cnt || 0// cnt  字数
+              }
+              let isHas = await NovelModel.findOne({title: item.cN, uuid: item.uuid}).count()
+              let saveQiDian = new NovelModel(novelCatalogOb)
+              // 如果不存在，则保存
+              if (!isHas) {
+                await saveQiDian.save()
+              }
+            })
+          })
+          console.timeEnd('testForEach')
+          resolve(novelObj)
+        }
       })
   })
 }
@@ -472,27 +585,20 @@ async function dealNovel (resObj, url, name) {
   let breakErrObj = {}
   return new Promise(async (resolve, reject) => {
     // 9 todo todo  todo 所以需要在此部分执行起点的爬虫方式，并将结果给下面的爬取单章做对比！！！！
-    // await getQiDianNovel(name)// 获取起点数据
-    //   .then(novelData => {
-    //     logger.warn(novelData)
-    //   })
-    //   .catch(novelError => {
-    //     logger.warn(novelError)
-    //   })
+    logger.warn(111)
+    await getQiDianNovel(name)// 获取起点数据
+      .then(novelData => {
+        logger.warn(novelData)
+      })
+      .catch(novelError => {
+        logger.warn(novelError)
+      })
     // 交叉爬取章节和对比起点数据写入到数据库
     thisCharsetStatus = status// 先存储当前是何种编码的状态 true utf-8,false gbk
     let catalogErr = false// 如果抓取单章，则跳出抓取目录循环
     await getCatalogs({url}, status)
       .then(async catalog => {
         logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************')
-        // 同步
-        // for (let i = 0; i < catalog.length; i++) {
-        //   if (catalogErr) {
-        //     logger.warn('\n++++ 第九步/4,爬取单章失败,跳出循环')
-        //     // await missionFail('爬取单章失败,跳出循环', breakErrObj.status === undefined ? '' : breakErrObj.status)
-        //     break
-        //   }
-        // }
         // 并发处理
         catalog.forEach(async (i, index) => {
           await singleNovel(i.href, host, i.title, i, catalog.length || 0, status)
@@ -687,30 +793,37 @@ const _novel = {
     }
     await _dbSuccess(res, msg, resData)
     // 异步任务
-    await searchNovel(req.query.keyword)
-      .then(async data => {
-        logger.warn('\n++++ 第四步/1：得到真实url地址数组' + arrUrls.length + '个')
-        console.table(data)// 打印url数据
-        // 过滤为空的url，因为并发，可能失败，此处采取同步处理
-        // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
-        for (let item of data) {
-          if (item.url) {
-            logger.warn('\n++++ 第五步：不为空url判断,完成url爬取阶段，开始进入小说主逻辑', item)
-            await novelControl(item, req.query.keyword)
-              .then(async obj => {
-                obj.startTime = resData.start
-                obj.bookName = req.query.keyword
-                notifyClient(obj) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
-                getNovel(req.query.keyword)// webSocket返回小说数据，异步任务，不需要await
-                logger.warn('\n++++ 第十一步 A/succees：完成流程')
-              })
-              .catch(async errObj => {
-                logger.warn(errObj)
-                await missionFail()
-              })
-            break
-          }
-        }
+    // await searchNovel(req.query.keyword)
+    //   .then(async data => {
+    //     logger.warn('\n++++ 第四步/1：得到真实url地址数组' + arrUrls.length + '个')
+    //     console.table(data)// 打印url数据
+    //     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
+    //     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
+    //     for (let item of data) {
+    //       if (item.url) {
+    //         logger.warn('\n++++ 第五步：不为空url判断,完成url爬取阶段，开始进入小说主逻辑', item)
+    //         await novelControl(item, req.query.keyword)
+    //           .then(async obj => {
+    //             obj.startTime = resData.start
+    //             obj.bookName = req.query.keyword
+    //             notifyClient(obj) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
+    //             getNovel(req.query.keyword)// webSocket返回小说数据，异步任务，不需要await
+    //             logger.warn('\n++++ 第十一步 A/succees：完成流程')
+    //           })
+    //           .catch(async errObj => {
+    //             logger.warn(errObj)
+    //             await missionFail()
+    //           })
+    //         break
+    //       }
+    //     }
+    //   })
+    //   .catch(err => {
+    //     logger.warn(err)
+    //   })
+    await getQiDianNovel(req.query.keyword)
+      .then(res => {
+        logger.warn(res)
       })
       .catch(err => {
         logger.warn(err)
