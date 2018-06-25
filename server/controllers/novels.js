@@ -169,7 +169,7 @@ async function searchNovel (keyword) {
           // 且成功或失败都会处理数组组装
           await realUrl(url, keyword)
             .then(async (realUrlData) => {
-              logger.warn('\n++++ 第三步/1-A 真实数据 then，有值的url', realUrlData)
+              // logger.warn('\n++++ 第三步/1-A 真实数据 then，有值的url', realUrlData)
               let obj = {
                 title, url: realUrlData
               }
@@ -177,7 +177,7 @@ async function searchNovel (keyword) {
               return realUrlData
             })
             .catch(async errUrl => {
-              logger.warn('\n++++ 第三步/1-B 真实数据 catch，空的url', errUrl)
+              // logger.warn('\n++++ 第三步/1-B 真实数据 catch，空的url', errUrl)
               let obj = {
                 title, url: errUrl
               }
@@ -234,11 +234,10 @@ async function realUrl (url, keyword) {
   }
   let stringUrl = invalidUrlsArray.join('|')
   let regExpUrl = new RegExp(stringUrl)
-  logger.warn('\n++++ 第三步/1：已存在的无效/非法的url，正则,用于下一步匹配', regExpUrl)
   let errorReject = ''
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
-      logger.warn('\n++++ 第三步：再次去异步获取真实url地址，设置5s超时')
+      logger.warn('\n++++ 第三步：再次去异步获取真实url地址，设置5s超时结束!reject空字符串')
       reject(errorReject)
     }, 5000)
     superAgent
@@ -257,6 +256,7 @@ async function realUrl (url, keyword) {
         }
         clearTimeout(rejectTime)
       })
+    clearTimeout(rejectTime)
   })
 }
 
@@ -274,9 +274,10 @@ async function loopCharsetDecodeHeader () {
     await logger.warn(arrUrls[loopIndex], loopHeader, loopIndex, arrUrls.length)
     loopHeaderStatus = true
     await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
-    // 此时resobj含有 编码状态、主机、url
+      // 此时resobj含有 编码状态、主机、url
       .then(async resobj => {
-        logger.warn('\n++++ 第七步/1-A-解析编码成功了，then：可以进行下去', resobj)
+        logger.warn(resobj)// todo为什么会false???
+        logger.warn('\n++++ 第七步/1-A-循环变更请求头header解析编码成功了，then：可以进行下去', resobj)
         dealNovel(resobj, resobj.url)
           .then(dealRes => {
             // todo
@@ -312,7 +313,7 @@ async function loopCharsetDecodeUrl () {
       .then(async resobj => {
         logger.warn('\n更换源url递归处理,then')
         logger.warn(resobj)
-        logger.warn('\n++++ 第七步/1-A-解析编码成功了，then：可以进行下去', resobj)
+        logger.warn('\n++++ 第七步/1-A-循环变更地址url解析编码成功了，then：可以进行下去', resobj)
         logger.warn('loopCharsetDecodeUrl', resobj)
         dealNovel(resobj, resobj.url)
           .then(async dealRes => {
@@ -353,11 +354,14 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
     logger.warn('\n++++ 不存在url，无法继续')
     return false
   }
-  if (isCharsetDecodeIndex > arrUrls.length) {
-    logger.warn('\n++++ error 函数执行超出url地址数组的长度\n')
+  // todo 这里打断了程序进行
+  if (isCharsetDecodeIndex > htmlHeader.length) {
+    logger.warn('\n++++ error 函数执行超出header的地址数组长度,打断判断编码函数！\n')
+    await missionFail('已超出请求头长度，请联系管理员处理该问题')
     return false
   }
   logger.warn('\n++++ 第七步 判断网站的编码是gbk还是utf-8的次数' + isCharsetDecodeIndex + '\n', url)
+  logger.warn(header)
   return new Promise((resolve, reject) => {
     superAgent
       .get(url)
@@ -401,11 +405,13 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
             logger.warn(typeof objMeta)
             for (let item in objMeta) {
               if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($1(objMeta[item]).attr('content'))) {
-                resolve({status: false, host, url})// false 走gbk
+                console.info(111)
+                resolve({status: false, host: host, url: url})// false 走gbk
                 break
               }
             }
-            resolve({status: true, host, url})// 因为前面抛出catch，所以，此处的Resolve无效
+            console.info(222)
+            resolve({status: true, host: host, url: url})// 因为前面抛出catch，所以，此处的Resolve无效
           }
         } else {
           // 上面会陷入死循环,如果
@@ -417,11 +423,13 @@ async function isCharsetDecode (url, header = htmlHeader[1]) {
           // todo 这里到底干了什么？为什么卡住?？？
           for (let item in objMeta) {
             if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($1(objMeta[item]).attr('content'))) {
-              resolve({status: false, host, url})// false 走gbk
+              console.info(333)
+              resolve({status: false, host: host, url: url})// false 走gbk
               break
             }
           }
-          resolve({status: true, host, url})// 因为前面抛出catch，所以，此处的Resolve无效
+          console.info(444)
+          resolve({status: true, host: host, url: url})// 因为前面抛出catch，所以，此处的Resolve无效
         }
       })
   })
@@ -596,6 +604,8 @@ async function getQiDianNovelPreview (url) {
 }
 /**
  * @desc 获取起点章节目录+uuid数据
+ * @resolve 如果有值，则说明不需要继续更新
+ * @reject 如果为0，则说明需要更新，走搜索小说爬取内容步骤
  * */
 async function getQiDianNovel (bookName) {
   let bookObj = {}
@@ -676,10 +686,10 @@ async function getQiDianNovel (bookName) {
           let novelCount = await NovelModel.find({name: bookName}).count()
           // 总长度比较
           if (novelCount === sourceData.chapterTotalCnt) {
-            logger.warn(novelCount, sourceData.chapterTotalCnt)
+            logger.warn('\n 数据库查到的长度等于搜索的长度，则说明是最新的')
             resolve(novelCount)
           } else {
-            logger.warn(novelCount, sourceData.chapterTotalCnt)
+            logger.warn('\n 数据库查到的长度不等于搜索的长度，则说明是可继续下一步的')
             resolve(0)
           }
         }
@@ -878,7 +888,6 @@ const _novel = {
       _dbError(res)
       return false
     }
-    logger.warn(processTask)
     // 存储任务栈，存在的时候，不再进行
     if (Array.isArray(processTask) && processTask.length) {
       _dbError(res, '已有任务进行中，无法进行', processTask)
@@ -891,33 +900,34 @@ const _novel = {
       now: new Date()
     }
     await _dbSuccess(res, msg, resData)
-    let resolveObj = 0// //todo 爬取点成功的章节长度
+    let latestNumber = 0// 0 则说明 可以继续的，否则直接返回客户端，不需要继续
     // 1、跑起点章节任务，并写入免费章节内容
     await getQiDianNovel(req.query.keyword)
       .then(novelData => {
-        resolveObj = novelData
+        latestNumber = novelData
         logger.warn(novelData)
       })
       .catch(novelError => {
         logger.warn(novelError)
-        resolveObj = novelError
+        latestNumber = novelError
       })
-    // 2、处理已更新到最新状态。如果resolveObj 起点返回的章节数，等于数据库中查到的数目，则直接返回结果到前端，不需要再去搜索了
-    let isNoUpdate = await NovelModel.find({name: req.query.keyword, $where: 'this.content.length>1'}).count()
-    let novelCount = await NovelModel.find({name: req.query.keyword}).count()
+    // 2、getQiDianNovel 会返回 0或者总章节数
     // 3、处理已更新到最新状态。如果全部内容都有值，且有值的个数等于总章节数，则直接返回成功结果给客户端，下面不需要继续爬取
-    if (isNoUpdate === novelCount && novelCount) {
+    // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
+    let isNoUpdate = await NovelModel.find({name: '圣墟', $where: 'this.content.length>1'}).count()
+    if (latestNumber && isNoUpdate === latestNumber) {
       let ob = {
         bookName: req.query.keyword,
         startTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
-        count: novelCount,
+        count: latestNumber,
         failureTotal: 0
       }
-      await notifyClient(ob)
+      notifyClient(ob)// 告诉结果
+      getNovel(req.query.keyword)// webSocket返回小说数据，异步任务，不需要await
       return false
     }
     // 4、如果爬取的章节结果实在太小，小于20章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
-    if (novelCount < 20) {
+    if (latestNumber < 20) {
       await missionFail('当前检测到《' + '》章节目录小于20，被系统拒绝该任务，抱歉！')
       return false
     }
@@ -925,8 +935,6 @@ const _novel = {
     await searchNovel(req.query.keyword)
       .then(async data => {
         logger.warn('\n++++ 第四步/1：得到真实url地址数组' + arrUrls.length + '个', arrUrls)
-        logger.warn('\n++++ searchUrl 部分百度搜索的结果', data)
-        console.table(data)// 打印url数据
         // 过滤为空的url，因为并发，可能失败，此处采取同步处理
         // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
         for (let item of data) {
