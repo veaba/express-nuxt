@@ -33,6 +33,7 @@ import cheerio from 'cheerio' // 解析字符
 import superAgent from 'superagent'
 import _io from '../server'
 import socket from '../../plugins/socket'
+
 const superAgentTo = charset(superAgent) // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
 const logger = require('tracer').console() // console追踪库
 
@@ -341,6 +342,7 @@ async function loopCharsetDecodeUrl () {
       })
   }
 }
+
 /**
  * @desc 判断网站的编码是gbk还是utf-8
  * @return Boolean gbk false;utf-8  true，以及主机
@@ -352,10 +354,10 @@ async function loopCharsetDecodeUrl () {
  * @desc reject 是耍了很多次手段换header+换url 都失败都，reject，此时，下一个流水线，理应终止程序进行！！！
  * @desc resolve 只要一个成功，则将流水线继续下去。！！！！
  * @desc 如果只有一个成功，则会resolve，或者一直会陷入reject，知道超时或者失败没办法解析之后自动reject去告诉程序
+ * @desc 带了header 反而出错
  * */
 async function isCharsetDecode (url, header) {
   isCharsetDecodeIndex++
-  logger.warn(isCharsetDecodeIndex)
   // 如果不存在url，则换源
   if (!url) {
     logger.warn('\n++++ 不存在url，无法继续')
@@ -370,7 +372,7 @@ async function isCharsetDecode (url, header) {
     await missionFail('已超出请求头长度，请联系管理员处理该问题')
     return false
   }
-  logger.warn('isCharsetDecodeisCharsetDecodeisCharsetDecode', header)
+  // header
   return new Promise((resolve, reject) => {
     superAgent
       .get(url)
@@ -378,8 +380,37 @@ async function isCharsetDecode (url, header) {
       .end(async (err, res) => {
         if (err) {
           isInit++
-          logger.warn('\n+++++ 识别编码失败')
-          reject(err)
+          logger.warn('\n+++++ 第' + isCharsetDecodeIndex + '次,识别编码失败')
+          // 递归处理。直到catch
+          await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
+            .then(async loopRes => {
+              let host = loopRes.request && loopRes.request.host// 站方的主机名称
+              const $1 = await cheerio.load(loopRes.text)
+              let objMeta = await Array.from($1('meta'))
+              // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
+              let isTrue = true
+              for (let item in objMeta) {
+                if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($1(objMeta[item]).attr('content'))) {
+                  isTrue = false
+                  resolve({status: false, host: host, url: url})// false 走gbk
+                  break
+                }
+              }
+              if (isTrue) {
+                resolve({status: true, host: host, url: url})// 因为前面抛出catch，所以，此处的Resolve无效
+              }
+            })
+            .catch(loopErr => {
+              reject(loopErr)
+            })
+          if (htmlHeader.length === isCharsetDecodeIndex) {
+            logger.warn(htmlHeader, isCharsetDecodeIndex)
+            logger.warn('1111111111')
+            reject(err)
+          }
+          if (!err.status) {
+            reject(err)
+          }
         } else {
           logger.warn('\n++++ 第七步/1-success：对该url进行爬取，判断何种编码', url, '状态编码：' + res.status)
           let host = res.request.host// 站方的主机名称
@@ -794,14 +825,19 @@ async function dealNovel (resObj, url, name) {
  * */
 async function novelControl (obj, name) {
   novelControlIndex++
-  if (!obj.url || !name) {
+  logger.warn(obj, name)
+  if (!obj || !name) {
+    logger.warn('\n url 或name不存在')
+    return false
+  }
+  if (!obj.url) {
     logger.warn('\n url 或name不存在')
     return false
   }
   return new Promise(async (resolve, reject) => {
     logger.warn('\n++++ 第六步：开始对爬取的url处理', obj.url)
     let charsetDecodeData = {}
-    let charsetDecodeErrorData = {}// catch 出来的报错信息
+    let charsetDecodeErrorData = null// catch 出来的报错信息
     // todo ！！！无法在catch里面再递归？
     await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
       .then(async (resobj) => {
@@ -809,38 +845,29 @@ async function novelControl (obj, name) {
         logger.warn('\n++++ 第七步/1-A-解析编码成功了，then入参参数：', resobj)
       })
       .catch(async reje => {
-        if (reje.status === 400) {
-          // 1.更改header
-          loopHeader++
-        } else if (reje.status === 403) {
-          // 2.更换url
-          loopIndex++
-          logger.warn(403)
-        } else {
-          console.info('socket挂掉了！！！')
-          logger.warn('不是404 或者 400')
-        }
         charsetDecodeErrorData = reje
-        logger.warn(reje)
       })
-    logger.warn(charsetDecodeErrorData)
-    function loop () {
-
+    logger.warn(charsetDecodeErrorData.status)
+    // 可能存在无法链接等原因所致
+    if (charsetDecodeErrorData && !charsetDecodeErrorData.status) {
+      await missionFail('解码错误，无法继续,由于一些未知的原因导致!')
+      return false
     }
-    logger('232222', charsetDecodeData)
-    return
-    // if (loopIndex === arrUrls.length && loopHeader === htmlHeader.length) {
-    //   await missionFail('更换了header+url后依然无法爬取，去联系管理员')
-    // }
-    await dealNovel(charsetDecodeData, obj.url, name)
-      .then(dealRes => {
-        logger.warn(dealRes)
-        resolve(dealRes)
-      })
-      .catch(dealErr => {
-        reject(dealErr)
-        logger.warn(dealErr)
-      })
+    // 可能是404/403/400等错误
+    if (charsetDecodeErrorData && charsetDecodeErrorData.status) {
+      await missionFail('解码错误，无法继续，错误代码：', charsetDecodeErrorData.status)
+      return false
+    }
+    logger.warn('232222', charsetDecodeData)
+    // await dealNovel(charsetDecodeData, obj.url, name)
+    //   .then(dealRes => {
+    //     logger.warn(dealRes)
+    //     resolve(dealRes)
+    //   })
+    //   .catch(dealErr => {
+    //     reject(dealErr)
+    //     logger.warn(dealErr)
+    //   })
   })
 }
 
@@ -962,8 +989,8 @@ const _novel = {
     //   })
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
-    // todo
-    arrUrls = [{title: '圣墟最新章节_圣墟无弹窗_笔趣阁', url: 'http://www.biqukan.com/0_178/'}]
+    // todo http://www.biqukan.com 时好时坏！
+    // arrUrls = [{title: '圣墟最新章节_圣墟无弹窗_笔趣阁', url: 'http://www.biqukan.com/0_178/'}]
     await novelControl(arrUrls[novelControlIndex], req.query.keyword)
       .then(async obj => {
         logger.warn(obj)
@@ -976,11 +1003,7 @@ const _novel = {
       .catch(async errObj => {
         logger.warn(errObj)
         // 自动更换百度url
-        if (errObj && novelControl < arrUrls.length) {
-          await novelControl(arrUrls[novelControlIndex], req.query.keyword)
-        } else {
-          await missionFail()
-        }
+        // todo
       })
   }
 }
