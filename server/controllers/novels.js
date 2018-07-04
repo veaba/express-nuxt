@@ -311,26 +311,32 @@ async function loopCharsetDecodeHeader () {
 async function loopCharsetDecodeUrl () {
   await logger.warn('\n++++ warn 在执行更换源URL部分 \n')
   loopIndex++
-  if (loopIndex > arrUrls.length) {
-    logger.warn('\n****** 警告！警告，URL参数已超出，请终止程序，排除异常的源URL!\n')
-    loopUrlsStatus = false
-  } else {
-    loopUrlsStatus = true
-    await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
-	  // todo
-    // // 此时resobj含有 编码状态、主机、url
-    // .then(async resobj => {
-    //   logger.warn('\n更换源url递归处理,then')
-    //   logger.warn(resobj)
-    //   logger.warn('\n++++ 第七步/1-A-循环变更地址url解析编码成功了，then：可以进行下去', resobj)
-    // })
-    // .catch(async errobj => {
-    //   logger.warn('\n更换源url递归处理,catch')
-    //   logger.warn(errobj)
-    //   logger.warn('\n++++ 更换源url递归处理，catch：通知客户端无法进行下去', errobj.status)
-    //   await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
-    // })
-  }
+  return new Promise(async (resolve, reject) => {
+    if (loopIndex > arrUrls.length) {
+      logger.warn('\n****** 警告！警告，URL参数已超出，请终止程序，排除异常的源URL!\n')
+      loopUrlsStatus = false
+    } else {
+      loopUrlsStatus = true
+      await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
+      // todo
+      // // 此时resobj含有 编码状态、主机、url
+        .then(async resobj => {
+          logger.warn('\n更换源url递归处理,then')
+          logger.warn(resobj)
+          logger.warn('\n++++ 第七步/1-A-循环变更地址url解析编码成功了，then：可以进行下去', resobj)
+	        resolve(resobj)
+	        return resobj
+        })
+        .catch(async errobj => {
+          logger.warn('\n更换源url递归处理,catch')
+          logger.warn(errobj)
+          logger.warn('\n++++ 更换源url递归处理，catch：通知客户端无法进行下去', errobj.status)
+          await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
+	        reject(errobj)
+          return errobj
+        })
+    }
+  })
 }
 
 /**
@@ -524,12 +530,6 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           let checkNumber = 0 // 如果等于5，则说明取的章节是正确的，如果小于5，则说明当前取的目录url是不对，则需要更换url源
           for (let i = 0; i < 5; i++) {
             let isTitle = await NovelModel.find({title: subLenArr[i].title}).count()
-	            .then(t => {
-		            console.info(t)
-	            })
-	            .catch(e => {
-		            console.info(e)
-	            })
             if (isTitle) {
               checkNumber++
             }
@@ -551,6 +551,12 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
             logger.warn('\n++++ 第七步/C -爬取的页面资源不准确，即将更换URL源')
 	          // todo 可能有问题
 	          await loopCharsetDecodeUrl()// 更换源url
+		          .then(loopRes => {
+		          	logger.warn(loopRes)
+		          })
+		          .catch(loopErr => {
+			          logger.warn(loopErr)
+		          })
           }
         }
       })
