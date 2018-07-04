@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars,no-const-assign */
+/* eslint-disable no-unused-vars,no-const-assign,no-mixed-spaces-and-tabs */
 /***********************
  * @name JS
  * @author Jo.gel
@@ -24,9 +24,9 @@
  * @todo 后续在建立小说关联库，通过小说情节、小说名字、作者名字、主角、配角建立关系库
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
-import { NovelModel, NovelBadUrlModel } from '../model/model'
-import { _dbError, _dbSuccess, _webSocket } from '../functions/functions'
-import { format } from 'date-fns' // 时间格式工具
+import {NovelModel, NovelBadUrlModel} from '../model/model'
+import {_dbError, _dbSuccess, _webSocket} from '../functions/functions'
+import {format} from 'date-fns' // 时间格式工具
 // import fs from 'fs' // 文件读写模块
 import charset from 'superagent-charset' // 转移模块
 import cheerio from 'cheerio' // 解析字符
@@ -140,7 +140,7 @@ const ELEMENT = {
   dd: 0,
   dt: 0
 }
-let thisCharsetStatus = false
+let thisCharsetStatus = false// 先存储当前是何种编码的状态 true utf-8,false gbk
 // element key值数组
 const ELEMENTKeys = Object.keys(ELEMENT)
 
@@ -317,29 +317,19 @@ async function loopCharsetDecodeUrl () {
   } else {
     loopUrlsStatus = true
     await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
-    // 此时resobj含有 编码状态、主机、url
-      .then(async resobj => {
-        logger.warn('\n更换源url递归处理,then')
-        logger.warn(resobj)
-        logger.warn('\n++++ 第七步/1-A-循环变更地址url解析编码成功了，then：可以进行下去', resobj)
-        logger.warn('loopCharsetDecodeUrl', resobj)
-        dealNovel(resobj, resobj.url, processTask[0])
-          .then(async dealRes => {
-            // todo
-            logger.warn(dealRes.status)
-          })
-          .catch(async dealErr => {
-            // todo
-            logger.warn(dealErr.status)
-            await _io('missionFail', {msg: '任务失败，更换了源url之后，还是失败，实在没办法了', data: [], errorCode: 1})
-          })
-      })
-      .catch(async errobj => {
-        logger.warn('\n更换源url递归处理,catch')
-        logger.warn(errobj)
-        logger.warn('\n++++ 更换源url递归处理，catch：通知客户端无法进行下去', errobj.status)
-        await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
-      })
+	  // todo
+    // // 此时resobj含有 编码状态、主机、url
+    // .then(async resobj => {
+    //   logger.warn('\n更换源url递归处理,then')
+    //   logger.warn(resobj)
+    //   logger.warn('\n++++ 第七步/1-A-循环变更地址url解析编码成功了，then：可以进行下去', resobj)
+    // })
+    // .catch(async errobj => {
+    //   logger.warn('\n更换源url递归处理,catch')
+    //   logger.warn(errobj)
+    //   logger.warn('\n++++ 更换源url递归处理，catch：通知客户端无法进行下去', errobj.status)
+    //   await _io('missionFail', {msg: '任务失败，更换了源url、源header之后，还是失败，实在没办法了', data: [], errorCode: 1})
+    // })
   }
 }
 
@@ -381,33 +371,33 @@ async function isCharsetDecode (url, header) {
         if (err) {
           isInit++
           logger.warn('\n+++++ 第' + isCharsetDecodeIndex + '次,识别编码失败')
-          // 递归处理。直到catch
-          await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
-            .then(async loopRes => {
-              let host = loopRes.request && loopRes.request.host// 站方的主机名称
-              const $1 = await cheerio.load(loopRes.text)
-              let objMeta = await Array.from($1('meta'))
-              // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
-              let isTrue = true
-              for (let item in objMeta) {
-                if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($1(objMeta[item]).attr('content'))) {
-                  isTrue = false
-                  resolve({status: false, host: host, url: url})// false 走gbk
-                  break
-                }
-              }
-              if (isTrue) {
-                resolve({status: true, host: host, url: url})// 因为前面抛出catch，所以，此处的Resolve无效
-              }
-            })
-            .catch(loopErr => {
-              reject(loopErr)
-            })
-          if (htmlHeader.length === isCharsetDecodeIndex) {
-            logger.warn(htmlHeader, isCharsetDecodeIndex)
-            logger.warn('1111111111')
-            reject(err)
-          }
+          // todo递归处理。直到catch
+          // await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
+          //   .then(async loopRes => {
+          //     let host = loopRes.request && loopRes.request.host// 站方的主机名称
+          //     const $1 = await cheerio.load(loopRes.text)
+          //     let objMeta = await Array.from($1('meta'))
+          //     // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
+          //     let isTrue = true
+          //     for (let item in objMeta) {
+          //       if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($1(objMeta[item]).attr('content'))) {
+          //         isTrue = false
+          //         resolve({status: false, host: host, url: url})// false 走gbk
+          //         break
+          //       }
+          //     }
+          //     if (isTrue) {
+          //       resolve({status: true, host: host, url: url})// 因为前面抛出catch，所以，此处的Resolve无效
+          //     }
+          //   })
+          //   .catch(loopErr => {
+          //     reject(loopErr)
+          //   })
+          // if (htmlHeader.length === isCharsetDecodeIndex) {
+          //   logger.warn(htmlHeader, isCharsetDecodeIndex)
+          //   logger.warn('1111111111')
+          //   reject(err)
+          // }
           if (!err.status) {
             reject(err)
           }
@@ -512,7 +502,7 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           let chapters = $1('body').find(ELEMENTKeys[indexMax])
           let catalogsArr = [] // 组装目录的title 和 href路径
           // 组装分类数组
-          console.time('testEach')
+          console.time('chapters Each:')
           // 只需要组装vip章节即可，过滤非vip章节
           chapters.each((index, item) => {
             let obj = {
@@ -525,7 +515,7 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
               catalogsArr.push(obj)
             }
           })
-          console.time('testEach')
+          console.timeEnd('chapters Each:')
           // todo 对比数据库，如果随机5条，不存在，则直接更换源url
           // todo 如果章节小于10章，可能无法计算！！！这需要在起点爬取目录那一块终止掉程序
           let isVipLen = (catalogsArr.length) - 10// 减去总章节10条后，使用随机数来对比5条数据是否与数据库对上
@@ -534,27 +524,33 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           let checkNumber = 0 // 如果等于5，则说明取的章节是正确的，如果小于5，则说明当前取的目录url是不对，则需要更换url源
           for (let i = 0; i < 5; i++) {
             let isTitle = await NovelModel.find({title: subLenArr[i].title}).count()
+	            .then(t => {
+		            console.info(t)
+	            })
+	            .catch(e => {
+		            console.info(e)
+	            })
             if (isTitle) {
               checkNumber++
             }
           }
           // 等于5，目录正确
           if (checkNumber === 5) {
-            logger.warn('等于5，目录正确', checkNumber)
+            logger.warn('对比当前爬取目录的页面是否是正确页面，等于5，目录正确', checkNumber)
             resolve(catalogsArr)
           } else {
-            logger.warn('不等于5，目录不正确', checkNumber)
+            logger.warn('对比当前爬取目录的页面是否是正确页面，不等于5，目录不正确', checkNumber)
             // 记录该错误/无效的url，下次让系统自动排除
             let isHasUrl = await NovelBadUrlModel.find({url: url})
             logger.warn('\n++++ 记录:', url)
             if (!isHasUrl.length) {
               let saveErrorUrls = new NovelBadUrlModel({url: url, book: name})
               await saveErrorUrls.save()
-              logger.warn('\n++++ todo 第七步/2 该url' + url + '是无效的url，已被记录到数据，将在下一次任务中排除!')
+              logger.warn('\n++++ todo 第七步/3 该url' + url + '是无效的url，已被记录到数据，将在下一次任务中排除!')
             }
             logger.warn('\n++++ 第七步/C -爬取的页面资源不准确，即将更换URL源')
-            // 目录不正确，执行变更url
-            await loopCharsetDecodeUrl()// 更换源url
+	          // todo 可能有问题
+	          await loopCharsetDecodeUrl()// 更换源url
           }
         }
       })
@@ -603,7 +599,7 @@ async function getQiDianNovelPreview (url) {
     superAgent
       .get(url)
       .set(qiDianHeader[1])
-      // .set(qiDianHeader[2])
+    // .set(qiDianHeader[2])
       .end(async (err, res) => {
         let nullString = ''
         if (err) {
@@ -641,7 +637,8 @@ async function getQiDianNovel (bookName) {
   return new Promise(async (resolve, reject) => {
     superAgent
       .get('https://read.qidian.com/ajax/book/category?bookId=' + bookObj.bookId)
-      .set(qiDianHeader[1])
+    // .set(qiDianHeader[1])
+      .set(qiDianHeader[0])
       .end(async (err, res) => {
         if (err) {
           logger.warn(err.status)
@@ -655,7 +652,6 @@ async function getQiDianNovel (bookName) {
             reject(e)
           }
           let sourceData = sourceDataJson.data
-          logger.warn(sourceData.vs.length)
           console.time('testForEach')
           // vip https://vipreader.qidian.com/chapter/3657207/294479399
           // 普通 https://read.qidian.com/chapter/j-mnmPqJ_JM1/klreGIIyhB0ex0RJOkJclQ2
@@ -699,15 +695,16 @@ async function getQiDianNovel (bookName) {
           })
           console.timeEnd('testForEach')
           // 如果查询的长度等于则返回结果
-          let novelCount = await NovelModel.find({name: bookName}).count()
+          // let novelDBCount = await NovelModel.find({name: bookName}).count()
           // 总长度比较
-          if (novelCount === sourceData.chapterTotalCnt) {
-            logger.warn('\n 数据库查到的长度等于搜索的长度，则说明是最新的')
-            resolve(novelCount)
-          } else {
-            logger.warn('\n 数据库查到的长度不等于搜索的长度，则说明是可继续下一步的')
-            resolve(0)
-          }
+          // logger.warn(novelDBCount, sourceData.chapterTotalCnt)
+          // let resolveData = {
+          //   searchCount: sourceData.chapterTotalCnt,
+          //   dbCount: novelDBCount
+          // }
+          // 1 如果 novelDBCount===sourceData.chapterTotalCnt 数据库查到的长度等于搜索的长度，则说明是最新的
+          // 2 否则数据库查到的长度不等于搜索的长度，则说明是可继续下一步的
+          resolve(sourceData.chapterTotalCnt)
         }
       })
   })
@@ -715,20 +712,18 @@ async function getQiDianNovel (bookName) {
 
 /**
  * @desc 对目录进行处理，合并起点数据和写入库操作
- * @param resObj gbk false;utf-8  true，以及主机
- * @param url 此时处理的url
- * @param name
+ * @param resObj {string } {status:false,host:'xx',url:'xx'}gbk false;utf-8  true，以及主机 url
+ * @param name 书名
  * */
-async function dealNovel (resObj, url, name) {
+async function dealNovel (resObj, name) {
+  let {status, host, url} = resObj// 状态和主机解构
   logger.warn('dealNoveldealNoveldealNovel', url)
   if (!url) {
-    logger.warn('\n ++++ dealNovel部分url 为空，无法继续')
+    logger.warn('\n ++++ 第八步/1-error dealNovel部分url 为空，无法继续')
     return false
   }
-  let {status, host} = resObj// 状态和主机解构
   let breakErrObj = {}
   return new Promise(async (resolve, reject) => {
-    logger.warn('\n------------------起点目录完成，开始爬取小说资源----------------------\n')
     // 2 交叉爬取章节和对比起点数据写入到数据库
     thisCharsetStatus = status// 先存储当前是何种编码的状态 true utf-8,false gbk
     let catalogErr = false// 如果抓取单章，则跳出抓取目录循环
@@ -736,7 +731,6 @@ async function dealNovel (resObj, url, name) {
     if (!name) {
       name = processTask[0]
     }
-    logger.warn('getCatalogsgetCatalogsgetCatalogs', name)
     await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex], name: name}, status)
       .then(async catalog => {
         logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************')
@@ -752,7 +746,6 @@ async function dealNovel (resObj, url, name) {
               }
               let saveNovel = new NovelModel(singleData) // 建立小说章节模型
               // 先判断该部小说是否存在
-              // let tenString = new RegExp(single.substr(0, 20)) , content: tenString
               // 查到该部小说，是vip，则标题对上，则返回数据
               let isHas = await NovelModel.findOne({name: name, title: i['title'], isVip: 1}).count()
               // 如果存在，则将内容更新进来
@@ -838,16 +831,20 @@ async function novelControl (obj, name) {
     logger.warn('\n++++ 第六步：开始对爬取的url处理', obj.url)
     let charsetDecodeData = {}
     let charsetDecodeErrorData = null// catch 出来的报错信息
-    // todo ！！！无法在catch里面再递归？
+    console.time('p11')
     await isCharsetDecode(arrUrls[loopIndex].url, htmlHeader[loopHeader])
-      .then(async (resobj) => {
-        charsetDecodeData = resobj
-        logger.warn('\n++++ 第七步/1-A-解析编码成功了，then入参参数：', resobj)
+      .then(resObj => {
+        charsetDecodeData = resObj
+        logger.warn('\n++++ 第七步/1-A-解析编码成功了1，then入参参数：', resObj)
       })
-      .catch(async reje => {
+      .catch(reje => {
+        console.info(reje)
         charsetDecodeErrorData = reje
       })
-    logger.warn(charsetDecodeErrorData.status)
+    console.timeEnd('p11')
+	  if (charsetDecodeErrorData) {
+		  logger.warn('\n 因为catch而抛出的错误状态码：' + charsetDecodeErrorData.status)
+	  }
     // 可能存在无法链接等原因所致
     if (charsetDecodeErrorData && !charsetDecodeErrorData.status) {
       await missionFail('解码错误，无法继续,由于一些未知的原因导致!')
@@ -858,16 +855,16 @@ async function novelControl (obj, name) {
       await missionFail('解码错误，无法继续，错误代码：', charsetDecodeErrorData.status)
       return false
     }
-    logger.warn('232222', charsetDecodeData)
-    // await dealNovel(charsetDecodeData, obj.url, name)
-    //   .then(dealRes => {
-    //     logger.warn(dealRes)
-    //     resolve(dealRes)
-    //   })
-    //   .catch(dealErr => {
-    //     reject(dealErr)
-    //     logger.warn(dealErr)
-    //   })
+	  logger.warn('\n++++ 第七步/2- 起点目录完成，开始爬取小说资源')
+    await dealNovel(charsetDecodeData, name)
+		  .then(dealRes => {
+			  logger.warn(dealRes)
+			  resolve(dealRes)
+		  })
+		  .catch(dealErr => {
+			  reject(dealErr)
+			  logger.warn(dealErr)
+		  })
   })
 }
 
@@ -950,15 +947,16 @@ const _novel = {
     await _dbSuccess(res, msg, resData)
     let latestNumber = 0// 0 则说明 可以继续的，否则直接返回客户端，不需要继续
     // 1、跑起点章节任务，并写入免费章节内容
+    console.info('getQiDianNovel start')
     await getQiDianNovel(req.query.keyword)
       .then(novelData => {
         latestNumber = novelData
         logger.warn(novelData)
       })
       .catch(novelError => {
-        logger.warn(novelError)
-        latestNumber = novelError
+        logger.warn('\n 起点抓取失败')
       })
+    console.info('getQiDianNovel end')
     // 2、getQiDianNovel 会返回 0或者总章节数
     // 3、处理已更新到最新状态。如果全部内容都有值，且有值的个数等于总章节数，则直接返回成功结果给客户端，下面不需要继续爬取
     // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
@@ -976,21 +974,27 @@ const _novel = {
     }
     // 4、如果爬取的章节结果实在太小，小于20章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
     if (latestNumber < 20) {
-      await missionFail('当前检测到《' + '》章节目录小于20，被系统拒绝该任务，抱歉！')
+      await missionFail('当前检测到《' + req.query.keyword + '》章节目录小于20，被系统拒绝该任务，抱歉！')
       return false
     }
     // todo 异步任务暂时关闭
-    // await searchNovel(req.query.keyword)
-    //   .then(async data => {
-    //     logger.warn('\n++++ 第四步/1：得到真实url地址数组' + arrUrls.length + '个', arrUrls)
-    //   })
-    //   .catch(err => {
-    //     logger.warn(err)
-    //   })
+    await searchNovel(req.query.keyword)
+      .then(async data => {
+        arrUrls = data// 再次赋值给数组
+        logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data)
+      })
+      .catch(err => {
+        logger.warn(err)
+      })
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
     // todo http://www.biqukan.com 时好时坏！
     // arrUrls = [{title: '圣墟最新章节_圣墟无弹窗_笔趣阁', url: 'http://www.biqukan.com/0_178/'}]
+	  if (Array.isArray(arrUrls) && !arrUrls.length) {
+    	await missionFail('由于通过搜索引擎爬取失败，无法继续。')
+		  return false
+	  }
+    logger.warn(arrUrls[novelControlIndex], arrUrls, novelControlIndex)
     await novelControl(arrUrls[novelControlIndex], req.query.keyword)
       .then(async obj => {
         logger.warn(obj)
@@ -1040,7 +1044,7 @@ async function notifyClient (obj) {
 async function getNovel (novel) {
   logger.warn('++++ 第十步/2：将数据查询后通过webSocket渲染到前端')
   let data = await
-    NovelModel.find({name: novel})
+  NovelModel.find({name: novel})
   const ob = {
     msg: novel + '小说数据',
     data: data,
