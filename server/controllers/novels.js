@@ -20,14 +20,19 @@
  * @todo 唯一章节id，uuid 由起点uuid接口写入
  * @todo 哨兵变量，用于是否终止异步任务的依据,去中断执行异步、同步任务的执行流水线
  * @todo https://www.qidian.com/search?kw=%E7%BA%AF%E9%98%B3%E6%AD%A6%E7%A5%9E 起点搜索 拿到书id值，将id 传递给查询书的目录
- * @todo 参考1  可以在https://book.qidian.com/info/3657207 拿到目录的数目
+ * @todo 参考1 a 可以在https://book.qidian.com/info/3657207 拿到目录的数目
  * @todo 后续在建立小说关联库，通过小说情节、小说名字、作者名字、主角、配角建立关系库
+ * @todo 免费小说目录名字可能错误，随意，需要匹配的序号+额外的名称
+ * @sql db.getCollection('novels').find({name: '圣墟', $where: 'this.content.length>1',isVip:1}).count() //查询vip章节的内容大于1的章节数
+ * @sql db.getCollection('novels').update({name: '圣墟',title:'请假一天'},{$set:{'content':'内容炸了'}})  查到并更新到
+ * @mongoose await NovelModel.find({name: '圣墟', $where: 'this.content.length>1'}).count()
+ * @sql exec()返回promise 否则 query
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
 import {NovelModel, NovelBadUrlModel} from '../model/model'
 import {_dbError, _dbSuccess, _webSocket} from '../functions/functions'
 import {format} from 'date-fns' // 时间格式工具
-// import fs from 'fs' // 文件读写模块
+// import fs from 'fs' // todo 可能用来生成text 文件下载。文件读写模块
 import charset from 'superagent-charset' // 转移模块
 import cheerio from 'cheerio' // 解析字符
 import superAgent from 'superagent'
@@ -38,41 +43,42 @@ const superAgentTo = charset(superAgent) // ajax api http 库 gb2312 或者gbk �
 const logger = require('tracer').console() // console追踪库
 
 // search 起点
-const qiDianHeader = [{
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Accept-Language': 'zh-CN,zh;q=0.9',
-  'Cache-Control': 'no-cache',
-  'Connection': 'keep-alive',
-  'Host': 'www.qidian.com',
-  'Pragma': 'no-cache',
-  'Upgrade-Insecure-Requests': 1,
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
-},
-{
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Accept-Language': 'zh-CN,zh;q=0.9',
-  'Cache-Control': 'no-cache',
-  'Connection': 'keep-alive',
-  'Cookie': '_csrfToken=qy4Rd0tr9OeOPGeTbBmP5wFM4mwEehh4nArJXzap; newstatisticUUID=1529775060_1919789918',
-  'Host': 'read.qidian.com',
-  'Pragma': 'no-cache',
-  'Upgrade-Insecure-Requests': 1,
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
-},
-{
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Accept-Language': 'zh-CN,zh;q=0.9',
-  'Cache-Control': 'no-cache',
-  'Connection': 'keep-alive',
-  'Cookie': '_csrfToken=c1T7tQp3nx4YuzLrg6hPImmAdrPh0fDclhAKwnif; pageOps=1; newstatisticUUID=1529845827_59365039; qdrs=0%7C3%7C0%7C0%7C1; qdgd=1; lrbc=3657207%7C294479399%7C1; rcr=3657207; bc=3657207',
-  'Host': 'vipreader.qidian.com',
-  'Pragma': 'no-cache',
-  'Upgrade-Insecure-Requests': 1,
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
-}
+const qiDianHeader = [
+  {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Host': 'www.qidian.com',
+    'Pragma': 'no-cache',
+    'Upgrade-Insecure-Requests': 1,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+  },
+  {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Cookie': '_csrfToken=qy4Rd0tr9OeOPGeTbBmP5wFM4mwEehh4nArJXzap; newstatisticUUID=1529775060_1919789918',
+    'Host': 'read.qidian.com',
+    'Pragma': 'no-cache',
+    'Upgrade-Insecure-Requests': 1,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+  },
+  {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Cookie': '_csrfToken=c1T7tQp3nx4YuzLrg6hPImmAdrPh0fDclhAKwnif; pageOps=1; newstatisticUUID=1529845827_59365039; qdrs=0%7C3%7C0%7C0%7C1; qdgd=1; lrbc=3657207%7C294479399%7C1; rcr=3657207; bc=3657207',
+    'Host': 'vipreader.qidian.com',
+    'Pragma': 'no-cache',
+    'Upgrade-Insecure-Requests': 1,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+  }
 ]
 /**
  * @desc 自定义的请求头参数，status400/403的时候去变更这个索引值，重新set header 的源，一般是由于host 不对所致
@@ -96,7 +102,7 @@ const htmlHeader = [
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Host': 'www.biquge.com.tw', // 导致失败
+    // 'Host': 'www.biquge.com.tw', // 导致失败
     'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36'
@@ -120,7 +126,7 @@ const htmlHeader = [
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
     'Cookie': 'UM_distinctid=16437bce479208-074e6984f37387-47e1f32-1fa400-16437bce47bb8f; CNZZDATA1260938422=1896072676-1529941185-%7C1529941185',
-    'Host': 'www.biqukan.com',
+    // 'Host': 'www.biqukan.com',
     'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
@@ -508,38 +514,44 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           let chapters = $1('body').find(ELEMENTKeys[indexMax])
           let catalogsArr = [] // 组装目录的title 和 href路径
           // 组装分类数组
-          console.time('chapters Each:')
+          console.time('目录循环 Each:')
           // 只需要组装vip章节即可，过滤非vip章节
           chapters.each((index, item) => {
             let obj = {
               title: $1(item).find('a').text(),
               href: $1(item).find('a').attr('href')
             }
-            let isHasVip = NovelModel.find({title: obj.title, isVip: 1}).count()
+            let isHasVip = NovelModel.find({name: name, title: obj.title, isVip: 1}).count()
             // 如果存在vip章节则组装vip章节
             if (isHasVip) {
               catalogsArr.push(obj)
             }
           })
-          console.timeEnd('chapters Each:')
+          console.timeEnd('目录循环 Each:')
           // todo 对比数据库，如果随机5条，不存在，则直接更换源url
           // todo 如果章节小于10章，可能无法计算！！！这需要在起点爬取目录那一块终止掉程序
-          let isVipLen = (catalogsArr.length) - 10// 减去总章节10条后，使用随机数来对比5条数据是否与数据库对上
+          let isVipLen = (catalogsArr.length) - 20// 减去总章节10条后，使用随机数来对比5条数据是否与数据库对上
           let randomNumber = Math.ceil((Math.random()) * isVipLen)// 得到随机数*(总vip数-10)条=用于截取总vip章节数组
-          let subLenArr = catalogsArr.splice(randomNumber, 5)// 截取处理5条章节的数组
+          let subLenArr = catalogsArr.splice(randomNumber, 10)// 截取处理10条章节的数组，由于发现《圣墟》1040章 九幽祇 与https://www.dingdiann.com/ddk74633/ 的1040 九幽只 无法匹配上
+	        logger.warn(subLenArr)
           let checkNumber = 0 // 如果等于5，则说明取的章节是正确的，如果小于5，则说明当前取的目录url是不对，则需要更换url源
-          for (let i = 0; i < 5; i++) {
-            let isTitle = await NovelModel.find({title: subLenArr[i].title}).count()
-            if (isTitle) {
-              checkNumber++
-            }
+          for (let i = 0; i < 10; i++) {
+            await NovelModel.find({name: name, title: subLenArr[i].title}).count()
+	            .then(dbRes => {
+	            	logger.warn(dbRes)
+		            checkNumber++
+		            logger.warn(subLenArr[i].title, dbRes)
+	            })
+	            .catch(dbErr => {
+	            	logger.warn(dbErr)
+	            })
           }
           // 等于5，目录正确
-          if (checkNumber === 5) {
-            logger.warn('对比当前爬取目录的页面是否是正确页面，等于5，目录正确', checkNumber)
+          if (checkNumber > 5) {
+            logger.warn('对比当前爬取目录的页面是否是正确页面，匹配大于5个章节相符，目录正确', checkNumber)
             resolve(catalogsArr)
           } else {
-            logger.warn('对比当前爬取目录的页面是否是正确页面，不等于5，目录不正确', checkNumber)
+            logger.warn('对比当前爬取目录的页面是否是正确页面，匹配小于5个章节不相符，目录不正确', checkNumber)
             // 记录该错误/无效的url，下次让系统自动排除
             let isHasUrl = await NovelBadUrlModel.find({url: url})
             logger.warn('\n++++ 记录:', url)
@@ -728,7 +740,6 @@ async function dealNovel (resObj, name) {
     logger.warn('\n ++++ 第八步/1-error dealNovel部分url 为空，无法继续')
     return false
   }
-  let breakErrObj = {}
   return new Promise(async (resolve, reject) => {
     // 2 交叉爬取章节和对比起点数据写入到数据库
     thisCharsetStatus = status// 先存储当前是何种编码的状态 true utf-8,false gbk
@@ -743,25 +754,20 @@ async function dealNovel (resObj, name) {
         catalog.forEach(async (i, index) => {
           await singleNovel(i.href, host, i.title, i, catalog.length || 0, status)
             .then(async single => {
-              await logger.warn('~~~~~~~~~~then抓取《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
-              let singleData = {
-                content: single || '',
-                url: i.href || '',
-                host: host || '',
-                timeout: false
-              }
-              let saveNovel = new NovelModel(singleData) // 建立小说章节模型
-              // 先判断该部小说是否存在
-              // 查到该部小说，是vip，则标题对上，则返回数据
-              let isHas = await NovelModel.findOne({name: name, title: i['title'], isVip: 1}).count()
-              // 如果存在，则将内容更新进来
-              if (isHas) {
-                await saveNovel.update() // 写入数据库
-              }
-              await logger.warn('~~~~~~~~~~then得到《' + name + '》单章文章' + i.title + ' End~~~~~~~~~~~~')
+            	// todo 先找到，再去更新，不符合的打印先打印出来
+	            // 先判断该部小说是否存在,查到该部小说，是vip，则标题对上，则返回数据,如果存在，则将内容更新进来
+              let singleData = {content: single || '', url: i.href || '', host: host || '', timeout: false}
+              logger.warn('$$$$ 爬取到的章节')
+	            // 写入数据库
+	            await NovelModel.update({name: name, title: i['title'], $where: 'this.content.length<1', isVip: 1}, {$set: singleData}).exec()
+		            .then(updateRes => {
+			            // 更新成功
+			            logger.warn(updateRes, '《' + name + '》第 ' + i.title + ' then更新成功')
+		            })
             })
             .catch(async errObj => {
               // 编码错误，去更改headerIndex
+	            // todo 先找到，不需要写入
               if (errObj.ErrStatus) {
                 if (loopHeader === htmlHeader) {
                   --loopHeader
@@ -769,22 +775,13 @@ async function dealNovel (resObj, name) {
                   ++loopHeader
                 }
               } else {
-                // todo如果单章抛出错误，则写入空内容
-                breakErrObj = errObj
-                await logger.warn('~~~~~~~~~~catch得到《' + name + '》单章文章' + i.title + ' Start~~~~~~~~~~')
-                let singleData = {
-                  name: name || '',
-                  content: errObj.status !== 200 ? '' : errObj.content, // 不等于200写入空字符
-                  url: i.href || '',
-                  host: errObj.host || '',
-                  timeout: true
-                }
-                let saveNovel = new NovelModel(singleData) // 建立小说章节模型
-                let isHas = await NovelModel.findOne({title: i['title'], isVip: 1}).count()
-                if (isHas) {
-                  await saveNovel.update() // 写入数据库
-                  await logger.warn('~~~~~~~~~~catch得到《' + name + '》单章文章' + i.title + ' End~~~~~~~~~~~~')
-                }
+	              logger.warn('&&&& 没有爬取到的章节')
+                let singleDataError = {content: errObj.status !== 200 ? '' : errObj.content}
+	              // 写入数据库
+                await NovelModel.update({name: name, title: errObj.title, $where: 'this.content.length<1', isVip: 1}, {$set: singleDataError}).exec()
+	                .then(updateRes => {
+		                logger.warn(updateRes, '《' + name + '》第 ' + i.title + ' catch写入成功')
+	                })
               }
             })
         })
@@ -884,49 +881,51 @@ async function novelControl (obj, name) {
  * @param charset false gbk true utf-8
  * */
 async function singleNovel (url, host, title, index, len, charset) {
+  logger.warn(url, host)
   let isChartSet = charset ? '' : 'gbk'
   let content = ''
+  let errObj = {
+    content: content,
+    host: host,
+    title: title,
+    length: len
+  }
   return new Promise((resolve, reject) => {
-    let errObj = {
-      content: content,
-      index: index,
-      host: host,
-      title: title,
-      length: len
-    }
     const rejectTime = setTimeout(() => {
-      logger.warn('\n++++第九步/2：爬取单章超时30s等待完成')
+      logger.warn('\n++++第九步/2：爬取单章超时60s等待完成')
       reject(errObj)
       clearTimeout(rejectTime)
-    }, 30000)
+    }, 60000)
     let superAgentChart = charset ? superAgent : superAgentTo
-    logger.warn('\n' + isChartSet)
+    logger.warn('header 索引：', loopHeader)
+	  console.time('爬取一章所耗时间')
     superAgentChart
       .get('http://' + host + url)
       .set(htmlHeader[loopHeader])// todo 此处可以更加优化的设置自己编码，但是一般情况下，应该满足
       .charset(isChartSet)
       .end(async (err, res) => {
         if (err && err.status && err.response) {
-          logger.warn('\n++++第九步/3：爬取单章获取内容和失败，状态:' + err.text)
+          logger.warn('\n++++第九步/3-err：爬取单章获取内容失败，状态:' + err.status)
           clearTimeout(rejectTime)
           let badStatus = {ErrStatus: true}
           reject(badStatus)// 如果错误404/403则抛出err
           // await missionFail('爬取章节失败，状态码' + err.status)
         } else {
+	        logger.warn('\n++++第九步/3-success：爬取单章获取内容成功，状态:' + res.status)
           const $ = await cheerio.load(res.text)
           content = await $('#content').text() || ''
-          logger.warn(content)
           // 除了超时之外reject,还有内容为空也会reject
           clearTimeout(rejectTime)
           if (content) {
+	        	logger.warn('有内容')
             await resolve(content)
           } else {
-            logger.warn(content)
-            logger.warn('内容为空', content)
+            logger.warn('内容为空')
             await reject(errObj)
           }
         }
       })
+	  console.timeEnd('爬取一章所耗时间')
   })
 }
 
@@ -966,7 +965,14 @@ const _novel = {
     // 2、getQiDianNovel 会返回 0或者总章节数
     // 3、处理已更新到最新状态。如果全部内容都有值，且有值的个数等于总章节数，则直接返回成功结果给客户端，下面不需要继续爬取
     // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
-    let isNoUpdate = await NovelModel.find({name: '圣墟', $where: 'this.content.length>1'}).count()
+    let isNoUpdate = await NovelModel.find({name: '圣墟', $where: 'this.content.length>1'}).count().exec()
+	    .then(countRes => {
+	    	logger.warn(countRes)
+	    })
+	    .catch(countErr => {
+		    logger.warn(countErr)
+	    })
+	  logger.warn('isNoUpdate', isNoUpdate)
     if (latestNumber && isNoUpdate === latestNumber) {
       let ob = {
         bookName: req.query.keyword,
@@ -978,24 +984,24 @@ const _novel = {
       getNovel(req.query.keyword)// webSocket返回小说数据，异步任务，不需要await
       return false
     }
-    // 4、如果爬取的章节结果实在太小，小于20章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
-    if (latestNumber < 20) {
+    // 4、如果爬取的章节结果实在太小，小于30章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
+    if (latestNumber < 30) {
       await missionFail('当前检测到《' + req.query.keyword + '》章节目录小于20，被系统拒绝该任务，抱歉！')
       return false
     }
     // todo 异步任务暂时关闭
-    await searchNovel(req.query.keyword)
-      .then(async data => {
-        arrUrls = data// 再次赋值给数组
-        logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data)
-      })
-      .catch(err => {
-        logger.warn(err)
-      })
+    // await searchNovel(req.query.keyword)
+    //   .then(async data => {
+    //     arrUrls = data// 再次赋值给数组
+    //     logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data)
+    //   })
+    //   .catch(err => {
+    //     logger.warn(err)
+    //   })
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
     // todo http://www.biqukan.com 时好时坏！
-    // arrUrls = [{title: '圣墟最新章节_圣墟无弹窗_笔趣阁', url: 'http://www.biqukan.com/0_178/'}]
+    arrUrls = [{title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说', url: 'https://www.dingdiann.com/ddk74633/'}]
 	  if (Array.isArray(arrUrls) && !arrUrls.length) {
     	await missionFail('由于通过搜索引擎爬取失败，无法继续。')
 		  return false
@@ -1015,6 +1021,11 @@ const _novel = {
         // 自动更换百度url
         // todo
       })
+  },
+  // 手动清楚任务栈
+  clearNovel: async (req, res, next) => {
+	  processTask = []
+    await _dbSuccess(res, '手动清空任务栈成功', processTask, 0)
   }
 }
 

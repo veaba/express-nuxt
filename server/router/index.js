@@ -118,7 +118,9 @@ router.post('/register', _public.register)
 /*******************************************************************
  * @desc novel 模块
  * */
-router.get('/novel/getNovel', _novel.getNovel)
+router.get('/novel/getNovel', _novel.getNovel)// 搜索小说
+
+router.post('/novel/clearNovel', _novel.clearNovel)// 清空任务栈
 
 /** ---------------------------------------------------------------------------
  * ================================= article ===================================
