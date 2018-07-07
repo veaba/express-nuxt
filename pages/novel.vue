@@ -5,22 +5,23 @@
  *@desc 网络小说下载
  -------------------------->
 <template>
-    <section class="container">
-        <div class="send-socket">
-            <Button type="ghost" @click="sendSome">发送一段文字</Button>
-        </div>
-        <!--Input-->
-        <div class="novel">
-            <div class="input-body">
-                <Input v-model="keyword" size="large" icon="search" placeholder="查找的小说" @on-enter="getNovel"
-                       @on-click="getNovel"></Input>
-            </div>
-        </div>
-        <!--progress-->
-        <Progress :percent="percent" :status="progressStatus"></Progress>
-        <!--table-->
-        <Table :loading="loading" :data="novelData" :columns="novelColumns"></Table>
-    </section>
+		<section class="container">
+				<div class="send-socket">
+						<Button type="ghost" @click="sendSome">发送一段文字</Button>
+				</div>
+				<!--Input-->
+				<div class="novel">
+						<div class="input-body">
+								<Input v-model="keyword" size="large" icon="search" placeholder="查找的小说" @on-enter="getNovel"
+								       @on-click="getNovel"></Input>
+						</div>
+						<Button style="margin-top: 20px;" @click="onClearNovel" type="ghost" size="small">手动清空任务栈</Button>
+				</div>
+				<!--progress-->
+				<Progress :percent="percent" :status="progressStatus"></Progress>
+				<!--table-->
+				<Table :loading="loading" :data="novelData" :columns="novelColumns"></Table>
+		</section>
 </template>
 <script>
 /* eslint-disable handle-callback-err */
@@ -63,6 +64,7 @@ export default {
         },
         {
           title: '内容预览',
+          width: 100,
           key: 'preview'
         },
         {
@@ -181,6 +183,29 @@ export default {
       this.$socket.on('receive1', data => {
         console.info(data)
       })
+    },
+    /**
+     * @desc 手动清空任务栈
+     * */
+    onClearNovel () {
+      this.$ajax
+        .post('/api/novel/clearNovel')
+        .then(res => {
+          if (res.errorCode === 0) {
+            this.$Notice.success({
+              title: '任务成功',
+              desc: res.msg || 'success'
+            })
+          } else {
+            this.$Notice.warning({
+              title: '任务失败',
+              desc: res.msg || 'error'
+            })
+          }
+        })
+        .catch(err => {
+          console.info(err)
+        })
     },
     /**
      * @desc 获取小说

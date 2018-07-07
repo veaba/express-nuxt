@@ -85,7 +85,9 @@ let novelSchema = new Schema({
   domain: String, // 所在主机,
   url: String, // 所在章节的url，半截，爬取的盗版网站
   end: Boolean, // 是否完结，如果同本小说，存在该状态 true，则说明小说完结，默认false
-  timeout: Boolean // 超时爬取true,default false
+  timeout: Boolean, // 超时爬取true,default false
+  spiderTime: String, //爬虫更新的时间
+  error: Number // 异常为1、正常为0 由于爬取的小说网站和【重名-尚未处理该异常】、命名错误、符号等原因导致无法查找产生异常
 })
 let novelErrorUrlSchema = new Schema({
   url: String, // 记录url
