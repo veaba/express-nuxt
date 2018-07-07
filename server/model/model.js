@@ -74,13 +74,24 @@ let novelSchema = new Schema({
   author: String, // 作者
   title: String, // 章节标题
   uuid: Number, // 章节序号，起点获取，真正的章节序号，放置有卷数干扰，为唯一id
+  real: String, // 卷名
+  qiDianUrl: '', // 起点单章的url地址，包含vip章节和免费章节的url组装
+  updateTime: String, // 更新时间
+  qiDianId: Number, // 起点章节的ID
+  isVip: Number, // 0 为免费 1为VIP
   preview: String, // 内容预览200字以下，起点获取
   content: String, // 内容
   length: Number, // 字数
   domain: String, // 所在主机,
-  url: String, // 所在章节的url，半截
+  url: String, // 所在章节的url，半截，爬取的盗版网站
   end: Boolean, // 是否完结，如果同本小说，存在该状态 true，则说明小说完结，默认false
-  timeout: Boolean // 超时爬取true,default flase
+  timeout: Boolean, // 超时爬取true,default false
+  spiderTime: String, //爬虫更新的时间
+  error: Number // 异常为1、正常为0 由于爬取的小说网站和【重名-尚未处理该异常】、命名错误、符号等原因导致无法查找产生异常
+})
+let novelErrorUrlSchema = new Schema({
+  url: String, // 记录url
+  book: String// 记录书名
 })
 /***********************************************
  * @desc 构建表模型，model(CollectionName,Model)
@@ -89,4 +100,5 @@ let UsersModel = mongoose.model('users', usersSchema)
 let RouterModel = mongoose.model('routers', routerSchema)
 let ArticleModel = mongoose.model('articles', articleSchema)
 let NovelModel = mongoose.model('novels', novelSchema)
-export {UsersModel, RouterModel, ArticleModel, NovelModel}
+let NovelBadUrlModel = mongoose.model('bad.urls', novelErrorUrlSchema)
+export {UsersModel, RouterModel, ArticleModel, NovelModel, NovelBadUrlModel}
