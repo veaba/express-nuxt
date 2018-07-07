@@ -534,17 +534,6 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
         if (err) {
           // todo判断是由于header引起的错误，此处的处理方式应该更换heander
           if (err && err.status === 400) {
-            // todo 该出的循环有问题！！！！！
-            // try {
-            //   await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex], name: name})
-            //     .then(loopRes => {
-            //       logger.warn('loopRes:', loopRes)
-            //     })
-            //     .catch(loopErr => {
-            //       logger.warn('loopErr:', loopErr)
-            //     })
-            // } catch (e) {
-            // }
             logger.warn(
               '\n++++ 第七步/B-error 直接打断，不再进行！获取目录',
               err.status || err
@@ -867,26 +856,24 @@ async function dealNovel (resObj, name) {
           await singleNovel(i.href, host, i.title, i, catalog.length || 0, status)
             .then(async single => {
               // 先判断该部小说是否存在,查到该部小说，是vip，则标题对上，则返回数据,如果存在，则将内容更新进来
-              let singleData = {content: single || '', url: i.href || '', host: host || '', timeout: false}
+              let singleData = {content: single || '', url: i.href || '', host: host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')}
               // 查到内容小于1的vip章节
               let isHas = await NovelModel.findOne({
                 name: name,
                 isVip: 1,
                 $where: 'this.content.length<1'
               }).count()
-              logger.warn('$$$$ 爬取到的章节')
               // 有找到的话，需要写入
               if (isHas) {
+                logger.warn('isHas', typeof isHas, isHas)
                 // 写入数据库
                 // 第一个空格后的第一个字+序号作为匹配调整，并对异常章节进行标注
-                // 正则有问题。
                 let temp = i['title']
-                temp.replace(/ [^\u4e00-\u9fa5].+$/, '')
-                let title = temp.substr(0, temp.length - 2)
+                let title = ''
+                temp.replace(/^(.+?) ./, ($1) => {
+                  title = $1
+                })
                 let regTile = new RegExp(title)
-                if (temp.search('第一百二十四章')) {
-                  logger.warn(temp, regTile, title)
-                }
                 // 查到vip 且内容小于1的，写入章节，如果找不到，则不做其他操作
                 await NovelModel.update({name: name, title: regTile, $where: 'this.content.length<1', isVip: 1}, {$set: singleData})
                   .exec()
@@ -894,9 +881,6 @@ async function dealNovel (resObj, name) {
                     // 更新成功
                     logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功')
                   })
-              } else {
-                // 没找到的话则不需要写入
-                logger.warn('《' + name + '》 ' + i.title + ' then更新失败')
               }
             })
             .catch(async errObj => {
@@ -913,7 +897,7 @@ async function dealNovel (resObj, name) {
               }
             })
         })
-        console.time('爬取整个目录消耗时间')
+        console.timeEnd('爬取整个目录消耗时间')
         let isTimeout = await NovelModel.findOne({
           name: name,
           timeout: true
@@ -1031,14 +1015,14 @@ async function singleNovel (url, host, title, index, len, charset) {
   }
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
-      logger.warn('\n++++第九步/2：爬取单章超时60s等待完成')
+      logger.warn('\n++++第九步/2：爬取单章超时30s等待完成')
       reject(errObj)
       clearTimeout(rejectTime)
-    }, 60000)
+    }, 30000)
     let superAgentChart = charset ? superAgent : superAgentTo
     superAgentChart
       .get('http://' + host + url)
-      .set(htmlHeader[loopHeader]) // todo 此处可以更加优化的设置自己编码，但是一般情况下，应该满足
+      .set(htmlHeader[loopHeader])
       .charset(isChartSet)
       .end(async (err, res) => {
         if (err && err.status && err.response) {
@@ -1058,10 +1042,9 @@ async function singleNovel (url, host, title, index, len, charset) {
           // 除了超时之外reject,还有内容为空也会reject
           clearTimeout(rejectTime)
           if (content) {
-            logger.warn('有内容')
             await resolve(content)
           } else {
-            logger.warn('内容为空')
+            logger.warn('内容为空', title, host, url, index)
             await reject(errObj)
           }
         }
@@ -1093,7 +1076,7 @@ const _novel = {
     await _dbSuccess(res, msg, resData)
     let latestNumber = 0 // 0 则说明 可以继续的，否则直接返回客户端，不需要继续
     // 1、跑起点章节任务，并写入免费章节内容
-    console.info('getQiDianNovel start')
+    console.time('获取起点章节部分 start')
     await getQiDianNovel(req.query.keyword)
       .then(novelData => {
         latestNumber = novelData
@@ -1102,17 +1085,19 @@ const _novel = {
       .catch(novelError => {
         logger.warn('\n 起点抓取失败')
       })
-    console.info('getQiDianNovel end')
+    console.timeEnd('获取起点章节部分 end')
     // 2、getQiDianNovel 会返回 0或者总章节数
     // 3、处理已更新到最新状态。如果全部内容都有值，且有值的个数等于总章节数，则直接返回成功结果给客户端，下面不需要继续爬取
     // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
-    let isNoUpdate = await NovelModel.find({
+    let isNoUpdate = 0// 判断是否更新到最新章节
+    await NovelModel.find({
       name: '圣墟',
       $where: 'this.content.length>1'
     })
       .count()
       .exec()
       .then(countRes => {
+        isNoUpdate = countRes
         logger.warn(countRes)
       })
       .catch(countErr => {
@@ -1121,6 +1106,7 @@ const _novel = {
     logger.warn('isNoUpdate', isNoUpdate)
     if (latestNumber && isNoUpdate === latestNumber) {
       let ob = {
+        msg: '《' + req.query.keyword + '》,已更新到最新!',
         bookName: req.query.keyword,
         startTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
         count: latestNumber,
@@ -1191,7 +1177,7 @@ const _novel = {
 async function notifyClient (obj) {
   logger.warn('++++ 第十步/1：小说爬取完成，总章节' + obj.count + '---------')
   const ob = {
-    msg: '《' + obj.bookName + '》,已下载完成!',
+    msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
       name: obj.bookName,
       url: 'http://www.baidu.com/1.text',

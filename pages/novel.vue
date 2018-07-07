@@ -64,6 +64,7 @@ export default {
         },
         {
           title: '内容预览',
+          width: 100,
           key: 'preview'
         },
         {
