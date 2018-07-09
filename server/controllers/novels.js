@@ -1097,7 +1097,7 @@ const _novel = {
         obj.startTime = resData.start
         obj.bookName = req.query.keyword
         notifyClient(obj) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
-        // getNovel(req.query.keyword) // webSocket返回小说数据，异步任务，不需要await
+        getNovel(res, obj.bookName) // webSocket返回小说数据，异步任务，不需要await
         logger.warn('\n++++ 第十一步 A/succees：完成流程')
       })
       .catch(async errObj => {
@@ -1154,7 +1154,7 @@ async function notifyClient (obj) {
     msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
       name: obj.bookName,
-      url: 'http://127.0.0.1:4000/api/novel/download?keyword=圣墟',
+      url: 'http://127.0.0.1:4000/api/novel/download?keyword='+obj.bookName,
       startTime: obj.startTime || '',
       timeConsuming:
       (new Date().valueOf() - new Date(obj.startTime).valueOf()) / 1000,

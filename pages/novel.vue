@@ -16,6 +16,7 @@
                        @on-click="getNovel"></Input>
             </div>
             <Button style="margin-top: 20px;" @click="onClearNovel" type="ghost" size="small">手动清空任务栈</Button>
+            <Button style="margin-top: 20px;margin-left: 20px;" @click="changeFlipPage" type="primary" size="small">查询该小说</Button>
         </div>
         <!--progress-->
         <Progress :percent="percent" :status="progressStatus"></Progress>
@@ -34,7 +35,7 @@
     components: {},
     data () {
       return {
-        keyword: '纯阳武神',
+        keyword: '工业之王',
         loading: false,
         progressStatus: 'active',
         percent: 0, // 进度条
