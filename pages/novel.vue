@@ -22,7 +22,7 @@
         <!--table-->
         <Table :loading="loading" :data="novelData" :columns="novelColumns"></Table>
         <Row class="pageBox" type="flex" justify="end">
-            <Page :total="pageData.total" :current.sync="pageData.page" show-total on-change @on-change="changeFlipPage"></Page>
+            <Page :total="pageData.totals" :current.sync="pageData.page" show-total on-change @on-change="changeFlipPage"></Page>
         </Row>
     </section>
 </template>
@@ -34,7 +34,7 @@
     components: {},
     data () {
       return {
-        keyword: '圣墟',
+        keyword: '纯阳武神',
         loading: false,
         progressStatus: 'active',
         percent: 0, // 进度条
@@ -43,7 +43,7 @@
         novelData: [],
         pageData: {
           page: 1,
-          total: 1
+          totals: 1
         },
         novelColumns: [
           {
@@ -66,7 +66,7 @@
           },
           {
             title: '内容预览',
-            width: 400,
+            width: 360,
             key: 'preview'
           },
           {
@@ -100,17 +100,16 @@
           }
         })
           .then(res => {
-            console.info(res)
             if (res.errorCode === 0) {
-              this.novelData = res.data
-              this.pageData.total = res.totals || 1
+              this.novelData = res.data || []
+              this.pageData.totals = res.totals || 1
             } else {
               this.novelData = []
             }
           })
           .catch(err => {
             console.info(err)
-            this.pageData.total = err.total || 1
+            this.pageData.totals = err.totals || 1
           })
       },
       /**

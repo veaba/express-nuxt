@@ -160,7 +160,7 @@ let loopIndex = 0 // 递归loop函数执行此处判断，同样是选取值的�
 let loopHeader = 1 // 递归loop函数执行此处判断，用于更换header头部参数
 let loopHeaderStatus = true // header状态
 let loopUrlsStatus = true // url 状态
-let catalogsCharsetIndex = 0 // gbk 函数的次数
+let catalogsCharsetIndex = 1 // gbk 函数的次数
 let isInit = 0
 let novelControlIndex = 0 // 主程序的次数
 /**
@@ -477,12 +477,18 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
     await missionFail('目录更换源header后，还是失败,错误代码:' + errStatus)
     return false
   }
+  logger.warn('\n 获取目录', urlAndHeaderObj)
   return new Promise((resolve, reject) => {
     superAgentCharset
       .get(url)
       .set(header)
       .charset(charset ? '' : 'gbk')
       .end(async (err, res) => {
+        if (err) {
+          console.info(11, err.text)
+        } else {
+          console.info(22, res.status)
+        }
         if (err) {
           // todo判断是由于header引起的错误，此处的处理方式应该更换heander
           if (err && err.status === 400) {
@@ -786,10 +792,8 @@ async function dealNovel (resObj, name) {
     if (!name) {
       name = processTask[0]
     }
-    await getCatalogs(
-      {url: url, header: htmlHeader[catalogsCharsetIndex], name: name},
-      status
-    )
+    logger.warn('\n 开始爬取目录')
+    await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex], name: name}, status)
       .then(async catalog => {
         logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************')
         console.time('爬取整个目录消耗时间')
@@ -1015,7 +1019,7 @@ const _novel = {
     await _dbSuccess(res, msg, resData)
     let latestNumber = 0 // 0 则说明 可以继续的，否则直接返回客户端，不需要继续
     // 1、跑起点章节任务，并写入免费章节内容
-    console.time('获取起点章节部分 start')
+    console.time('获取起点章节部分')
     await getQiDianNovel(req.query.keyword)
       .then(novelData => {
         latestNumber = novelData
@@ -1024,7 +1028,7 @@ const _novel = {
       .catch(novelError => {
         logger.warn('\n 起点抓取失败')
       })
-    console.timeEnd('获取起点章节部分 end')
+    console.timeEnd('获取起点章节部分')
     // 2、getQiDianNovel 会返回 0或者总章节数
     // 3、处理已更新到最新状态。如果全部内容都有值，且有值的个数等于总章节数，则直接返回成功结果给客户端，下面不需要继续爬取
     // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
@@ -1052,7 +1056,7 @@ const _novel = {
         failureTotal: 0
       }
       notifyClient(ob) // 告诉结果
-      getNovel(req.query.keyword, req.query.page = 1) // webSocket返回小说数据，异步任务，不需要await
+      getNovel(res, req.query.keyword, req.query.page = 1) // webSocket返回小说数据，异步任务，不需要await
       return false
     }
     // 4、如果爬取的章节结果实在太小，小于30章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
@@ -1065,23 +1069,23 @@ const _novel = {
       return false
     }
     // todo 异步任务暂时关闭
-    // await searchNovel(req.query.keyword)
-    //   .then(async data => {
-    //     arrUrls = data// 再次赋值给数组
-    //     logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data)
-    //   })
-    //   .catch(err => {
-    //     logger.warn(err)
-    //   })
+    await searchNovel(req.query.keyword)
+      .then(async data => {
+        arrUrls = data// 再次赋值给数组
+        logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data)
+      })
+      .catch(err => {
+        logger.warn(err)
+      })
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
     // todo http://www.biqukan.com 时好时坏！
-    arrUrls = [
-      {
-        title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
-        url: 'https://www.dingdiann.com/ddk74633/'
-      }
-    ]
+    // arrUrls = [
+    //   {
+    //     title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
+    //     url: 'https://www.dingdiann.com/ddk74633/'
+    //   }
+    // ]
     if (Array.isArray(arrUrls) && !arrUrls.length) {
       await missionFail('由于通过搜索引擎爬取失败，无法继续。')
       return false
@@ -1135,17 +1139,8 @@ const _novel = {
       return false
     }
     console.time('time 查询数据库列表10个长度')
-    let count = await NovelModel.find({name: name}).count().exec()// 总长度 sort() -1，倒叙,1默认升序
-    let dbData = await NovelModel.aggregate([{git: name}, {uuid: 1, name: 1, title: 1, length: 1, preview: 1, timeout: 1}]).sort({uuid: 1}).limit(10).limit(10).skip(page * 10 - 10).exec()
-    // let dbData = await NovelModel.find({name: name}, {uuid: 1, name: 1, title: 1, length: 1, preview: 1, timeout: 1}).sort({uuid: 1}).limit(10).limit(10).skip(page * 10 - 10).exec()
-    if (!dbData.length) {
-      await missionFail('数据库不存在该小说')
-      return false
-    } else {
-      let pages = Math.ceil((count / 10))
-      await _flipPage(res, dbData, 0, '获取列表成功', {totals: count, pages: pages, pageCurrent: page})
-      console.timeEnd('time 查询数据库列表10个长度')
-    }
+    await getNovel(res, name, page, 1)
+    console.timeEnd('time 查询数据库列表10个长度')
   }
 }
 
@@ -1176,14 +1171,50 @@ async function notifyClient (obj) {
 
 /**
  * @desc 返回小说数据
- * _flipPage
+ * @param res
+ * @param novel
+ * @param pageNumber
+ * @param action 1 直接查询列表 2、成功后返回暂未用上
  * */
-async function getNovel (novel, pageNumber) {
+async function getNovel (res, novel, pageNumber, action) {
   logger.warn('++++ 第十步/2：将数据查询后通过webSocket渲染到前端')
   let page = pageNumber || 1
-  let count = await ArticleModel.find({name: novel}).count()// 总长度 sort() -1，倒叙,1默认升序
-  let data = await NovelModel.find({name: novel}, {uuid: 1, name: 1, title: 1, length: 1, preview: 1, timeout: 1}).sort({uuid: 1}).limit(10).limit(10).skip(page * 10 - 10).exec()
+  let count = await NovelModel.find({name: novel}).count()// 总长度 sort() -1，倒叙,1默认升序
+  logger.warn(count)
+  let data = await NovelModel.aggregate([
+    {
+      $match: {name: novel}
+    },
+    {
+      $project: {
+        uuid: 1,
+        name: 1,
+        title: 1,
+        length: 1,
+        preview: {
+          $substrCP: ['$preview', 0, 40]
+        },
+        timeout: 1
+      }
+    },
+    {
+      $sort: {uuid: 1}
+    },
+    {
+      $skip: page * 10 - 10
+    },
+    {
+      $limit: 10
+    }
+  ])
   let pages = Math.ceil((count / 10))
+  if (!data.length) {
+    await missionFail('数据库不存在该小说')
+    return false
+  } else {
+    let pages = Math.ceil((count / 10))
+    await _flipPage(res, data, 0, '获取列表成功', {totals: count, pages: pages, pageCurrent: page})
+  }
   const ob = {
     msg: novel + '小说数据',
     data: data,
