@@ -1154,7 +1154,7 @@ async function notifyClient (obj) {
     msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
       name: obj.bookName,
-      url: 'http://127.0.0.1:4000/api/novel/download?keyword='+obj.bookName,
+      url: 'http://127.0.0.1:4000/api/novel/download?keyword=' + obj.bookName,
       startTime: obj.startTime || '',
       timeConsuming:
       (new Date().valueOf() - new Date(obj.startTime).valueOf()) / 1000,
