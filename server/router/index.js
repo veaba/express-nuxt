@@ -97,32 +97,6 @@ router.post('/addRouter', _router.addRouter)
 router.post('/deleteRouter', _router.deleteRouter)
 
 /** ---------------------------------------------------------------------------
- * ================================= public ===================================
- *-----------------------------------------------------------------------------**/
-
-/**
- * @desc 用户登录
- * */
-router.post('/login', _public.login)
-
-/**
- * @desc 注销登录 路由
- * */
-router.post('/logout', _public.logout)
-
-/**
- * @desc 注册账号
- * */
-router.post('/register', _public.register)
-
-/*******************************************************************
- * @desc novel 模块
- * */
-router.get('/novel/getNovel', _novel.getNovel)// 搜索小说
-
-router.post('/novel/clearNovel', _novel.clearNovel)// 清空任务栈
-
-/** ---------------------------------------------------------------------------
  * ================================= article ===================================
  *-----------------------------------------------------------------------------**/
 /**
@@ -155,4 +129,31 @@ router.post('/deletesArticle', _article.deleteArticle)
  * */
 router.get('/getUser', _user.getUser)
 
+/** ---------------------------------------------------------------------------
+ * ================================= public ===================================
+ *-----------------------------------------------------------------------------**/
+
+/**
+ * @desc 用户登录
+ * */
+router.post('/login', _public.login)
+
+/**
+ * @desc 注销登录 路由
+ * */
+router.post('/logout', _public.logout)
+
+/**
+ * @desc 注册账号
+ * */
+router.post('/register', _public.register)
+
+/*******************************************************************
+ * @desc novel 模块
+ * */
+router.get('/novel/getNovel', _novel.getNovel)// 搜索小说
+router.get('/novel/getNovelList', _novel.getNovelList)// 小说翻页
+router.post('/novel/clearNovel', _novel.clearNovel)// 清空任务栈
+
+router.get('/novel/download', _novel.download)// 下载小说
 export {router}
