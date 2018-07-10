@@ -50,47 +50,62 @@ export default {
         {
           title: '序号',
           type: 'index',
-          sortable: true
+          sortable: true,
+          width: 80
         },
         {
           title: 'uuid',
           key: 'uuid',
-          sortable: true
+          sortable: true,
+          width: 80
         },
         {
           title: '是否抓取成功',
-          key: 'hasContent'
+          key: 'hasContent',
+          width: 110,
+          render: (h, params) => {
+            return h('span', params.row.hasContent ? '成功' : '失败')
+          }
         },
         {
           title: '类型',
           key: 'isVip',
+          width: 80,
           render: (h, params) => {
             return h('span', params.row.isVip ? 'vip' : '普通')
           }
         },
         {
           title: '小说',
+          width: 120,
           key: 'name'
         },
         {
           title: '章节名称',
+          width: 200,
           key: 'title'
-        },
-        {
-          title: '内容预览',
-          width: 360,
-          key: 'preview'
         },
         {
           title: '字数',
           key: 'length',
+          width: 100,
           sortable: true
         },
         {
           title: '是否超时',
+          width: 100,
           sortable: true,
           render: (h, params) => {
             return h('span', params.row.timeout ? '是' : '-')
+          }
+        },
+        {
+          title: '内容预览',
+          minWidth: 480,
+          ellipsis: true,
+          key: 'preview',
+          render: (h, params) => {
+            return h('span', params.row.preview.trim())
           }
         }
       ]
@@ -105,6 +120,7 @@ export default {
      * @desc 翻页
      * */
     changeFlipPage () {
+      this.loading = true
       this.$ajax.get('/api/novel/getNovelList', {
         params: {
           keyword: this.keyword,
@@ -113,6 +129,7 @@ export default {
       })
         .then(res => {
           if (res.errorCode === 0) {
+            this.loading = false
             this.novelData = res.data || []
             this.pageData.totals = res.totals || 1
           } else {
@@ -121,6 +138,7 @@ export default {
         })
         .catch(err => {
           console.info(err)
+          this.loading = false
           this.pageData.totals = err.totals || 1
         })
     },
@@ -175,7 +193,7 @@ export default {
                     'a',
                     {
                       attrs: {
-                        href: json['data']['url']
+                        href: location.origin + json['data']['url']
                       }
                     },
                     json.data.name
@@ -200,15 +218,15 @@ export default {
       /**
        * @desc 小说下载的结果
        * */
-      this.$socket.on('novelData', json => {
-        console.info(json)
-        if (json.errorCode === 0) {
-          this.novelData = json.data || []
-          this.pageData.total = json.data.totals || 1
-        }
-        this.loading = false
-        this.percent = 100
-      })
+      // this.$socket.on('novelData', json => {
+      //   console.info(json)
+      //   if (json.errorCode === 0) {
+      //     this.novelData = json.data || []
+      //     this.pageData.total = json.data.totals || 1
+      //   }
+      //   this.loading = false
+      //   this.percent = 100
+      // })
 
       /**
        * @desc 大兄弟，任务失败了
