@@ -146,6 +146,7 @@
       getUserInfo () {
         this.$ajax.get('/api/getUser')
           .then(res => {
+            console.info(res)
             if (res.errorCode === 0) {
               this.$store.commit('USER_INFO', res.data)
             }

@@ -98,6 +98,7 @@
           id: id
         }})
           .then(res => {
+            console.info(res)
             if (res.errorCode === 0) {
               this.articleItem = res.data
             }

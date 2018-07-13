@@ -9,12 +9,12 @@ module.exports = {
   head: {
     title: 'beike.io',
     meta: [
-      {charset: 'utf-8'},
-      {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-      {hid: 'description', name: 'description', content: 'Nuxt.js project'}
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: 'Nuxt.js project' }
     ],
     link: [
-      {rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'}
+      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ]
   },
   /*
@@ -42,7 +42,7 @@ module.exports = {
     /*
     ** Run ESLINT on save
     */
-    extend (config, { isClient, isServer }) {
+    extend(config, { isClient, isServer }) {
       if (isClient) {
         config.module.rules.push({
           enforce: 'pre',
@@ -59,9 +59,13 @@ module.exports = {
     PORT: '4000'
   },
   // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件
-  plugins: ['~plugins/axios', '~plugins/highlight', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
+  plugins: ['~plugins/axios', '~plugins/highlight', '~plugins/iview', '~plugins/socket', { src: '~plugins/mavon-editor', ssr: false }],
   // src: '~plugins/socket', ssr: false}
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
+  modules: ['@nuxtjs/proxy', ['@nuxtjs/proxy', {
+    pathRewrite: { '^/api': 'http://127.0.0.1:8888/api/' }
+  }]],
+
   // 路由跳转调用中间鉴权文件
   router: {
     // middleware: ['auth'] //鉴权
