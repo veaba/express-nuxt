@@ -1,6 +1,7 @@
 <!--
     @desc 控制台布局
     @date 2018-2-6 16:50:56
+    @desc 目前由前端写死menu
 -->
 <template>
     <div class="main">

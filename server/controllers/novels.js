@@ -485,11 +485,6 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
       .charset(charset ? '' : 'gbk')
       .end(async (err, res) => {
         if (err) {
-          console.info(11, err.text)
-        } else {
-          console.info(22, res.status)
-        }
-        if (err) {
           // todo判断是由于header引起的错误，此处的处理方式应该更换heander
           if (err && err.status === 400) {
             logger.warn(
@@ -788,11 +783,11 @@ async function dealNovel (resObj, name) {
     // 2 交叉爬取章节和对比起点数据写入到数据库
     thisCharsetStatus = status // 先存储当前是何种编码的状态 true utf-8,false gbk
     let catalogErr = false // 如果抓取单章，则跳出抓取目录循环
-    logger.warn(url, name)
+    logger.warn('即将爬取的小说数据', url, name)
     if (!name) {
       name = processTask[0]
     }
-    logger.warn('\n 开始爬取目录')
+    await logger.warn('\n 开始爬取目录')
     await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex], name: name}, status)
       .then(async catalog => {
         logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************')
@@ -800,6 +795,11 @@ async function dealNovel (resObj, name) {
         catalog.forEach(async (i, index) => {
           await singleNovel(i.href, host, i.title, i, catalog.length || 0, status)
             .then(async single => {
+              if (single) {
+                logger.warn('then 有内容', single.substr(0, 50))
+              } else {
+                logger.warn('then 里面没有内容')
+              }
               // 先判断该部小说是否存在,查到该部小说，是vip，则标题对上，则返回数据,如果存在，则将内容更新进来
               let singleData = {content: single || '', url: i.href || '', host: host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')}
               // 查到内容小于1的vip章节
@@ -819,6 +819,7 @@ async function dealNovel (resObj, name) {
                   title = $1
                 })
                 let regTile = new RegExp(title)
+                logger.warn('\n 章节正则：' + regTile)
                 // 查到vip 且内容小于1的，写入章节，如果找不到，则不做其他操作
                 await NovelModel.update({name: name, title: regTile, $where: 'this.content.length<1', isVip: 1}, {$set: singleData})
                   .exec()
@@ -826,6 +827,8 @@ async function dealNovel (resObj, name) {
                     // 更新成功
                     logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功')
                   })
+              } else {
+                logger.warn('\n 由于查找到章节内容不为空', '《' + name + '》' + i.title)
               }
             })
             .catch(async errObj => {
@@ -843,21 +846,18 @@ async function dealNovel (resObj, name) {
             })
         })
         console.timeEnd('爬取整个目录消耗时间')
-        let isTimeout = await NovelModel.findOne({
-          name: name,
-          timeout: true
-        }).count() // 超时的数量
         let t = 0
         // 通过定时器，来大致判断异步任务结束，如果不结束的，强制reject
         let InterTime = setInterval(function () {
-          if (t > 29) {
+          // todo 尝试超时设置为10s超时,设置太小无法完成
+          if (t > 20) {
             t = 0
             // 倒计时，发送通知
             clearInterval(InterTime)
             let sendObj = {
-              count: catalog.length,
-              failureTotal: isTimeout
+              count: catalog.length
             }
+            logger.warn('\n 尝试超时设置为10s超时,设置太小无法完成 10s')
             resolve(sendObj)
           }
           t++
@@ -869,8 +869,8 @@ async function dealNovel (resObj, name) {
       })
       // 假如catch 或者实在是解析章节情况下，将会通知客户端
       .catch(async utf8Error => {
-        reject(utf8Error || '爬取章节没有错误？？')
-        logger.warn('\n 爬取目录的之后，状态码', utf8Error.status, utf8Error)
+        logger.warn('\n 爬取目录的之后，catch 有错误，状态码', utf8Error.status, utf8Error)
+        reject(utf8Error || '爬取章节错误？？')
       })
   })
 }
@@ -932,8 +932,8 @@ async function novelControl (obj, name) {
         resolve(dealRes)
       })
       .catch(dealErr => {
-        reject(dealErr)
         logger.warn(dealErr)
+        reject(dealErr)
       })
   })
 }
@@ -980,10 +980,13 @@ async function singleNovel (url, host, title, index, len, charset) {
             '\n++++第九步/3-success：爬取单章获取内容成功，状态:' + res.status
           )
           const $ = await cheerio.load(res.text)
+          // todo 由于页面的不同导致匹配ID有问题，比如 http://www.aoyuge.com/35/35920/17712809.html
+          // todo 需要匹配内容最多的，且含有ID的才是正确的内容
           content = (await $('#content').text()) || ''
           // 除了超时之外reject,还有内容为空也会reject
           clearTimeout(rejectTime)
           if (content) {
+            logger.warn('有内容', title, host, url, index)
             await resolve(content)
           } else {
             logger.warn('内容为空', title, host, url, index)
@@ -1034,7 +1037,7 @@ const _novel = {
     // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
     let isNoUpdate = 0// 判断是否更新到最新章节
     await NovelModel.find({
-      name: '圣墟',
+      name: req.query.keyword,
       $where: 'this.content.length>1'
     })
       .count()
@@ -1048,15 +1051,15 @@ const _novel = {
       })
     logger.warn('isNoUpdate', isNoUpdate)
     if (latestNumber && isNoUpdate === latestNumber) {
+      logger.warn('已更新到最新')
       let ob = {
         msg: '《' + req.query.keyword + '》,已更新到最新!',
         bookName: req.query.keyword,
         startTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
-        count: latestNumber,
-        failureTotal: 0
+        count: latestNumber
       }
-      notifyClient(ob) // 告诉结果
       getNovel(res, req.query.keyword, req.query.page = 1) // webSocket返回小说数据，异步任务，不需要await
+      notifyClient(ob) // 告诉结果
       return false
     }
     // 4、如果爬取的章节结果实在太小，小于30章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
@@ -1093,16 +1096,17 @@ const _novel = {
     logger.warn(arrUrls[novelControlIndex], arrUrls, novelControlIndex)
     await novelControl(arrUrls[novelControlIndex], req.query.keyword)
       .then(async obj => {
-        logger.warn(obj)
-        obj.startTime = resData.start
-        obj.bookName = req.query.keyword
-        notifyClient(obj) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
-        // getNovel(req.query.keyword) // webSocket返回小说数据，异步任务，不需要await
+        let objData = obj
+        logger.warn(obj, '已下载完成')
+        objData.startTime = resData.start
+        objData.bookName = req.query.keyword
+        getNovel(res, {novel: req.query.keyword}) // webSocket返回小说数据，异步任务，不需要await
+        notifyClient(objData) // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
         logger.warn('\n++++ 第十一步 A/succees：完成流程')
       })
       .catch(async errObj => {
-        logger.warn(errObj)
         // todo 自动更换百度url
+        logger.warn(errObj, '\n novelControl catch')
       })
   },
   // 手动清楚任务栈
@@ -1134,33 +1138,37 @@ const _novel = {
   getNovelList: async (req, res, next) => {
     let name = req.query.keyword
     let page = req.query.page || 1
+    let isVip = req.query.isVip || 0
+    let hasContent = req.query.hasContent || 0
     if (!name) {
       await _dbError(res, '请输入小说名')
       return false
     }
     console.time('time 查询数据库列表10个长度')
-    await getNovel(res, name, page, 1)
+    await getNovel(res, {novel: name, page: page, isVip: isVip, hasContent: hasContent})
     console.timeEnd('time 查询数据库列表10个长度')
   }
 }
 
 /**
  * @desc 完成标志，通知客户端
- * @todo 是否提供下载地址，另说
+ * @downloads 提供下载地址，新打开标签，并保存为txt，使用脚本工具格式化
  * */
 async function notifyClient (obj) {
   logger.warn('++++ 第十步/1：小说爬取完成，总章节' + obj.count + '---------')
+  // 失败的计数，查询vip 且 内容为空的数目
+  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1}).count()
   const ob = {
     msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
       name: obj.bookName,
-      url: 'http://127.0.0.1:4000/api/novel/download?keyword=圣墟',
+      url: '/api/novel/download?keyword=' + obj.bookName,
       startTime: obj.startTime || '',
       timeConsuming:
       (new Date().valueOf() - new Date(obj.startTime).valueOf()) / 1000,
       endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
       count: obj.count,
-      failureTotal: obj.failureTotal
+      failureTotal: failCount
     },
     errorCode: 0
   }
@@ -1172,18 +1180,37 @@ async function notifyClient (obj) {
 /**
  * @desc 返回小说数据
  * @param res
- * @param novel
- * @param pageNumber
- * @param action 1 直接查询列表 2、成功后返回暂未用上
+ * @param options {object} novel page isVip hasContent
  * */
-async function getNovel (res, novel, pageNumber, action) {
+async function getNovel (res, options) {
   logger.warn('++++ 第十步/2：将数据查询后通过webSocket渲染到前端')
-  let page = pageNumber || 1
-  let count = await NovelModel.find({name: novel}).count()// 总长度 sort() -1，倒叙,1默认升序
-  logger.warn(count)
+  if (!options.novel || !res) {
+    logger.warn('++++ 第十步/3：小数名为空，无法继续查询')
+    return false
+  }
+  let page = options.page || 1
+  let $where = '1'
+  if (options.hasContent === '1') {
+    $where = 'this.content.length>1'
+  } else if (options.hasContent === '0') {
+    $where = 'this.content.length<1'
+  } else {
+    let $where = '1'
+  }
+  let count = await NovelModel.find({name: options.novel, isVip: Number(options.isVip), $where: $where}).count()// 总长度 sort() -1，倒叙,1默认升序
+  let aggregateOb = {
+    name: options.novel, isVip: Number(options.isVip)
+  }
+  if (!options.hasContent || options.hasContent === '0') {
+    delete aggregateOb.content
+  } else {
+    aggregateOb.content = ''
+  }
+  console.info(options, aggregateOb)
   let data = await NovelModel.aggregate([
     {
-      $match: {name: novel}
+      // 条件查询
+      $match: aggregateOb
     },
     {
       $project: {
@@ -1192,7 +1219,15 @@ async function getNovel (res, novel, pageNumber, action) {
         title: 1,
         length: 1,
         preview: {
-          $substrCP: ['$preview', 0, 40]
+          $substrCP: ['$preview', 0, 100]
+        },
+        isVip: 1,
+        hasContent: {
+          $gt: [
+            {
+              $strLenCP: '$content'
+            }, options.hasContent === '1' ? 1 : 0
+          ]
         },
         timeout: 1
       }
@@ -1201,7 +1236,7 @@ async function getNovel (res, novel, pageNumber, action) {
       $sort: {uuid: 1}
     },
     {
-      $skip: page * 10 - 10
+      $skip: Number(page) * 10 - 10
     },
     {
       $limit: 10
@@ -1209,21 +1244,13 @@ async function getNovel (res, novel, pageNumber, action) {
   ])
   let pages = Math.ceil((count / 10))
   if (!data.length) {
+    logger.warn('数据库不存在该小说')
     await missionFail('数据库不存在该小说')
     return false
   } else {
-    let pages = Math.ceil((count / 10))
-    await _flipPage(res, data, 0, '获取列表成功', {totals: count, pages: pages, pageCurrent: page})
+    logger.warn('\n 发送列表')
+    await _flipPage(res, data, 0, '获取列表成功', {totals: count, pages: pages, pageCurrent: Number(page)})
   }
-  const ob = {
-    msg: novel + '小说数据',
-    data: data,
-    errorCode: 0,
-    totals: count,
-    pages: pages,
-    pageCurrent: Number(page)
-  }
-  await _io('novelData', ob)
 }
 
 async function missionFail (msg) {
