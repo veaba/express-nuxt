@@ -69,7 +69,7 @@ const processTask = []
 /**
  * @desc 百度搜索并找到解析的小说站点
  * */
-async function searchNovel(keyword) {
+async function searchNovel (keyword) {
   return new Promise((resolve, reject) => {
     // 1 根据 keyword 去百度搜索符合规格的结果
     superAgent
@@ -102,7 +102,7 @@ async function searchNovel(keyword) {
  * @return Boolean gbk false;utf-8  true
  * @params url {String}
  * */
-async function isUTF8Charset(url) {
+async function isUTF8Charset (url) {
   return new Promise((resolve, reject) => {
     superAgent
       .get(url)
@@ -134,7 +134,7 @@ async function isUTF8Charset(url) {
  * @params url
  * @todo
  * */
-async function utf8Charset(url) {
+async function utf8Charset (url) {
   return new Promise((resolve, reject) => {
     superAgent
       .get(url)
@@ -158,7 +158,7 @@ async function utf8Charset(url) {
  * @params url
  * @todo
  * */
-async function gbkCharset(url) {
+async function gbkCharset (url) {
   return new Promise((resolve, reject) => {
     superAgentTo
       .get(url)
@@ -200,7 +200,7 @@ async function gbkCharset(url) {
  * @params obj
  * @params name 小说名字，后续在建立小说关联库，通过小说情节、小说名字、作者名字、主角、配角建立关系库
  * */
-async function dealNovel(obj, name) {
+async function dealNovel (obj, name) {
   return new Promise(async (resolve, reject) => {
     await isUTF8Charset(obj.url)
       .then(async (resobj) => {
@@ -360,17 +360,6 @@ const _novel = {
           })
       })
   }
-}
-
-function a1() {
-  setTimeout(() => {
-    console.info(1000)
-  }, 10000);
-}
-function a1() {
-  setTimeout(() => {
-    console.info(2000)
-  }, 10000);
 }
 /**
  * @desc 解析html代码一级请求数据
