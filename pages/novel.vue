@@ -17,6 +17,20 @@
             </div>
             <Button style="margin-top: 20px;" @click="onClearNovel" type="ghost" size="small">手动清空任务栈</Button>
             <Button style="margin-top: 20px;margin-left: 20px;" @click="changeFlipPage" type="primary" size="small">查询该小说</Button>
+          <Row style="margin-top: 20px;">
+          	<i-col span="6">
+              <Select v-model="pageData.isVip">
+                <Option :value="1">vip</Option>
+                <Option :value="0">普通</Option>
+              </Select>
+          	</i-col>
+            <i-col span="6">
+              <Select v-model="pageData.hasContent">
+                <Option :value="1">成功的章节</Option>
+                <Option :value="0">失败的章节</Option>
+              </Select>
+            </i-col>
+          </Row>
         </div>
         <!--progress-->
         <Progress :percent="percent" :status="progressStatus"></Progress>
@@ -44,7 +58,9 @@ export default {
       novelData: [],
       pageData: {
         page: 1,
-        totals: 1
+        totals: 1,
+        isVip: '', // 1 vip 0 普通
+        hasContent: '' // 有内容
       },
       novelColumns: [
         {
@@ -113,7 +129,7 @@ export default {
   },
   mounted () {
     this.receive() // 接收socket 的消息
-    this.changeFlipPage()// 获取列表
+    this.changeFlipPage() // 获取列表
   },
   methods: {
     /**
@@ -121,12 +137,15 @@ export default {
      * */
     changeFlipPage () {
       this.loading = true
-      this.$ajax.get('/api/novel/getNovelList', {
-        params: {
-          keyword: this.keyword,
-          page: this.pageData.page
-        }
-      })
+      this.$ajax
+        .get('/api/novel/getNovelList', {
+          params: {
+            keyword: this.keyword,
+            page: this.pageData.page,
+            isVip: this.pageData.isVip,
+            hasContent: this.pageData.hasContent // '' 全部 1-有内容 0-没内容
+          }
+        })
         .then(res => {
           if (res.errorCode === 0) {
             this.loading = false
@@ -206,7 +225,7 @@ export default {
                 h(
                   'p',
                   '成功章节：' +
-                  Number(json.data.count - json.data.failureTotal)
+                    Number(json.data.count - json.data.failureTotal)
                 ),
                 h('p', '失败章节：' + json.data.failureTotal || '')
               ])
