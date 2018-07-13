@@ -9,15 +9,16 @@
  * @updateLog1 无法安装 charset + superAgent +cheerio +superagent-charset(转译模块)  模块，无法进行下一步开发
  * @updateLog2 准备全用promise 来实现正 流程控制，当然需要注意的是对性能的影响
  ***********************/
-import {NovelModel} from '../model/model'
+import { NovelModel } from '../model/model'
 import { _dbError, _dbSuccess, _webSocket } from '../functions/functions'
-import {format} from 'date-fns' // 时间格式工具
+import { format } from 'date-fns' // 时间格式工具
 // import fs from 'fs' // 文件读写模块
 import charset from 'superagent-charset' // 转移模块
 import cheerio from 'cheerio' // 解析字符
 import superAgent from 'superagent'
 import _io from '../server'
 import socket from '../../plugins/socket'
+
 const superAgentTo = charset(superAgent) // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
 const logger = require('tracer').console() // console追踪库
 
@@ -68,7 +69,7 @@ const processTask = []
 /**
  * @desc 百度搜索并找到解析的小说站点
  * */
-async function searchNovel (keyword) {
+async function searchNovel(keyword) {
   return new Promise((resolve, reject) => {
     // 1 根据 keyword 去百度搜索符合规格的结果
     superAgent
@@ -101,7 +102,7 @@ async function searchNovel (keyword) {
  * @return Boolean gbk false;utf-8  true
  * @params url {String}
  * */
-async function isUTF8Charset (url) {
+async function isUTF8Charset(url) {
   return new Promise((resolve, reject) => {
     superAgent
       .get(url)
@@ -114,12 +115,12 @@ async function isUTF8Charset (url) {
         // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
         for (let item in objMeta) {
           if (/(gbk|GBK|GB2342)/.test(objMeta[item].attribs.content)) {
-            resolve({status: false, host})
+            resolve({ status: false, host })
             break
           }
         }
         // logger.error(host) // 可以拿到host
-        resolve({status: true, host})
+        resolve({ status: true, host })
         if (err) {
           logger.error(err)
           reject(err)
@@ -133,7 +134,7 @@ async function isUTF8Charset (url) {
  * @params url
  * @todo
  * */
-async function utf8Charset (url) {
+async function utf8Charset(url) {
   return new Promise((resolve, reject) => {
     superAgent
       .get(url)
@@ -151,12 +152,13 @@ async function utf8Charset (url) {
       })
   })
 }
+
 /**
  * @desc 如果编码是gbk此走此部分解析
  * @params url
  * @todo
  * */
-async function gbkCharset (url) {
+async function gbkCharset(url) {
   return new Promise((resolve, reject) => {
     superAgentTo
       .get(url)
@@ -198,49 +200,80 @@ async function gbkCharset (url) {
  * @params obj
  * @params name 小说名字，后续在建立小说关联库，通过小说情节、小说名字、作者名字、主角、配角建立关系库
  * */
-async function dealNovel (obj, name) {
+async function dealNovel(obj, name) {
   return new Promise(async (resolve, reject) => {
     await isUTF8Charset(obj.url)
       .then(async (resobj) => {
-        let {status, host} = resobj// 状态和主机解构
+        let { status, host } = resobj// 状态和主机解构
         if (status) {
-          await utf8Charset(obj.url) // utf-8走此部分
+          await utf8Charset(obj.url) // todo utf-8走此部分
         } else {
           await gbkCharset(obj.url) // gbk 走此部分
             // 得到目录数组
             .then(async catalog => {
+              catalog.forEach(async (i) => {
+                try {
+                  await singleNovel(i.href, host)
+                    .then(async single => {
+                      logger.error('~~~~~~~~~~得到单章文章 Start~~~~~~~~~~')
+                      let singleData = {
+                        name: name || '',
+                        content: single || '',
+                        url: i.href || '',
+                        host: host || '',
+                        length: single.length || 0,
+                        title: i['title'] || ''
+                      }
+                      let saveNovel = new NovelModel(singleData) // 建立小说章节模型
+                      // 先判断该部小说是否存在
+                      let isHas = await NovelModel.findOne({ title: i['title'], content: single }).count()
+                      if (isHas) {
+                        logger.error('~~~~~~~~~~已存在该章节~~~~~~~~~~')
+                        return
+                      } else {
+                        logger.error('~~~~~~~~~~正在写入该章节~~~~~~~~~~')
+                        saveNovel.save() // 写入数据库
+                      }
+                      logger.error('~~~~~~~~~~得到单章文章 End~~~~~~~~~~~~')
+                    })
+                } catch (e) {
+                  logger.warn(e)
+                }
+              })
+              // 循环并发
+              // return
               // for 循环批量处理单章
               // todo 不是用for 而是用reduce 来处理
-              for (let i of catalog) {
-                await singleNovel(i.href, host)
-                // 得到单章文章
-                  .then(async single => {
-                    logger.error('~~~~~~~~~~得到单章文章 Start~~~~~~~~~~')
-                    let singleData = {
-                      name: name || '',
-                      content: single || '',
-                      url: i.href || '',
-                      host: host || '',
-                      length: single.length || 0,
-                      title: i['title'] || ''
-                    }
-                    let saveNovel = new NovelModel(singleData) // 建立小说章节模型
-                    // 先判断该部小说是否存在
-                    let isHas = await NovelModel.findOne({title: i['title'], content: single}).count()
-                    if (isHas) {
-                      logger.error('~~~~~~~~~~已存在该章节~~~~~~~~~~')
-                      return
-                    } else {
-                      logger.error('~~~~~~~~~~正在写入该章节~~~~~~~~~~')
-                      saveNovel.save() // 写入数据库
-                    }
-                    logger.error('~~~~~~~~~~得到单章文章 End~~~~~~~~~~~~')
-                  })
-                  .catch(singleErr => {
-                    logger.error(singleErr)
-                  })
-                break
-              }
+              // for (let i of catalog) {
+              //   await singleNovel(i.href, host)
+              //   // 得到单章文章
+              //     .then(async single => {
+              //       logger.error('~~~~~~~~~~得到单章文章 Start~~~~~~~~~~')
+              //       let singleData = {
+              //         name: name || '',
+              //         content: single || '',
+              //         url: i.href || '',
+              //         host: host || '',
+              //         length: single.length || 0,
+              //         title: i['title'] || ''
+              //       }
+              //       let saveNovel = new NovelModel(singleData) // 建立小说章节模型
+              //       // 先判断该部小说是否存在
+              //       let isHas = await NovelModel.findOne({title: i['title'], content: single}).count()
+              //       if (isHas) {
+              //         logger.error('~~~~~~~~~~已存在该章节~~~~~~~~~~')
+              //         return
+              //       } else {
+              //         logger.error('~~~~~~~~~~正在写入该章节~~~~~~~~~~')
+              //         saveNovel.save() // 写入数据库
+              //       }
+              //       logger.error('~~~~~~~~~~得到单章文章 End~~~~~~~~~~~~')
+              //     })
+              //     .catch(singleErr => {
+              //       logger.error(singleErr)
+              //     })
+              //   break
+              // }
               resolve(catalog.length)
             })
         }
@@ -255,7 +288,7 @@ async function dealNovel (obj, name) {
  * @desc 单章处理，返回promise
  * @params url host 主机
  * */
-async function singleNovel (url, host) {
+async function singleNovel(url, host) {
   return new Promise((resolve, reject) => {
     superAgentTo
       .get('http://' + host + url)
@@ -329,6 +362,16 @@ const _novel = {
   }
 }
 
+function a1() {
+  setTimeout(() => {
+    console.info(1000)
+  }, 10000);
+}
+function a1() {
+  setTimeout(() => {
+    console.info(2000)
+  }, 10000);
+}
 /**
  * @desc 解析html代码一级请求数据
  * */

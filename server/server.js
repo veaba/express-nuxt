@@ -19,7 +19,7 @@ const port = process.env.PORT || 4000
 // 创建socket服务
 const server = app.listen(port + 1)
 const io = require('socket.io')(server)
-// body parser 封装req.bdoy
+// body parser 封装req.body
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 app.set('port', port)

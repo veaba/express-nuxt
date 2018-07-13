@@ -1,26 +1,26 @@
 <!------------------------
  *@name Vue.js
  *@author Jo.gel
- *@date 2017/11/26
+ *@date 2018/5/2
  -------------------------->
 <template>
-    <section class="is-settings">
-        {{msg}}
-    </section>
+  <div class="is-nuxt">
+    <nuxt-child/>
+  </div>
 </template>
 <script>
-  /* eslint-disable quotes */
-
   export default {
-    name: 'settings',
-    layout: 'console',
+    name: 'nuxtImport',
+    layout: 'guide',
     components: {},
     data () {
       return {
-        msg: 'Hello world settings VueJS'
+        msg: 'Hello world nuxt VueJS'
       }
     },
     methods: {}
   }
 </script>
+<style lang="scss" scoped>
 
+</style>
