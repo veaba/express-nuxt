@@ -154,6 +154,7 @@ router.post('/register', _public.register)
 router.get('/novel/getNovel', _novel.getNovel)// 搜索小说
 router.get('/novel/getNovelList', _novel.getNovelList)// 小说翻页
 router.post('/novel/clearNovel', _novel.clearNovel)// 清空任务栈
+router.get('/novel/novelTesting', _novel.novelTesting)// testing
 
 router.get('/novel/download', _novel.download)// 下载小说
 export {router}

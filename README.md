@@ -303,3 +303,6 @@ mavon-editor
 
 	less  
 	less-loader
+##　开发笔记
+### 如何处理未知的章节页面具体的小说内容所在的id？
+- 因为风格原因，有些命名#content 、有些BookText,没办法知道内容所在的id名称为此，只能这样计算
