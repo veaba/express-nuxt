@@ -1,4 +1,4 @@
-<!------------------------
+<!--------------------------
  *@name Vue.js
  *@author Jo.gel
  *@date 2018/4/20
@@ -17,6 +17,7 @@
             </div>
             <Button style="margin-top: 20px;" @click="onClearNovel" type="ghost" size="small">手动清空任务栈</Button>
             <Button style="margin-top: 20px;margin-left: 20px;" @click="changeFlipPage" type="primary" size="small">查询该小说</Button>
+            <Button style="margin-top: 20px;margin-left: 20px;" @click="novelTesting" type="primary" size="small">临时测试</Button>
           <Row style="margin-top: 20px;">
           	<i-col span="6">
               <Select v-model="pageData.isVip">
@@ -132,6 +133,19 @@ export default {
     this.changeFlipPage() // 获取列表
   },
   methods: {
+    /**
+     * @desc 临时测试
+     * */
+    novelTesting () {
+      console.info(11)
+      this.$ajax.get('/api/novel/novelTesting')
+        .then(res => {
+          console.info(res)
+        })
+        .catch(err => {
+          console.info(err)
+        })
+    },
     /**
      * @desc 翻页
      * */
