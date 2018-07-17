@@ -578,7 +578,9 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
               .count()
               .then(dbRes => {
                 logger.warn(dbRes)
-                checkNumber++
+                if (dbRes) {
+                  checkNumber++
+                }
                 logger.warn(subLenArr[i].title, dbRes)
               })
               .catch(dbErr => {
@@ -1019,6 +1021,8 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
     title: title,
     length: len
   }
+  let checkHasLine = /^\/+/.test(url)
+  let theUrl = checkHasLine ? 'http://' + host + url : catalogUrl + url
   logger.warn(url, host, catalogUrl + url, 'http://' + host + url, title, len, isChartSet)
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
@@ -1029,9 +1033,7 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
     }, 30000)
     let superAgentChart = charset ? superAgent : superAgentTo
     superAgentChart
-    // todo todo url 的组合依然有问题
-    // todo todo
-      .get(catalogUrl + url)
+      .get(theUrl)
       .set(htmlHeader[1])
       .charset(isChartSet)
       .end(async (err, res) => {
