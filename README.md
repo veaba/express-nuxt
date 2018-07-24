@@ -148,6 +148,12 @@ db.getCollection('novels').aggregate([{
 //查到某一列，并生成新列名，并字符串分割,如果使用 substr 会报一个解析的错误
 ```
 
+- 额外的查询
+
+```js
+db.getCollection('novels').distinct("name") //查询 name 字段多少个值，通过这个，可以查询数据库存储多少本小说
+
+```
 ### 文章
 	- 文章预览（标题、时间、）
 	- 

@@ -21,13 +21,9 @@ const router = Router()
  * @desc 配置数据库连接选项,访问数据库的通信证
  * */
 let options = {
-  db: {native_parser: true},
-  server: {
-    poolSize: 5, // 线程池是什么鬼
-    socketOptions: {
-      keepAlive: 30000
-    }
-  },
+  // db: {native_parser: true},
+  poolSize: 5, // 线程池是什么鬼
+  keepAlive: 30000,
   user: 'admin',
   pass: 'admin'
 }

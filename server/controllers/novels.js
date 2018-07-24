@@ -28,6 +28,7 @@
  * @sql db.getCollection('novels').update({name: '圣墟',title:'请假一天'},{$set:{'content':'内容炸了'}})  查到并更新到
  * let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}) 只查两列
  * @mongoose await NovelModel.find({name: '圣墟', $where: 'this.content.length>1'}).count()
+ * @mongoose db.getCollection('novels').distinct("name") 查询 name 字段多少个值，通过这个，可以查询数据库存储多少本小说
  * @sql exec()返回promise 否则 query
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
@@ -39,7 +40,6 @@ import {
   _download
 } from '../functions/functions';
 import { format } from 'date-fns'; // 时间格式工具
-// import fs from 'fs' // todo 可能用来生成txt 文件下载。文件读写模块
 import charset from 'superagent-charset'; // 转移模块
 import cheerio from 'cheerio'; // 解析字符
 import superAgent from 'superagent';
@@ -742,7 +742,7 @@ async function getQiDianNovel (bookName) {
           let isCheckDone = 0;
           sourceData.vs.forEach(async (items, indexs) => {
             isCheckDone = 0;
-            items.cs.forEach(async (item, index) => {
+            items['cs'].forEach(async (item, index) => {
               let qiDianUrl = item.sS
                 ? 'https://read.qidian.com/chapter/' + item.cU
                 : 'https://vipreader.qidian.com/chapter/' +
@@ -756,6 +756,7 @@ async function getQiDianNovel (bookName) {
                   previewContent = preview;
                 })
                 .catch(previewErr => {
+                  logger.warn(previewErr)
                   previewContent = '';
                 });
               // 构造起点小说目录对象
@@ -920,7 +921,7 @@ async function dealNovel (resObj, name) {
         let t = 0;
         // 通过定时器，来大致判断异步任务结束，如果不结束的，强制reject
         let InterTime = setInterval(function () {
-          // todo 尝试超时设置为10s超时,设置太小无法完成
+          // 尝试超时设置为10s超时,设置太小无法完成
           if (t > 20) {
             t = 0;
             // 倒计时，发送通知
@@ -1046,7 +1047,6 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
   );
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
-      // todo 为什么会到这里？
       logger.warn('\n++++第九步/2：爬取单章超时30等待完成');
       reject(errObj);
       clearTimeout(rejectTime);
@@ -1068,8 +1068,6 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
           logger.warn(
             '\n++++第九步/3-success：爬取单章获取内容成功，状态:' + res.status
           );
-          // todo 由于页面的不同导致匹配ID有问题，比如 http://www.aoyuge.com/35/35920/17712809.html
-          // todo 需要匹配内容最多的，且含有ID的才是正确的内容
           // 匹配到真正的内容，尽管如此，还需要后续的关注。才能产生变种
           const $ = await cheerio.load(res.text);
           let elArr = $('div');
@@ -1155,10 +1153,6 @@ const _novel = {
             ) {
               logger.warn('\n B+++' + $(item)
                 .text());
-              // logger.warn('\n A+++' + index + '____' + $(item).attr('id') + '-------' + $(item).text())
-              // logger.warn('\n A+++' + index + '____' + $(item).attr('id'))
-              // + $(item).text()
-            } else {
             }
           });
         } else {
@@ -1167,7 +1161,7 @@ const _novel = {
       });
   },
   // 小说控制入口
-  getNovel: async (req, res, next) => {
+  getNovel: async (req, res) => {
     if (!req.query.keyword) {
       _dbError(res);
       return false;
@@ -1194,7 +1188,7 @@ const _novel = {
         logger.warn(novelData);
       })
       .catch(novelError => {
-        logger.warn('\n 起点抓取失败');
+        logger.warn('\n 起点抓取失败', novelError);
       });
     console.timeEnd('获取起点章节部分');
     // 2、getQiDianNovel 会返回 0或者总章节数
@@ -1236,7 +1230,7 @@ const _novel = {
       );
       return false;
     }
-    // todo 异步任务暂时关闭
+    // 异步任务暂时关闭
     await searchNovel(req.query.keyword)
       .then(async data => {
         arrUrls = data; // 再次赋值给数组
@@ -1250,7 +1244,7 @@ const _novel = {
       });
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
-    // todo http://www.biqukan.com 时好时坏！
+    // url http://www.biqukan.com 时好时坏！
     // arrUrls = [
     //   {
     //     title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
@@ -1278,20 +1272,19 @@ const _novel = {
       });
   },
   // 手动清楚任务栈
-  clearNovel: async (req, res, next) => {
+  clearNovel: async (req, res) => {
     processTask = [];
     await _dbSuccess(res, '手动清空任务栈成功', processTask, 0);
   },
   // 下载小说页面
-  download: async (req, res, next) => {
+  download: async (req, res) => {
     console.time('下载时间耗时');
-    // req.accepts('text/plain')// todo 设置req的协议类型
     let name = req.query.keyword;
     if (!name) {
       await _dbError(res, '请输入要下载的小说名');
       return false;
     }
-    // todo 查询500+条，表现太慢，35s，能否分为多条，然后走websocket返回多条数据同时进行来渲染数据么
+    // todo 查询500+条，表现太慢，35s，能否分为多条，然后走webSocket返回多条数据同时进行来渲染数据么
     console.time('查询数据库所需全部章节列');
     let dbData = await NovelModel.find(
       {name: name},
@@ -1310,7 +1303,7 @@ const _novel = {
     await _download(res, '下载成功', data);
   },
   // 小说列表
-  getNovelList: async (req, res, next) => {
+  getNovelList: async (req, res) => {
     let name = req.query.keyword;
     let page = req.query.page || 1;
     let isVip = req.query.isVip || 0;
@@ -1393,11 +1386,12 @@ async function getNovelData (res, options) {
     isVip: Number(options.isVip)
   };
   if (!options.hasContent || options.hasContent === '0') {
-    delete aggregateOb.content;
-  } else {
     aggregateOb.content = '';
+  } else {
+    delete aggregateOb.content;
   }
-  console.info(options, aggregateOb);
+  logger.warn(options, aggregateOb);
+  // 聚合查询，返回到前端的列表
   let data = await NovelModel.aggregate([
     {
       // 条件查询
@@ -1424,18 +1418,13 @@ async function getNovelData (res, options) {
         timeout: 1
       }
     },
-    {
-      $sort: {uuid: 1}
-    },
-    {
-      $skip: Number(page) * 10 - 10
-    },
-    {
-      $limit: 10
-    }
+    { $sort: {uuid: 1} },
+    { $skip: Number(page) * 10 - 10 },
+    { $limit: 10 }
   ]);
+  let isHasBook = await NovelModel.find({name: options.novel}).count() // 判断数据库是否存在该本小说
   let pages = Math.ceil(count / 10);
-  if (!data.length) {
+  if (!isHasBook) {
     logger.warn('数据库不存在该小说');
     await missionFail('数据库不存在该小说');
     return false;
@@ -1458,7 +1447,7 @@ async function missionFail (msg) {
     .then(res => {
       // 成功执行任务之后，清空任务栈
       processTask = [];
-      logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程');
+      logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程', res);
     });
 }
 
