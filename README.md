@@ -111,8 +111,43 @@
 ## 后端
 ### 翻页接口函数
 ### mongodb 语法
-	db.getCollection('articles').find({}).limit(10).skip(10) // 假如有20条，则从第10开始，截取10条结果返回
-	db.getCollection('articles').find({}).limit(10) // 从1 到10条截取
+- query
+```js
+db.getCollection('articles').find({}).limit(10).skip(10) // 假如有20条，则从第10开始，截取10条结果返回
+db.getCollection('articles').find({}).limit(10) // 从1 到10条截取
+```
+
+- 聚合查询
+
+```js
+db.getCollection('articles').aggregate([
+	{
+		$match:{
+			length:{
+				$gt:5000
+			}
+		}
+	},
+	{
+		$sort:{
+			uuid:1
+		}
+	},
+	{
+		$limit:50
+	}
+]) // 查询长度大于5000的，数字长度的集合
+
+db.getCollection('novels').aggregate([{
+    $project: {
+        content: {
+            $substr: ["$content", 0, 10]
+        }
+    }
+}])
+//查到某一列，并生成新列名，并字符串分割,如果使用 substr 会报一个解析的错误
+```
+
 ### 文章
 	- 文章预览（标题、时间、）
 	- 
