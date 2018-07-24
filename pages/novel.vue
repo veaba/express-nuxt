@@ -226,7 +226,9 @@ export default {
                     'a',
                     {
                       attrs: {
-                        href: location.origin + json['data']['url']
+                        // todo 返回比较慢，后续才会生成txt文件
+                        href: location.origin + json['data']['url'],
+                        download: json['data'].name + '.txt'
                       }
                     },
                     json.data.name

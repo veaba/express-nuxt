@@ -9,21 +9,21 @@
  * @updateLog1 无法安装 charset + superAgent +cheerio +superagent-charset(转译模块)  模块，无法进行下一步开发
  * @updateLog2 准备全用promise 来实现正 流程控制，当然需要注意的是对性能的影响
  * @finish 提供webScoket 倒计时下载时间。√，进度条
- * @todo 正在下载的问题，先要比较长度，如果相同，则提示不要再去下载，先去爬取起点的数据，如果查到库里面和起点的数据一样，则直接从库里面返回，不需要去百度查到
+ * @finish 正在下载的问题，先要比较长度，如果相同，则提示不要再去下载，先去爬取起点的数据，如果查到库里面和起点的数据一样，则直接从库里面返回，不需要去百度查到
  * @finish 为了减少服务器的压力，存在执行的问题，不在提供下载服务，需要等待任务完成。√，完成
  * @todo 并在前端展示服务器当前压力，是否空闲状态，或者繁忙状态，×，仅仅警告无法处理处理已有的请求
  * @finish 写入库，应该异步操作，不需要await 等待顺序写入库 √并发写入 完成
- * @todo 有些小说，比如纯阳武神，有卷名，比较难办。！！！，章节名可能重叠，且每卷的章节次序需要重新开始计算->用爬取与起点API的对比章节名+预览，并设置uuid来实现唯一id
- * @todo 所以需要去抓取起点的目录，然后拿到目录名称，再去对比章节名，但依然有错漏的问题
- * @todo https://read.qidian.com/ajax/book/category?_csrfToken=trKplZoIC9MzizIxq8JxJvQWPCAJxU9VAbW6ERKr&bookId=3657207 起点拿到章节接口，卷名
+ * @finish 有些小说，比如纯阳武神，有卷名，比较难办。！！！，章节名可能重叠，且每卷的章节次序需要重新开始计算->用爬取与起点API的对比章节名+预览，并设置uuid来实现唯一id
+ * @desc 所以需要去抓取起点的目录，然后拿到目录名称，再去对比章节名，但依然有错漏的问题
+ * @finish https://read.qidian.com/ajax/book/category?_csrfToken=trKplZoIC9MzizIxq8JxJvQWPCAJxU9VAbW6ERKr&bookId=3657207 起点拿到章节接口，卷名
  * @todo race 有一个resolve或者reject都会返回
- * @todo 唯一章节id，uuid 由起点uuid接口写入
+ * @desc 唯一章节id，uuid 由起点uuid接口写入
  * @todo 哨兵变量，用于是否终止异步任务的依据,去中断执行异步、同步任务的执行流水线
  * @todo https://www.qidian.com/search?kw=%E7%BA%AF%E9%98%B3%E6%AD%A6%E7%A5%9E 起点搜索 拿到书id值，将id 传递给查询书的目录
  * @todo 参考1 a 可以在https://book.qidian.com/info/3657207 拿到目录的数目
  * @todo 后续在建立小说关联库，通过小说情节、小说名字、作者名字、主角、配角建立关系库
- * @todo 免费小说目录名字可能错误，随意，需要匹配的序号+额外的名称
- * @todo websocket 需要返回列表随后交给前端完成余下的
+ * @finish 免费小说目录名字可能错误，随意，需要匹配的序号+额外的名称
+ * @todo webSocket 需要返回列表随后交给前端完成余下的
  * @sql db.getCollection('novels').find({name: '圣墟', $where: 'this.content.length>1',isVip:1}).count() //查询vip章节的内容大于1的章节数
  * @sql db.getCollection('novels').update({name: '圣墟',title:'请假一天'},{$set:{'content':'内容炸了'}})  查到并更新到
  * let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}) 只查两列
@@ -39,7 +39,7 @@ import {
   _download
 } from '../functions/functions';
 import { format } from 'date-fns'; // 时间格式工具
-// import fs from 'fs' // todo 可能用来生成text 文件下载。文件读写模块
+// import fs from 'fs' // todo 可能用来生成txt 文件下载。文件读写模块
 import charset from 'superagent-charset'; // 转移模块
 import cheerio from 'cheerio'; // 解析字符
 import superAgent from 'superagent';
@@ -1284,11 +1284,15 @@ const _novel = {
   },
   // 下载小说页面
   download: async (req, res, next) => {
+    console.time('下载时间耗时');
+    // req.accepts('text/plain')// todo 设置req的协议类型
     let name = req.query.keyword;
     if (!name) {
       await _dbError(res, '请输入要下载的小说名');
       return false;
     }
+    // todo 查询500+条，表现太慢，35s，能否分为多条，然后走websocket返回多条数据同时进行来渲染数据么
+    console.time('查询数据库所需全部章节列');
     let dbData = await NovelModel.find(
       {name: name},
       {title: 1, content: 1}
@@ -1299,7 +1303,6 @@ const _novel = {
       return false;
     }
     let data = '';
-    console.time('查询数据库所需全部章节列');
     for (let item of dbData) {
       data = data + item.title + '\n' + item.content + '\n';
     }

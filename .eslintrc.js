@@ -13,7 +13,8 @@ module.exports = {
   // add your custom rules here
   rules: {
     // "semi": ["error","always"],//语句强制分号结尾
-    "semi": 0 //禁止分号检测
+    "semi": 0, //禁止分号检测
   },
-  globals: {}
+  globals: {
+  }
 }
