@@ -50,7 +50,7 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '工业之王',
+      keyword: '重生之最强剑神',
       loading: false,
       progressStatus: 'active',
       percent: 0, // 进度条
@@ -214,6 +214,11 @@ export default {
       this.$socket.on('novel', json => {
         if (json.errorCode === 0) {
           this.loading = false
+          // 最新的话，进度条完成
+          if (json.data.eventType === 'latest') {
+            this.percent = 100
+          }
+          console.info(json);
           // 如果本卡有上一次通知，则在开始后，4.5s关闭本卡
           this.$Notice.success({
             duration: 0,
@@ -226,7 +231,9 @@ export default {
                     'a',
                     {
                       attrs: {
-                        href: location.origin + json['data']['url']
+                        // todo 返回比较慢，后续才会生成txt文件
+                        href: location.origin + json['data']['url'],
+                        download: json['data'].name + '.txt'
                       }
                     },
                     json.data.name
@@ -251,15 +258,15 @@ export default {
       /**
        * @desc 小说下载的结果
        * */
-      // this.$socket.on('novelData', json => {
-      //   console.info(json)
-      //   if (json.errorCode === 0) {
-      //     this.novelData = json.data || []
-      //     this.pageData.total = json.data.totals || 1
-      //   }
-      //   this.loading = false
-      //   this.percent = 100
-      // })
+      this.$socket.on('novelData', json => {
+        console.info(json)
+        if (json.errorCode === 0) {
+          this.novelData = json.data || []
+          this.pageData.total = json.data.totals || 1
+        }
+        this.loading = false
+        this.percent = 100
+      })
 
       /**
        * @desc 大兄弟，任务失败了
@@ -314,7 +321,7 @@ export default {
       this.$ajax
         .get('/api/novel/getNovel', {
           params: {
-            keyword: this.keyword
+            keyword: this.keyword.trim()
           }
         })
         .then(res => {
