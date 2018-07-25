@@ -24,11 +24,13 @@
  * @todo 后续在建立小说关联库，通过小说情节、小说名字、作者名字、主角、配角建立关系库
  * @finish 免费小说目录名字可能错误，随意，需要匹配的序号+额外的名称
  * @todo webSocket 需要返回列表随后交给前端完成余下的
+ * @todo 确保起点初次不覆盖那些content
  * @sql db.getCollection('novels').find({name: '圣墟', $where: 'this.content.length>1',isVip:1}).count() //查询vip章节的内容大于1的章节数
  * @sql db.getCollection('novels').update({name: '圣墟',title:'请假一天'},{$set:{'content':'内容炸了'}})  查到并更新到
  * let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}) 只查两列
  * @mongoose await NovelModel.find({name: '圣墟', $where: 'this.content.length>1'}).count()
  * @mongoose db.getCollection('novels').distinct("name") 查询 name 字段多少个值，通过这个，可以查询数据库存储多少本小说
+ * @mongoose await NovelModel.findOne({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'}) 原生shell findOne 没有count()
  * @sql exec()返回promise 否则 query
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  ***********************/
@@ -51,47 +53,39 @@ const logger = require('tracer')
 // search 起点
 const qiDianHeader = [
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    Host: 'www.qidian.com',
-    Pragma: 'no-cache',
+    'Connection': 'keep-alive',
+    'Host': 'www.qidian.com',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
   },
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    Cookie:
-      '_csrfToken=qy4Rd0tr9OeOPGeTbBmP5wFM4mwEehh4nArJXzap; newstatisticUUID=1529775060_1919789918',
-    Host: 'read.qidian.com',
-    Pragma: 'no-cache',
+    'Connection': 'keep-alive',
+    'Cookie': '_csrfToken=qy4Rd0tr9OeOPGeTbBmP5wFM4mwEehh4nArJXzap; newstatisticUUID=1529775060_1919789918',
+    'Host': 'read.qidian.com',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
   },
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    Cookie:
-      '_csrfToken=c1T7tQp3nx4YuzLrg6hPImmAdrPh0fDclhAKwnif; pageOps=1; newstatisticUUID=1529845827_59365039; qdrs=0%7C3%7C0%7C0%7C1; qdgd=1; lrbc=3657207%7C294479399%7C1; rcr=3657207; bc=3657207',
-    Host: 'vipreader.qidian.com',
-    Pragma: 'no-cache',
+    'Connection': 'keep-alive',
+    'Cookie': '_csrfToken=c1T7tQp3nx4YuzLrg6hPImmAdrPh0fDclhAKwnif; pageOps=1; newstatisticUUID=1529845827_59365039; qdrs=0%7C3%7C0%7C0%7C1; qdgd=1; lrbc=3657207%7C294479399%7C1; rcr=3657207; bc=3657207',
+    'Host': 'vipreader.qidian.com',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
   }
 ];
 /**
@@ -100,59 +94,50 @@ const qiDianHeader = [
 const htmlHeader = [
   // baidu:
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
     'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6',
-    Connection: 'keep-alive',
-    Host: 'www.baidu.com',
-    Referer: 'www.baidu.com',
+    'Connection': 'keep-alive',
+    'Host': 'www.baidu.com',
+    'Referer': 'www.baidu.com',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
   },
   // biquge:
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
+    'Connection': 'keep-alive',
     // 'Host': 'www.biquge.com.tw', // 导致失败
-    Pragma: 'no-cache',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36'
   },
   // biqukan:
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
+    'Connection': 'keep-alive',
     // 'Host': 'www.biqukan.com', // 导致失败
-    Pragma: 'no-cache',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
   },
   {
-    Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    Cookie:
-      'UM_distinctid=16437bce479208-074e6984f37387-47e1f32-1fa400-16437bce47bb8f; CNZZDATA1260938422=1896072676-1529941185-%7C1529941185',
+    'Connection': 'keep-alive',
+    'Cookie': 'UM_distinctid=16437bce479208-074e6984f37387-47e1f32-1fa400-16437bce47bb8f; CNZZDATA1260938422=1896072676-1529941185-%7C1529941185',
     // 'Host': 'www.biqukan.com',
-    Pragma: 'no-cache',
+    'Pragma': 'no-cache',
     'Upgrade-Insecure-Requests': 1,
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
   }
 ];
 // 常见用于组合章节元素
@@ -167,7 +152,8 @@ const ELEMENT = {
   p: 0,
   dl: 0,
   dd: 0,
-  dt: 0
+  dt: 0,
+  td: 0
 };
 let thisCharsetStatus = false; // 先存储当前是何种编码的状态 true utf-8,false gbk
 const ELEMENTKeys = Object.keys(ELEMENT); // element key值数组
@@ -278,10 +264,12 @@ async function realUrl (url, keyword) {
       );
       reject(errorReject);
     }, 5000);
+    logger.warn(url)
     superAgent.get(url)
       .set(htmlHeader[0])
       .end(async (err, res) => {
         let theUrl = res.request.url;
+        logger.warn(theUrl)
         let strUrl = theUrl.substr(8); // 从第八个字符截取，取出https://、http://
         if (/\/+./g.test(strUrl) && theUrl.search(regExpUrl) < 0) {
           resolve(theUrl);
@@ -494,7 +482,7 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
     await missionFail('目录更换源header后，还是失败,错误代码:' + errStatus);
     return false;
   }
-  logger.warn('\n 获取目录', urlAndHeaderObj);
+  logger.warn('\n 获取目录');
   return new Promise((resolve, reject) => {
     superAgentCharset.get(url)
       .set(header)
@@ -538,28 +526,18 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           // 找到数组最大值的所在位置
           let indexMax = valuesArr.indexOf(
             Math.max.apply(Math, valuesArr));
-          let chapters = $1('body')
-            .find(ELEMENTKeys[indexMax]);
+          let chapters = $1('body').find(ELEMENTKeys[indexMax]);
           let catalogsArr = []; // 组装目录的title 和 href路径
           // 组装分类数组
           console.time('目录循环 Each:');
           // 只需要组装vip章节即可，过滤非vip章节
           chapters.each((index, item) => {
             let obj = {
-              title: $1(item)
-                .find('a')
-                .text(),
-              href: $1(item)
-                .find('a')
-                .attr('href'),
+              title: ($1(item).find('a').text()).replace(/(.+?) 第/, '第'), //  正文 第1066章 黑炎出现 =>第1066章 黑炎出现
+              href: $1(item).find('a').attr('href'),
               catalogsUrl: urlAndHeaderObj.url
             };
-            let isHasVip = NovelModel.find({
-              name: name,
-              title: obj.title,
-              isVip: 1
-            })
-              .count();
+            let isHasVip = NovelModel.find({name: name, title: obj.title, isVip: 1}).count();
             // 如果存在vip章节则组装vip章节
             if (isHasVip) {
               catalogsArr.push(obj);
@@ -573,6 +551,7 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           let subLenArr = catalogsArr.splice(randomNumber, 10); // 截取处理10条章节的数组，由于发现《圣墟》1040章 九幽祇 与https://www.dingdiann.com/ddk74633/ 的1040 九幽只 无法匹配上
           logger.warn(subLenArr);
           let checkNumber = 0; // 如果等于5，则说明取的章节是正确的，如果小于5，则说明当前取的目录url是不对，则需要更换url源
+          // 卧槽~~，起点章节名称，有些是 第413章  白雾峡谷 两个空格，你大爷啊
           for (let i = 0; i < 10; i++) {
             await NovelModel.find(
               {name: name, title: subLenArr[i].title})
@@ -582,8 +561,7 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
                 if (dbRes) {
                   checkNumber++;
                 }
-                logger.warn(subLenArr[i].title,
-                  dbRes);
+                logger.warn(subLenArr[i].title, dbRes);
               })
               .catch(dbErr => {
                 logger.warn(dbErr);
@@ -602,8 +580,7 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
               checkNumber
             );
             // 记录该错误/无效的url，下次让系统自动排除
-            let isHasUrl = await NovelBadUrlModel.find(
-              {url: url});
+            let isHasUrl = await NovelBadUrlModel.find({url: url});
             logger.warn('\n++++ 记录:', url);
             if (!isHasUrl.length) {
               let saveErrorUrls = new NovelBadUrlModel({
@@ -644,9 +621,7 @@ async function searchQiDianBook (name) {
         if (err) {
           logger.warn(err);
         } else {
-          logger.warn('https://www.qidian.com/search?kw=' +
-            encodeURI(name));
-          // logger.warn(res.text)
+          logger.warn('https://www.qidian.com/search?kw=' + encodeURI(name));
           const $ = await cheerio.load(res.text);
           let theBookElement = $(
             '#result-list li:nth-child(1) > div.book-mid-info > h4 > a'
@@ -655,15 +630,9 @@ async function searchQiDianBook (name) {
             bookId: '',
             bookUrl: ''
           };
-          if (
-            $(theBookElement)
-              .children()
-              .text() === name
-          ) {
-            ob.bookId = $(theBookElement)
-              .attr('data-bid');
-            ob.bookUrl = $(theBookElement)
-              .attr('href');
+          if ($(theBookElement).children().text() === name) {
+            ob.bookId = $(theBookElement).attr('data-bid');
+            ob.bookUrl = $(theBookElement).attr('href');
             resolve(ob);
           } else {
             // 如果找到还是跳出空对象
@@ -681,7 +650,6 @@ async function getQiDianNovelPreview (url) {
   return new Promise((resolve, reject) => {
     superAgent.get(url)
       .set(qiDianHeader[1])
-      // .set(qiDianHeader[2])
       .end(async (err, res) => {
         let nullString = '';
         if (err) {
@@ -689,8 +657,7 @@ async function getQiDianNovelPreview (url) {
           reject(nullString); // 如果抓取失败，则返回空字符串
         } else {
           let $ = cheerio.load(res.text);
-          let content = $('.read-content')
-            .text();
+          let content = $('.read-content').text();
           resolve(content);
         }
       });
@@ -759,30 +726,29 @@ async function getQiDianNovel (bookName) {
                   logger.warn(previewErr)
                   previewContent = '';
                 });
-              // 构造起点小说目录对象
-              let novelCatalogOb = {
-                name: bookName, // 书名
-                uuid: item.uuid, // uuid
-                qiDianUrl: qiDianUrl,
-                qiDianId: item.id,
-                title: item.cN, // cN 标题
-                updateTime: item.uT, // uT 更新时间
-                preview: item.sS
-                  ? previewContent.substr(0, 200)
-                  : previewContent, // 章节预览，vip写入预览，普通写入200字
-                content: item.sS ? previewContent : '', // 如果不存在内容，而且为免费小说。则写入到内容，爬取vip章节内容的时候就不要再一次写入了
-                reel: items.vN, // 卷名vN
-                isVip: item.sS ? 0 : 1, // 起点：sS 1为免费 0为vip，数据库 1vip、0免费
-                length: item.cnt || 0 // cnt  字数
-              };
-              let isHas = await NovelModel.findOne({
-                title: item.cN,
-                uuid: item.uuid
-              })
-                .count();
-              let saveQiDian = new NovelModel(novelCatalogOb);
+              let theTitle = (item.cN).replace(/ [ ]+/, ' ')
+              // 存在章节与章节名 两个空格 三个空格情况
+              let isHas = await NovelModel.findOne({name: bookName, title: theTitle, uuid: item.uuid}).count();
               // 如果不存在，则保存
               if (!isHas) {
+                // 构造起点小说目录对象
+                let novelCatalogOb = {
+                  name: bookName, // 书名
+                  uuid: item.uuid, // uuid
+                  qiDianUrl: qiDianUrl,
+                  qiDianId: item.id,
+                  title: theTitle, // cN 标题，有些章节名称是空格，吐血
+                  updateTime: item.uT, // uT 更新时间
+                  preview: item.sS
+                    ? previewContent.substr(0, 200)
+                    : previewContent, // 章节预览，vip写入预览，普通写入200字
+                  content: item.sS ? previewContent : '', // 如果不存在内容，而且为免费小说。则写入到内容，爬取vip章节内容的时候就不要再一次写入了
+                  reel: items.vN, // 卷名vN
+                  isVip: item.sS ? 0 : 1, // 起点：sS 1为免费 0为vip，数据库 1vip、0免费
+                  length: item.cnt || 0 // cnt  字数
+                };
+                let saveQiDian = new NovelModel(novelCatalogOb);
+                logger.warn('起点写入的章节：' + theTitle)
                 await saveQiDian.save();
               }
               isCheckDone++;
@@ -799,6 +765,9 @@ async function getQiDianNovel (bookName) {
  * @desc 对目录进行处理，合并起点数据和写入库操作
  * @param resObj {string } {status:false,host:'xx',url:'xx'}gbk false;utf-8  true，以及主机 url
  * @param name 书名
+ * @desc 有找到的话，需要写入
+ * @desc 第一个空格后的第一个字+序号作为匹配调整，并对异常章节进行标注
+ * @desc 查到vip 且内容小于1的，写入章节，如果找不到，则不做其他操作
  * */
 async function dealNovel (resObj, name) {
   let {status, host, url} = resObj; // 状态和主机解构
@@ -816,106 +785,54 @@ async function dealNovel (resObj, name) {
       name = processTask[0];
     }
     await logger.warn('\n 开始爬取目录');
-    await getCatalogs(
-      {url: url, header: htmlHeader[catalogsCharsetIndex], name: name},
-      status
-    )
+    await getCatalogs({url: url, header: htmlHeader[catalogsCharsetIndex], name: name}, status)
       .then(async catalog => {
-        logger.warn(
-          '\n++++ 第八步/1：检测到是 ' + status
-            ? 'utf-8'
-            : 'gbk' + ' 编码****************'
-        );
+        logger.warn('\n++++ 第八步/1：检测到是 ' + status ? 'utf-8' : 'gbk' + ' 编码****************');
         console.time('爬取整个目录消耗时间');
         // todo 下一次循环之前只针对尚未爬取的小说，进行爬取，有的话，直接跳过
         // todo 先查找数据库，再去循环分类的章节
         catalog.forEach(async (i, index) => {
-          singleNovel(
-            i.href,
-            i.catalogsUrl,
-            host,
-            i.title,
-            catalog.length || 0,
-            status
-          )
-            .then(async single => {
-              if (single) {
-                logger.warn('then 有内容', single.substr(0, 50));
-              } else {
-                logger.warn('then 里面没有内容');
-              }
-              // 先判断该部小说是否存在,查到该部小说，是vip，则标题对上，则返回数据,如果存在，则将内容更新进来
-              let singleData = {
-                content: single || '',
-                url: i.href || '',
-                host: host || '',
-                timeout: false,
-                spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')
-              };
-              // 查到内容小于1的vip章节
-              let isHas = await NovelModel.findOne({
-                name: name,
-                isVip: 1,
-                $where: 'this.content.length<1'
-              })
-                .count();
-              // 有找到的话，需要写入
-              if (isHas) {
-                logger.warn('isHas', typeof isHas, isHas);
-                // 写入数据库
-                // 第一个空格后的第一个字+序号作为匹配调整，并对异常章节进行标注
-                let temp = i['title'];
-                let title = '';
-                temp.replace(/^(.+?) ./, $1 => {
-                  title = $1;
+          // 1、判断如果不存在content才会去抓取
+          let temp = i['title'];
+          let title = '';
+          temp.replace(/^(.+?) ./, $1 => {
+            title = $1;
+          });
+          let regTile = new RegExp(title);
+          let isHas = await NovelModel.findOne({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'}).count()
+          if (isHas) {
+            logger.warn('查到内容等于1的vip章节：' + regTile)
+            logger.warn({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'})
+            singleNovel(i.href, i.catalogsUrl, host, i.title, catalog.length || 0, status)
+              .then(async single => {
+                if (single) { logger.warn('then 有内容', single.substr(0, 50)); } else { logger.warn('then 里面没有内容') }
+                // 先判断该部小说是否存在,查到该部小说，是vip，则标题对上，则返回数据,如果存在，则将内容更新进来
+                let checkHasLine = /^\/+/.test(url);// 判断是否是第一个斜杠开头，如果是，则说明是绝对路径，都在相对路径
+                let checkHasHttp = /^http+/.test(url)// 有些网站会将标题的url就是直接的单章url
+                let theUrl = ''// 真实要去爬取的url
+                if (checkHasHttp) { theUrl = url } else { theUrl = checkHasLine ? 'http://' + host + url : i.catalogsUrl + url; }
+                let singleData = {content: single || '', url: theUrl || '', host: host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')};
+                await NovelModel.update({name: name, title: regTile, $where: 'this.content.length<1', isVip: 1}, {$set: singleData}).exec().then(updateRes => {
+                  logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
                 });
-                let regTile = new RegExp(title);
-                logger.warn('\n 章节正则：' + regTile);
-                // 查到vip 且内容小于1的，写入章节，如果找不到，则不做其他操作
-                await NovelModel.update(
-                  {
-                    name: name,
-                    title: regTile,
-                    $where: 'this.content.length<1',
-                    isVip: 1
-                  },
-                  {$set: singleData}
-                )
-                  .exec()
-                  .then(updateRes => {
-                    // 更新成功
-                    logger.warn(
-                      updateRes,
-                      '《' + name + '》 ' + i.title + ' then更新成功'
-                    );
-                  });
-              } else {
-                logger.warn(
-                  '\n 由于查找到章节内容不为空',
-                  '《' + name + '》' + i.title
-                );
-              }
-            })
-            .catch(async errObj => {
-              logger.warn(errObj);
-              // 编码错误，去更改headerIndex
-              if (errObj.ErrStatus) {
-                if (loopHeader === htmlHeader) {
-                  --loopHeader;
+              })
+              .catch(async errObj => {
+                // todo 如果走到这一步，就不执行了。
+                logger.warn(errObj);
+                // 编码错误，去更改headerIndex
+                if (errObj.ErrStatus) {
+                  if (loopHeader === htmlHeader) {
+                    --loopHeader;
+                  } else {
+                    ++loopHeader;
+                  }
                 } else {
-                  ++loopHeader;
+                  // todo 下一次循环标注这些异常的章节
+                  logger.warn('《' + name + '》第 ' + (errObj.title || '未知章节') + ' catch出来异常');
                 }
-              } else {
-                // todo 下一次循环标注这些异常的章节
-                logger.warn(
-                  '《' +
-                  name +
-                  '》第 ' +
-                  (errObj.title || '未知章节') +
-                  ' catch出来异常'
-                );
-              }
-            });
+                return false
+              });
+          }
         });
         console.timeEnd('爬取整个目录消耗时间');
         let t = 0;
@@ -941,11 +858,7 @@ async function dealNovel (resObj, name) {
       })
       // 假如catch 或者实在是解析章节情况下，将会通知客户端
       .catch(async utf8Error => {
-        logger.warn(
-          '\n 爬取目录的之后，catch 有错误，状态码',
-          utf8Error.status,
-          utf8Error
-        );
+        logger.warn('\n 爬取目录的之后，catch 有错误，状态码', utf8Error.status, utf8Error);
         reject(utf8Error || '爬取章节错误？？');
       });
   });
@@ -1034,17 +947,11 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
     title: title,
     length: len
   };
-  let checkHasLine = /^\/+/.test(url);
-  let theUrl = checkHasLine ? 'http://' + host + url : catalogUrl + url;
-  logger.warn(
-    url,
-    host,
-    catalogUrl + url,
-    'http://' + host + url,
-    title,
-    len,
-    isChartSet
-  );
+  let checkHasLine = /^\/+/.test(url);// 判断是否是第一个斜杠开头，如果是，则说明是绝对路径，都在相对路径
+  let checkHasHttp = /^http+/.test(url)// 有些网站会将标题的url就是直接的单章url
+  let theUrl = ''// 真实要去爬取的url
+  if (checkHasHttp) { theUrl = url } else { theUrl = checkHasLine ? 'http://' + host + url : catalogUrl + url; }
+  logger.warn(len + 'title:' + title)
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
       logger.warn('\n++++第九步/2：爬取单章超时30等待完成');
@@ -1056,7 +963,6 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
       .set(htmlHeader[1])
       .charset(isChartSet)
       .end(async (err, res) => {
-        logger.warn(err);
         if (err && err.status && err.response) {
           logger.warn(
             '\n++++第九步/3-err：爬取单章获取内容失败，状态:' + err.status
@@ -1065,44 +971,30 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
           let badStatus = {ErrStatus: true};
           reject(badStatus); // 如果错误404/403则抛出err
         } else {
-          logger.warn(
-            '\n++++第九步/3-success：爬取单章获取内容成功，状态:' + res.status
-          );
+          logger.warn('\n++++ 第九步/3-success：单章页面成功，状态:' + res.status);
           // 匹配到真正的内容，尽管如此，还需要后续的关注。才能产生变种
           const $ = await cheerio.load(res.text);
-          let elArr = $('div');
+          let elArr = $('div,dd');// todo 1、有些网站内容放在div。2、有些放在 dd，比如 https://www.23us.so/files/article/html/0/131/9208971.html
           elArr.each((index, item) => {
             // 存在内容&&存在id&&不存在儿子的内容
             // 有些不存在id
-            if (
-              $(item)
-                .text()
-                .trim() &&
-              ($(item)
-                .attr('id') || $(item)
-                .attr('class')) &&
-              $(item)
-                .children('br').length > 10
-            ) {
-              logger.warn(
-                '\n A+++' + index + '____' + $(item)
-                  .attr('id') +
-                '-------'
-              );
-              content = $(item)
-                .text() || '';
+            if ($(item).text().trim() && ($(item).attr('id') || $(item).attr('class')) && $(item).children('br').length > 10) {
+              logger.warn('\n A+++' + index + '____' + $(item).attr('id') + '-------');
+              content = $(item).text() || '';
               // 除了超时之外reject,还有内容为空也会reject
               clearTimeout(rejectTime);
               if (content) {
-                logger.warn('有内容', title, host, url, index);
                 resolve(content);
               } else {
-                logger.warn('内容为空', title, host, url, index);
                 reject(errObj);
               }
+              logger.warn('\n++++ 第九步/4:进入单章内容抓取循环')
               return false; // 停止循环
             }
           });
+          if (!content) {
+            logger.warn('\n++++ 第九步/5 前面的条件无法查到单章内容')
+          }
         }
       });
   });
@@ -1113,52 +1005,48 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
  * */
 const _novel = {
   // 临时测试入口
-  novelTesting: async (req, res, next) => {
-    // return new Promise((resolve, reject) => {
-    //
-    // })
+  novelTesting: async (req, res) => {
+    logger.warn('临时测试入口')
+    // /第2117章 又/
+    // 第1065章 战/
+    let isHas = await NovelModel.findOne({name: '重生之最强剑神', isVip: 1, title: /第1065章 战/, $where: 'this.content.length<1'}).count()
+    logger.warn(isHas)
+    res.json({isHas: isHas})
     // superAgent
-    superAgentTo
-      .get('http://www.88dus.com/xiaoshuo/38/38812/9054457.html')
-      // http://www.biqukan.com/0_178/15661959.html #content √
-      // http://www.88dus.com/xiaoshuo/38/38812/9054457.html 不存在 id，只有class √
-      // http://www.aoyuge.com/35/35920/17712809.html #BoolText
-      // https://www.booktxt.net/7_7256/2884388.html'
-      // http://www.biqusa.com/6_6800/14213891.html' 存在div 又存在a标签  ok √ utf-8
-      // https://m.35wx.com/book/4092/2960555.html'
-      // http://www.88dus.com/xiaoshuo/38/38812/8893812.html
-      // https://www.pbtxt.com/105692/32750744.html
-      // https://www.bequgew.com/1066/3661202.html'
-      // http://www.biquge.com.tw/16_16058/8904827.html
-      // https://www.zwdu.com/book/28845/12007265.html
-      .set(htmlHeader[1])
-      .charset('gbk')
-      .end(async (err, rest) => {
-        if (!err) {
-          const $ = await cheerio.load(rest.text);
-          let elArr = $('div');
-          elArr.each((index, item) => {
-            // 存在内容&&存在id&&不存在儿子的内容
-            // item && ($(item).attr('id') || $(item).attr('class')) && (!($(item).find('div').text())) && (!$(item).find('a').text())
-            // item && $(item).attr('id') && (!($(item).find('div').text())) && (!$(item).find('a').text()) 有些不存在id
-            if (
-              $(item)
-                .text()
-                .trim() &&
-              ($(item)
-                .attr('id') || $(item)
-                .attr('class')) &&
-              $(item)
-                .children('br').length > 10
-            ) {
-              logger.warn('\n B+++' + $(item)
-                .text());
-            }
-          });
-        } else {
-          console.info(err);
-        }
-      });
+    // // superAgentTo
+    //   .get('https://www.23us.so/files/article/html/0/131/9208971.html')
+    //   // http://www.88dus.com/xiaoshuo/38/38812/9054457.html
+    //   // http://www.biqukan.com/0_178/15661959.html #content √
+    //   // http://www.88dus.com/xiaoshuo/38/38812/9054457.html 不存在 id，只有class √
+    //   // http://www.aoyuge.com/35/35920/17712809.html #BoolText
+    //   // https://www.booktxt.net/7_7256/2884388.html'
+    //   // http://www.biqusa.com/6_6800/14213891.html' 存在div 又存在a标签  ok √ utf-8
+    //   // https://m.35wx.com/book/4092/2960555.html'
+    //   // http://www.88dus.com/xiaoshuo/38/38812/8893812.html
+    //   // https://www.pbtxt.com/105692/32750744.html
+    //   // https://www.bequgew.com/1066/3661202.html'
+    //   // http://www.biquge.com.tw/16_16058/8904827.html
+    //   // https://www.zwdu.com/book/28845/12007265.html
+    //   .set(htmlHeader[1])
+    //   // .charset('gbk')
+    //   .end(async (err, rest) => {
+    //     if (!err) {
+    //       const $ = await cheerio.load(rest.text);
+    //       let elArr = $('div,dd')
+    //       elArr.each((index, item) => {
+    //         // 存在内容&&存在id&&不存在儿子的内容
+    //         // item && ($(item).attr('id') || $(item).attr('class')) && (!($(item).find('div').text())) && (!$(item).find('a').text())
+    //         // item && $(item).attr('id') && (!($(item).find('div').text())) && (!$(item).find('a').text()) 有些不存在id
+    //         if ($(item).text().trim() && ($(item).attr('id') || $(item).attr('class')) && $(item).children('br').length > 10) {
+    //           logger.warn('\n B+++' + $(item).text());
+    //         }
+    //         // logger.warn($(item).text(), index)
+    //       });
+    //     } else {
+    //       console.info(err);
+    //     }
+    //   });
+    logger.warn('临时测试出口')
   },
   // 小说控制入口
   getNovel: async (req, res) => {
@@ -1185,7 +1073,7 @@ const _novel = {
     await getQiDianNovel(req.query.keyword)
       .then(novelData => {
         latestNumber = novelData;
-        logger.warn(novelData);
+        logger.warn('起点返回来的目录长度：' + novelData);
       })
       .catch(novelError => {
         logger.warn('\n 起点抓取失败', novelError);
@@ -1195,10 +1083,7 @@ const _novel = {
     // 3、处理已更新到最新状态。如果全部内容都有值，且有值的个数等于总章节数，则直接返回成功结果给客户端，下面不需要继续爬取
     // 4、查到如果内容长度大于的个数，如果该个数等于返回的长度，则说明是最新的，且已vip章已爬取
     let isNoUpdate = 0; // 判断是否更新到最新章节
-    await NovelModel.find({
-      name: req.query.keyword,
-      $where: 'this.content.length>1'
-    })
+    await NovelModel.find({name: req.query.keyword, $where: 'this.content.length>1'})
       .count()
       .exec()
       .then(countRes => {
@@ -1215,42 +1100,37 @@ const _novel = {
         msg: '《' + req.query.keyword + '》,已更新到最新!',
         bookName: req.query.keyword,
         startTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
-        count: latestNumber
+        count: latestNumber,
+        eventType: 'latest' // 事件类型，latest最新
       };
-      await getNovelData(res, req.query.keyword, (req.query.page = 1)); // webSocket返回小说数据，异步任务，不需要await
+      await webSocketNovelData(ob); // webSocket返回小说数据，异步任务，不需要await
       await notifyClient(ob); // 告诉结果
       return false;
     }
     // 4、如果爬取的章节结果实在太小，小于30章，则终止程序，因为会影响到爬取目录的随机交叉对比的真实性
     if (latestNumber < 30) {
-      await missionFail(
-        '当前检测到《' +
-        req.query.keyword +
-        '》章节目录小于20，被系统拒绝该任务，抱歉！'
-      );
+      await missionFail('当前检测到《' + req.query.keyword + '》章节目录小于20，被系统拒绝该任务，抱歉！');
       return false;
     }
     // 异步任务暂时关闭
-    await searchNovel(req.query.keyword)
-      .then(async data => {
-        arrUrls = data; // 再次赋值给数组
-        logger.warn(
-          '\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url',
-          data
-        );
-      })
-      .catch(err => {
-        logger.warn(err);
-      });
+    // await searchNovel(req.query.keyword)
+    //   .then(async data => {
+    //     arrUrls = data; // 再次赋值给数组
+    //     logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data);
+    //   })
+    //   .catch(err => {
+    //     logger.warn(err);
+    //   });
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
     // url http://www.biqukan.com 时好时坏！
-    // arrUrls = [
-    //   {
-    //     title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
-    //     url: 'http://www.aoyuge.com/35/35920/17712809.html'
-    //   }
-    // ]
+    // todo
+    arrUrls = [
+      {
+        title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
+        url: 'https://www.23us.so/files/article/html/0/131/index.html'
+      }
+    ]
     if (Array.isArray(arrUrls) && !arrUrls.length) {
       await missionFail('由于通过搜索引擎爬取失败，无法继续。');
       return false;
@@ -1262,8 +1142,15 @@ const _novel = {
         logger.warn(obj, '已下载完成');
         objData.startTime = resData.start;
         objData.bookName = req.query.keyword;
-        getNovelData(res, {novel: req.query.keyword}); // webSocket返回小说数据，异步任务，不需要await
-        notifyClient(objData); // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
+        let ob = {
+          msg: '《' + req.query.keyword + '》,任务完成!',
+          bookName: req.query.keyword,
+          startTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
+          count: latestNumber,
+          eventType: 'done' // 事件类型，latest最新
+        };
+        await webSocketNovelData(ob); // webSocket返回小说数据，异步任务，不需要await
+        await notifyClient(objData); // 通过webSocket告诉客户端已完成下载的消息，异步任务，不需要await
         logger.warn('\n++++ 第十一步 A/succees：完成流程');
       })
       .catch(async errObj => {
@@ -1286,11 +1173,7 @@ const _novel = {
     }
     // todo 查询500+条，表现太慢，35s，能否分为多条，然后走webSocket返回多条数据同时进行来渲染数据么
     console.time('查询数据库所需全部章节列');
-    let dbData = await NovelModel.find(
-      {name: name},
-      {title: 1, content: 1}
-    )
-      .sort({uuid: 1});
+    let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}).sort({uuid: 1});
     if (!dbData.length) {
       await missionFail('数据库不存在该小说');
       return false;
@@ -1313,29 +1196,20 @@ const _novel = {
       return false;
     }
     console.time('time 查询数据库列表10个长度');
-    await getNovelData(res, {
-      novel: name,
-      page: page,
-      isVip: isVip,
-      hasContent: hasContent
-    });
+    await getNovelData(res, {novel: name, page: page, isVip: isVip, hasContent: hasContent});
     console.timeEnd('time 查询数据库列表10个长度');
   }
 };
 
 /**
+ * @desc webSocket
  * @desc 完成标志，通知客户端
  * @downloads 提供下载地址，新打开标签，并保存为txt，使用脚本工具格式化
  * */
 async function notifyClient (obj) {
   logger.warn('++++ 第十步/1：小说爬取完成，总章节' + obj.count + '---------');
   // 失败的计数，查询vip 且 内容为空的数目
-  let failCount = await NovelModel.find({
-    name: obj.bookName,
-    $where: 'this.content.length<1',
-    isVip: 1
-  })
-    .count();
+  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1}).count();
   const ob = {
     msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
@@ -1346,7 +1220,8 @@ async function notifyClient (obj) {
         (new Date().valueOf() - new Date(obj.startTime).valueOf()) / 1000,
       endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
       count: obj.count,
-      failureTotal: failCount
+      failureTotal: failCount,
+      eventType: obj.eventType || ''
     },
     errorCode: 0
   };
@@ -1354,16 +1229,63 @@ async function notifyClient (obj) {
   processTask = [];
   await _io('novel', ob); // 通过webSocket告诉客户端已完成下载的消息
 }
-
 /**
- * @desc 返回小说数据
+ * @desc webSocket返回结果
+ * */
+async function webSocketNovelData (ob) {
+  logger.warn(ob)
+  // 聚合查询，返回到前端的列表
+  let queryStatement = await NovelModel.aggregate([
+    {
+      // 条件查询
+      $match: {name: ob.bookName}
+    },
+    {
+      $project: {
+        uuid: 1,
+        name: 1,
+        title: 1,
+        length: 1,
+        preview: {
+          $substrCP: ['$preview', 0, 100]
+        },
+        isVip: 1,
+        hasContent: {
+          $gt: [
+            {
+              $strLenCP: '$content'
+            },
+            1
+          ]
+        },
+        timeout: 1
+      }
+    },
+    {$sort: {uuid: 1}},
+    {$skip: 0},
+    {$limit: 10}
+  ]);
+  // 成功执行任务之后，清空任务栈
+  processTask = [];
+  let obj = {
+    data: queryStatement || [],
+    errorCode: 0,
+    totals: ob.latestNumber,
+    pages: Math.ceil(ob.latestNumber / 10),
+    pageCurrent: 1
+  }
+  await _io('novelData', obj); // 通过webSocket告诉客户端已完成下载的消息
+}
+/**
+ * @desc 返回小说数据,必须直接返回该函数。
  * @param res
  * @param options {object} novel page isVip hasContent
  * */
 async function getNovelData (res, options) {
   logger.warn('++++ 第十步/2：将数据查询后通过webSocket渲染到前端');
+  logger.warn(options);
   if (!options.novel || !res) {
-    logger.warn('++++ 第十步/3：小数名为空，无法继续查询');
+    logger.warn('++++ 第十步/3：小说书名为空，无法继续查询');
     return false;
   }
   let page = options.page || 1;
@@ -1375,22 +1297,13 @@ async function getNovelData (res, options) {
   } else {
     let $where = '1';
   }
-  let count = await NovelModel.find({
-    name: options.novel,
-    isVip: Number(options.isVip),
-    $where: $where
-  })
-    .count(); // 总长度 sort() -1，倒叙,1默认升序
-  let aggregateOb = {
-    name: options.novel,
-    isVip: Number(options.isVip)
-  };
+  let count = await NovelModel.find({name: options.novel, isVip: Number(options.isVip === '0' ? 0 : 1), $where: $where}).count(); // 总长度 sort() -1，倒叙,1默认升序
+  let aggregateOb = {name: options.novel, isVip: Number(options.isVip)};
   if (!options.hasContent || options.hasContent === '0') {
     aggregateOb.content = '';
   } else {
     delete aggregateOb.content;
   }
-  logger.warn(options, aggregateOb);
   // 聚合查询，返回到前端的列表
   let data = await NovelModel.aggregate([
     {
@@ -1418,9 +1331,9 @@ async function getNovelData (res, options) {
         timeout: 1
       }
     },
-    { $sort: {uuid: 1} },
-    { $skip: Number(page) * 10 - 10 },
-    { $limit: 10 }
+    {$sort: {uuid: 1}},
+    {$skip: Number(page) * 10 - 10},
+    {$limit: 10}
   ]);
   let isHasBook = await NovelModel.find({name: options.novel}).count() // 判断数据库是否存在该本小说
   let pages = Math.ceil(count / 10);
@@ -1430,7 +1343,7 @@ async function getNovelData (res, options) {
     return false;
   } else {
     logger.warn('\n 发送列表');
-    await _flipPage(res, data, 0, '获取列表成功', {
+    return _flipPage(res, data, 0, '获取列表成功', {
       totals: count,
       pages: pages,
       pageCurrent: Number(page)
@@ -1447,7 +1360,7 @@ async function missionFail (msg) {
     .then(res => {
       // 成功执行任务之后，清空任务栈
       processTask = [];
-      logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程', res);
+      logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程');
     });
 }
 
