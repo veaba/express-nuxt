@@ -33,6 +33,8 @@
  * @mongoose await NovelModel.findOne({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'}) 原生shell findOne 没有count()
  * @sql exec()返回promise 否则 query
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
+ * @todo 闭包的思想，依然需要注意！
+ * @bug todo 默认的列表页数不对
  ***********************/
 import { NovelModel, NovelBadUrlModel, ArticleModel } from '../model/model';
 import {
@@ -140,23 +142,8 @@ const htmlHeader = [
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
   }
 ];
-// 常见用于组合章节元素
-const ELEMENT = {
-  div: 0,
-  ul: 0,
-  li: 0,
-  h2: 0,
-  h3: 0,
-  h4: 0,
-  h5: 0,
-  p: 0,
-  dl: 0,
-  dd: 0,
-  dt: 0,
-  td: 0
-};
+
 let thisCharsetStatus = false; // 先存储当前是何种编码的状态 true utf-8,false gbk
-const ELEMENTKeys = Object.keys(ELEMENT); // element key值数组
 let arrUrls = []; // 存储百度搜索的url数组
 let SentinelVariable = false; // todo 哨兵变量，用于是否终止异步任务的依据
 let processTask = []; // 小说下载进程，后续去判断是否存在下载任务，有的话，将需要等待，否则会影响性能
@@ -386,6 +373,38 @@ async function loopCharsetDecodeUrl () {
 }
 
 /**
+ * @desc 定制化判断编码
+ * */
+async function pageDecode (url, header) {
+  return new Promise((resolve, reject) => {
+    superAgent.get(url)
+      .set(header)
+      .end(async (err, res) => {
+        if (err) {
+          logger.warn('识别编码失败');
+          reject(err)
+        } else {
+          logger.warn('对该url进行爬取，判断何种编码', url, '状态编码：' + res.status);
+          const $ = await cheerio.load(res.text);
+          let host = res.request.host; // 站方的主机名称
+          let objMeta = await Array.from($('meta'));
+          // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
+          let isTrue = true;
+          for (let item in objMeta) {
+            if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($(objMeta[item]).attr('content'))) {
+              isTrue = false;
+              resolve({status: false, host: host}); // false 走gbk
+              break;
+            }
+          }
+          if (isTrue) {
+            resolve({status: true, host: host}); // 因为前面抛出catch，所以，此处的Resolve无效
+          }
+        }
+      });
+  });
+}
+/**
  * @desc 判断网站的编码是gbk还是utf-8
  * @return Boolean gbk false;utf-8  true，以及主机
  * @params url {String}
@@ -455,12 +474,108 @@ async function isCharsetDecode (url, header) {
 }
 
 /**
+ * @desc 定制化获取章节目录
+ * @desc 定制化不存储数据库
+ * @todo http://www.mianhuatang.la/23/23460/ 类似这种有倒序，需要判断是有同一个直接上级中，或者去重，后者替换前者
+ * */
+async function customerCatalogs (url, name, charset, header) {
+  if (!url) {
+    logger.warn('\n++++ 获取章节部分url 为空');
+    return false
+  }
+  if (!name) {
+    logger.warn('\n++++ 获取小说 为空');
+    return false
+  }
+  let superAgentCharset = charset ? superAgent : superAgentTo;
+  // 常见用于组合章节元素
+  const _ELEMENT = {
+    div: 0,
+    ul: 0,
+    li: 0,
+    h2: 0,
+    h3: 0,
+    h4: 0,
+    h5: 0,
+    p: 0,
+    dl: 0,
+    dd: 0,
+    dt: 0,
+    td: 0
+  };
+  const _ELEMENTKeys = Object.keys(_ELEMENT); // element key值数组
+  // 解析开始
+  return new Promise((resolve, reject) => {
+    superAgentCharset
+      .get(url)
+      .set(header)
+      .charset(charset ? '' : 'gbk')
+      .end(async (err, res) => {
+        if (err) {
+          reject(err.text || '页面错误，请稍后再试')
+        } else {
+          const $ = await cheerio.load(res.text)
+          let objArr = Array.from($('*'))
+          // let objParentArr = Array.from($('*').parent())
+          for (let item of objArr) {
+            for (let el in _ELEMENT) {
+              if (item.name === el) {
+                _ELEMENT[el]++;
+              }
+            }
+          }
+          let valuesArr = Object.values(_ELEMENT);
+          // 找到数组最大值的所在位置
+          let indexMax = valuesArr.indexOf(Math.max.apply(Math, valuesArr));
+          // _ELEMENTKeys[indexMax]此时 就是所在标签
+          let targetArr = Array.from($(_ELEMENTKeys[indexMax]).parent())// 得到父级数组
+          let targetMap = {}// 存储map
+          for (let item in targetArr) {
+            targetMap[item] = $(targetArr[item]).children().length// 将个数存储到map中
+          }
+          let targetKeysArr = Object.values(targetMap)// 存储个数[1,33]数组
+          let targetIndexMax = targetKeysArr.indexOf(Math.max.apply(Math, targetKeysArr))// 找到最大值所在的索引
+          // 于是，目标标签位置就在，父级的正确索引下的对象的，子级就是正确的目标了
+          let chapters = $('body').find($($(_ELEMENTKeys[indexMax]).parent()[targetIndexMax]).children(_ELEMENTKeys[indexMax]));
+          let catalogsArr = []; // 组装目录的title 和 href路径
+          console.time('定制化url目录循环 Each:');
+          chapters.each((index, item) => {
+            let obj = {
+              title: ($(item).find('a').text()).replace(/(.+?) 第/, '第'), //  正文 第1066章 黑炎出现 =>第1066章 黑炎出现
+              href: $(item).find('a').attr('href')
+            };
+            catalogsArr.push(obj);
+          });
+          resolve(catalogsArr)
+          console.timeEnd('定制化url目录循环 Each:');
+          return catalogsArr
+        }
+      })
+  })
+}
+/**
  * @desc 获取章节目录，只是vip章节
  * @param urlAndHeaderObj url header name
  * @param charset 何种编码 true utf-8 false gbk
  * */
 
 async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
+  // 常见用于组合章节元素
+  const ELEMENT = {
+    div: 0,
+    ul: 0,
+    li: 0,
+    h2: 0,
+    h3: 0,
+    h4: 0,
+    h5: 0,
+    p: 0,
+    dl: 0,
+    dd: 0,
+    dt: 0,
+    td: 0
+  };
+  const ELEMENTKeys = Object.keys(ELEMENT); // element key值数组
   catalogsCharsetIndex++;
   let url = urlAndHeaderObj.url;
   let header = urlAndHeaderObj.header
@@ -524,9 +639,17 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           }
           let valuesArr = Object.values(ELEMENT);
           // 找到数组最大值的所在位置
-          let indexMax = valuesArr.indexOf(
-            Math.max.apply(Math, valuesArr));
-          let chapters = $1('body').find(ELEMENTKeys[indexMax]);
+          let indexMax = valuesArr.indexOf(Math.max.apply(Math, valuesArr));
+          // _ELEMENTKeys[indexMax]此时 就是所在标签
+          let targetArr = Array.from($1(ELEMENTKeys[indexMax]).parent())// 得到父级数组
+          let targetMap = {}// 存储map
+          for (let item in targetArr) {
+            targetMap[item] = $1(targetArr[item]).children().length// 将个数存储到map中
+          }
+          let targetKeysArr = Object.values(targetMap)// 存储个数[1,33]数组
+          let targetIndexMax = targetKeysArr.indexOf(Math.max.apply(Math, targetKeysArr))// 找到最大值所在的索引
+          // 于是，目标标签位置就在，父级的正确索引下的对象的，子级就是正确的目标了
+          let chapters = $1('body').find($1($1(ELEMENTKeys[indexMax]).parent()[targetIndexMax]).children(ELEMENTKeys[indexMax]));
           let catalogsArr = []; // 组装目录的title 和 href路径
           // 组装分类数组
           console.time('目录循环 Each:');
@@ -807,10 +930,10 @@ async function dealNovel (resObj, name) {
               .then(async single => {
                 if (single) { logger.warn('then 有内容', single.substr(0, 50)); } else { logger.warn('then 里面没有内容') }
                 // 先判断该部小说是否存在,查到该部小说，是vip，则标题对上，则返回数据,如果存在，则将内容更新进来
-                let checkHasLine = /^\/+/.test(url);// 判断是否是第一个斜杠开头，如果是，则说明是绝对路径，都在相对路径
-                let checkHasHttp = /^http+/.test(url)// 有些网站会将标题的url就是直接的单章url
+                let checkHasLine = /^\/+/.test(i.href);// 判断是否是第一个斜杠开头，如果是，则说明是绝对路径，都在相对路径
+                let checkHasHttp = /^http+/.test(i.href)// 有些网站会将标题的url就是直接的单章url
                 let theUrl = ''// 真实要去爬取的url
-                if (checkHasHttp) { theUrl = url } else { theUrl = checkHasLine ? 'http://' + host + url : i.catalogsUrl + url; }
+                if (checkHasHttp) { theUrl = i.href } else { theUrl = checkHasLine ? 'http://' + host + i.href : i.catalogsUrl + i.href; }
                 let singleData = {content: single || '', url: theUrl || '', host: host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')};
                 await NovelModel.update({name: name, title: regTile, $where: 'this.content.length<1', isVip: 1}, {$set: singleData}).exec().then(updateRes => {
                   logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
@@ -1048,7 +1171,7 @@ const _novel = {
     //   });
     logger.warn('临时测试出口')
   },
-  // 小说控制入口
+  // 起点小说控制入口
   getNovel: async (req, res) => {
     if (!req.query.keyword) {
       _dbError(res);
@@ -1113,24 +1236,24 @@ const _novel = {
       return false;
     }
     // 异步任务暂时关闭
-    // await searchNovel(req.query.keyword)
-    //   .then(async data => {
-    //     arrUrls = data; // 再次赋值给数组
-    //     logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data);
-    //   })
-    //   .catch(err => {
-    //     logger.warn(err);
-    //   });
+    await searchNovel(req.query.keyword)
+      .then(async data => {
+        arrUrls = data; // 再次赋值给数组
+        logger.warn('\n++++ 第四步/1：得到百度搜索的真实数组，并排除无效url', data);
+      })
+      .catch(err => {
+        logger.warn(err);
+      });
     // 过滤为空的url，因为并发，可能失败，此处采取同步处理
     // 使用循环执行同步任务，确保url是有值的，此处只会执行一次，
     // url http://www.biqukan.com 时好时坏！
     // todo
-    arrUrls = [
-      {
-        title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
-        url: 'https://www.23us.so/files/article/html/0/131/index.html'
-      }
-    ]
+    // arrUrls = [
+    //   {
+    //     title: '圣墟最新章节,圣墟无弹窗广告 - 顶点小说',
+    //     url: 'https://www.23us.so/files/article/html/0/131/index.html'
+    //   }
+    // ]
     if (Array.isArray(arrUrls) && !arrUrls.length) {
       await missionFail('由于通过搜索引擎爬取失败，无法继续。');
       return false;
@@ -1158,22 +1281,103 @@ const _novel = {
         logger.warn(errObj, '\n novelControl catch');
       });
   },
-  // 手动清楚任务栈
+  // 定制化小说部分
+  customizedNovel: async (req, res) => {
+    let name = req.body.keyword;
+    let url = req.body.url
+    let startTime = format(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    if (!name || !url) {
+      await _dbError(res, '请输入要下载的小说名或者目标url');
+      return false;
+    }
+    // 1、todo 判断编码
+    let decodeType = await pageDecode(url, htmlHeader[loopHeader])// {status,host}
+    // 2、todo 抓取定位所在div,爬取章节数据
+
+    await customerCatalogs(url, name, decodeType.status, htmlHeader[loopHeader])
+      .then(catalogs => {
+        // todo 回到经典的问题，forEach循环里面放一个异步,然后再使用promise 处理循环，就可以返回给第二then使用了
+        let data = []
+        return new Promise((resolve, reject) => {
+          let _index = 0
+          catalogs.forEach(async (i, index) => {
+            let isHas = await NovelModel.findOne({name: name, title: i['title'], $where: 'this.content.length>1'}).count()
+            logger.warn(isHas, {name: name, title: i['title'], $where: 'this.content.length>1'})
+            if (isHas) {
+              // todo update
+              logger.warn('todo update')
+              await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
+                .then(async single => {
+                  let singleData = {type: 'customer', title: i.title, length: single.length, isVip: 0, index: index, content: single || '', url: i.href || '', host: decodeType.host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')}
+                  await NovelModel.update({name: name, title: i['title']}, {$set: singleData}).exec()
+                    .then(updateRes => {
+                      logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
+                    });
+                  i.single = single
+                  data.push(i)
+                })
+                .catch(singleErr => {
+                  console.info(singleErr);
+                })
+            } else {
+              // todo save
+              logger.warn('todo save')
+              await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
+                .then(async single => {
+                  let singleData = await NovelModel({name: name, title: i.title, length: single.length, isVip: 0, type: 'customer', index: index, content: single || '', url: i.href || '', host: decodeType.host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')})
+                  await singleData.save().then(saveThen => {
+                    logger.warn('《' + name + '》 ' + i.title + ' save成功');
+                  })
+                  i.single = single
+                  data.push(i)
+                })
+                .catch(singleErr => {
+                  console.info(singleErr);
+                })
+            }
+            _index++
+            if (_index === catalogs.length) {
+              resolve({_index: _index, data: data, count: catalogs.length})
+            }
+          })
+        })
+      })
+      .then(async obj => {
+        let ob = {
+          msg: '《' + name + '》,任务完成!',
+          bookName: name,
+          startTime: startTime,
+          count: obj.count,
+          eventType: 'done' // 事件类型，latest最新
+        };
+        await webSocketNovelData(ob); // webSocket返回小说数据，异步任务，不需要await
+        await resNotifyClient(res, ob)
+      })
+      .catch(err => {
+        console.info(err.status);
+      })
+  },
+  // 手动清除任务栈
   clearNovel: async (req, res) => {
     processTask = [];
     await _dbSuccess(res, '手动清空任务栈成功', processTask, 0);
   },
-  // 下载小说页面
+  /**
+   * @desc 下载小说页面
+   * @todo 下载任务中，不允许再次提交。并限制
+   * @todo 查询耗时太慢，需要优化,34章，耗时1s
+   * */
   download: async (req, res) => {
-    console.time('下载时间耗时');
+    logger.warn('开始下载~~~~~')
+    console.time('下载时间耗时:');
     let name = req.query.keyword;
     if (!name) {
       await _dbError(res, '请输入要下载的小说名');
       return false;
     }
     // todo 查询500+条，表现太慢，35s，能否分为多条，然后走webSocket返回多条数据同时进行来渲染数据么
-    console.time('查询数据库所需全部章节列');
-    let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}).sort({uuid: 1});
+    console.time('查询数据库所需全部章节列:');
+    let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}).sort({uuid: 1, index: 1});
     if (!dbData.length) {
       await missionFail('数据库不存在该小说');
       return false;
@@ -1182,7 +1386,7 @@ const _novel = {
     for (let item of dbData) {
       data = data + item.title + '\n' + item.content + '\n';
     }
-    console.timeEnd('查询数据库所需全部章节列');
+    console.timeEnd('查询数据库所需全部章节列:');
     await _download(res, '下载成功', data);
   },
   // 小说列表
@@ -1190,7 +1394,7 @@ const _novel = {
     let name = req.query.keyword;
     let page = req.query.page || 1;
     let isVip = req.query.isVip || 0;
-    let hasContent = req.query.hasContent || 0;
+    let hasContent = req.query.hasContent || 1;
     if (!name) {
       await _dbError(res, '请输入小说名');
       return false;
@@ -1201,6 +1405,29 @@ const _novel = {
   }
 };
 
+async function resNotifyClient (res, obj) {
+  logger.warn('++++ 最后：小说爬取完成，总章节' + obj.count + '---------');
+  // 失败的计数，查询vip 且 内容为空的数目
+  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1}).count();
+  const ob = {
+    msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
+    data: {
+      name: obj.bookName,
+      url: '/api/novel/download?keyword=' + obj.bookName,
+      startTime: obj.startTime || '',
+      timeConsuming:
+        (new Date().valueOf() - new Date(obj.startTime).valueOf()) / 1000,
+      endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
+      count: obj.count,
+      failureTotal: failCount,
+      eventType: obj.eventType || ''
+    },
+    errorCode: 0
+  };
+  // 成功执行任务之后，清空任务栈
+  processTask = [];
+  await res.json(ob)
+}
 /**
  * @desc webSocket
  * @desc 完成标志，通知客户端
@@ -1265,13 +1492,14 @@ async function webSocketNovelData (ob) {
     {$skip: 0},
     {$limit: 10}
   ]);
+  let latestNumber = await NovelModel.find({name: ob.bookName}).count()
   // 成功执行任务之后，清空任务栈
   processTask = [];
   let obj = {
     data: queryStatement || [],
     errorCode: 0,
-    totals: ob.latestNumber,
-    pages: Math.ceil(ob.latestNumber / 10),
+    totals: latestNumber,
+    pages: Math.ceil(latestNumber / 10),
     pageCurrent: 1
   }
   await _io('novelData', obj); // 通过webSocket告诉客户端已完成下载的消息
@@ -1292,18 +1520,20 @@ async function getNovelData (res, options) {
   let $where = '1';
   if (options.hasContent === '1') {
     $where = 'this.content.length>1';
-  } else if (options.hasContent === '0') {
+  } else if (options.hasContent === '0' || !options.hasContent) {
     $where = 'this.content.length<1';
   } else {
     let $where = '1';
   }
-  let count = await NovelModel.find({name: options.novel, isVip: Number(options.isVip === '0' ? 0 : 1), $where: $where}).count(); // 总长度 sort() -1，倒叙,1默认升序
+  let count = await NovelModel.find({name: options.novel, isVip: Number(options.isVip === '1' ? 1 : 0), $where: $where}).count(); // 总长度 sort() -1，倒叙,1默认升序
   let aggregateOb = {name: options.novel, isVip: Number(options.isVip)};
+  // 不存在内容或者属于0
   if (!options.hasContent || options.hasContent === '0') {
     aggregateOb.content = '';
   } else {
     delete aggregateOb.content;
   }
+  logger.warn(aggregateOb)
   // 聚合查询，返回到前端的列表
   let data = await NovelModel.aggregate([
     {
@@ -1339,6 +1569,11 @@ async function getNovelData (res, options) {
   let pages = Math.ceil(count / 10);
   if (!isHasBook) {
     logger.warn('数据库不存在该小说');
+    await _flipPage(res, data, 1, '获取列表失败', {
+      totals: count,
+      pages: pages,
+      pageCurrent: Number(page)
+    });
     await missionFail('数据库不存在该小说');
     return false;
   } else {

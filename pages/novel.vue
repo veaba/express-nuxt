@@ -12,12 +12,27 @@
         <!--Input-->
         <div class="novel">
             <div class="input-body">
-                <Input v-model="keyword" size="large" icon="search" placeholder="查找的小说" @on-enter="getNovel"
-                       @on-click="getNovel"></Input>
+                <i-input v-model="keyword" size="large" icon="search" placeholder="查找的小说">
+                  <Select v-model="selectType" slot="append" style="width: 70px">
+                    <Option value="default">默认</Option>
+                    <Option value="customer">自定义</Option>
+                  </Select>
+                </i-input>
+              <!--todo 暂时未开发，后续开发一个对目录直接撸的，不走起点-->
+              <Input v-if="selectType==='customer'" v-model="customerUrl" size="large" icon="network" placeholder="请输入小说的目录URL" style="margin-top: 20px;"></Input>
             </div>
-            <Button style="margin-top: 20px;" @click="onClearNovel" type="ghost" size="small">手动清空任务栈</Button>
-            <Button style="margin-top: 20px;margin-left: 20px;" @click="changeFlipPage" type="primary" size="small">查询该小说</Button>
-            <Button style="margin-top: 20px;margin-left: 20px;" @click="novelTesting" type="primary" size="small">临时测试</Button>
+            <Button style="margin-top: 20px;" @click="getNovel" type="primary" long>执行任务</Button>
+          <ButtonGroup style="margin-top: 20px;">
+            <Button @click="onClearNovel" type="ghost" size="small">
+              <Icon type="trash-a"></Icon>
+              手动清空任务栈</Button>
+            <Button @click="changeFlipPage" type="ghost" size="small">
+              <Icon type="search"></Icon>
+              查询该小说</Button>
+            <Button @click="novelTesting" type="ghost" size="small">
+              <Icon type="information-circled"></Icon>
+              临时测试</Button>
+          </ButtonGroup>
           <Row style="margin-top: 20px;">
           	<i-col span="6">
               <Select v-model="pageData.isVip">
@@ -50,8 +65,10 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '重生之最强剑神',
+      keyword: '官榜',
       loading: false,
+      selectType: 'customer', // default走起点、customer，自定义
+      customerUrl: 'http://www.shuge.net/html/2/2779/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       progressStatus: 'active',
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify
@@ -161,8 +178,8 @@ export default {
           }
         })
         .then(res => {
+          this.loading = false
           if (res.errorCode === 0) {
-            this.loading = false
             this.novelData = res.data || []
             this.pageData.totals = res.totals || 1
           } else {
@@ -262,7 +279,8 @@ export default {
         console.info(json)
         if (json.errorCode === 0) {
           this.novelData = json.data || []
-          this.pageData.total = json.data.totals || 1
+          this.pageData.totals = json.totals || 1
+          this.pageData.page = json.pageCurrent || 1
         }
         this.loading = false
         this.percent = 100
@@ -299,6 +317,7 @@ export default {
               desc: res.msg || 'success'
             })
           } else {
+            this.progressStatus = 'wrong'
             this.$Notice.warning({
               title: '任务失败',
               desc: res.msg || 'error'
@@ -317,13 +336,29 @@ export default {
         this.$Message.error('尚未输入小说名')
         return false
       }
+      if (this.selectType === 'customer' && !this.customerUrl) {
+        this.$Message.error('请输入爬取目标小说目录所在的url')
+        return false
+      }
       this.$Notice.close('novelNotify') // 移除通知卡
-      this.$ajax
-        .get('/api/novel/getNovel', {
-          params: {
-            keyword: this.keyword.trim()
-          }
-        })
+      if (this.selectType === 'default') {
+        // 起点爬取部分
+        this.qiQianNovel()
+      } else {
+        // 自定义爬取部分
+        this.customerNovel()
+      }
+    },
+    /**
+     * @desc 起点爬取部分
+     * */
+    qiQianNovel () {
+      this.loading = true
+      this.$ajax.get('/api/novel/getNovel', {
+        params: {
+          keyword: this.keyword.trim()
+        }
+      })
         .then(res => {
           console.info(res)
           this.loading = false
@@ -348,6 +383,70 @@ export default {
             title: '无法处理你的请求',
             desc: err.msg
           })
+        })
+    },
+    /**
+     * @desc 负责通知而已
+     * */
+    customerNovel () {
+      this.loading = true
+      this.setProgress() // 设置进度条
+      this.$ajax.post('/api/novel/customizedNovel', {
+        url: this.customerUrl,
+        keyword: this.keyword.trim()
+      })
+        .then(res => {
+          console.info(res)
+          this.loading = false
+          if (res.errorCode === 0) {
+            this.percent = 100
+            this.$Notice.success({
+              duration: 0,
+              title: res.msg || '',
+              render: h => {
+                return h('div', [
+                  h('p', [
+                    '下载地址：',
+                    h(
+                      'a',
+                      {
+                        attrs: {
+                          href: location.origin + res['data']['url'],
+                          download: res['data'].name + '.txt'
+                        }
+                      },
+                      res.data.name
+                    )
+                  ]),
+                  h('p', '开始时间：' + res.data.startTime || ''),
+                  h('p', '结束时间：' + res.data.endTime || ''),
+                  h('p', '耗时(s)：' + res.data.timeConsuming || ''),
+                  h('p', '总章节：' + res.data.count || ''),
+                  h(
+                    'p',
+                    '成功章节：' +
+                    Number(res.data.count - res.data.failureTotal)
+                  ),
+                  h('p', '失败章节：' + res.data.failureTotal || '')
+                ])
+              }
+            })
+          } else {
+            this.percent = 100
+            // 已有任务，警告
+            this.$Notice.warning({
+              title: res.msg || '',
+              desc: res.data || []
+            })
+          }
+        })
+        .catch(err => {
+          this.$Notice.error({
+            title: '无法处理你的请求',
+            desc: err.msg
+          })
+          this.pageData.totals = 1
+          this.pageData.page = 1
         })
     }
   }
