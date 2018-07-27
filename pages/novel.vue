@@ -38,7 +38,7 @@
               下载小说
             </Button>
             <!--定制化-->
-            <Button v-if="isDoneWebSocketCustomer" type="ghost" size="small">
+            <Button v-show="isDoneWebSocketCustomer" type="ghost" size="small">
               <Icon type="ios-cloud-download"></Icon>
               <span class="download" style="margin-left: 5px;"></span>
             </Button>
@@ -168,7 +168,7 @@ export default {
     isDoneWebSocketCustomer: function () {
       let countLength = this.webSocketCountData.length
       let countCeil = this.webSocketCount
-      if (this.webSocketCount && countLength === countCeil) {
+      if (this.webSocketCount && countLength + 1 === countCeil) {
         this.disabledDownload = false
         return true
       } else {
@@ -205,10 +205,13 @@ export default {
       link.href = window.URL.createObjectURL(blob)
       link.download = this.keyword + '.txt'
       this.$nextTick(() => {
-        console.info(document.querySelector('.download'));
-        document.querySelector('.download').appendChild(link) // 5000+章节时候，这里会失败
-        // document.getElementsByTagName('body')[0].appendChild(link)
+        if (document.querySelector('.download')) {
+          console.info(document.querySelector('.download'));
+          document.querySelector('.download').appendChild(link)
+        }
       })
+      // document.querySelector('.download').appendChild(link) // 5000+章节时候，这里会失败
+      // document.getElementsByTagName('body')[0].appendChild(link)
       // document.getElementsByTagName('body')[0].appendChild(link)
       console.info(link);
       return link
