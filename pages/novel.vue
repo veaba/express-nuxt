@@ -3,6 +3,7 @@
  *@author Jo.gel
  *@date 2018/4/20
  *@desc 网络小说下载
+ *@desc todo 严重，自定义下载，会污染全局。
  -------------------------->
 <template>
     <section class="container">
@@ -21,7 +22,7 @@
               <!--todo 暂时未开发，后续开发一个对目录直接撸的，不走起点-->
               <Input v-if="selectType==='customer'" v-model="customerUrl" size="large" icon="network" placeholder="请输入小说的目录URL" style="margin-top: 20px;"></Input>
             </div>
-            <Button style="margin-top: 20px;" @click="getNovel" type="primary" long>执行任务</Button>
+            <Button style="margin-top: 20px;" @click="getNovel" type="primary" long>更新小说内容</Button>
           <ButtonGroup style="margin-top: 20px;">
             <Button @click="onClearNovel" type="ghost" size="small">
               <Icon type="trash-a"></Icon>
@@ -32,11 +33,15 @@
             <Button @click="novelTesting" type="ghost" size="small">
               <Icon type="information-circled"></Icon>
               临时测试</Button>
-            <Button @click="download" type="ghost" size="small" style="border: 1px solid #2d8cf0;padding: 2px 7px">
+            <Button @click="downloadNotify" :disabled="disabledDownload" type="ghost" size="small" style="border: 1px solid #2d8cf0;padding: 2px 7px">
+              <Icon type="play"></Icon>
+              下载小说
+            </Button>
+            <!--定制化-->
+            <Button v-if="isDoneWebSocketCustomer" type="ghost" size="small">
               <Icon type="ios-cloud-download"></Icon>
-              <a :href="'/api/novel/download?keyword='+keyword" :download="keyword+'.txt'">下载小说</a>
-              </Button>
-            {{isDoneWebSocket?'下載完成':'尚未完成'}}---{{webSocketCount}}+++{{webSocketCountData}}
+              <span class="download" style="margin-left: 5px;"></span>
+            </Button>
           </ButtonGroup>
           <Row style="margin-top: 20px;">
           	<i-col span="6">
@@ -56,7 +61,7 @@
         <!--progress-->
         <Progress :percent="percent" :status="progressStatus"></Progress>
         <!--table-->
-        <Table :loading="loading" :data="novelData" :columns="novelColumns"></Table>
+        <Table :loading="loading" :data="novelTable" :columns="novelColumns"></Table>
         <Row class="pageBox" type="flex" justify="end">
             <Page :total="pageData.totals" :current.sync="pageData.page" show-total on-change @on-change="changeFlipPage"></Page>
         </Row>
@@ -70,17 +75,20 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '圣墟',
+      keyword: '永夜君主',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
-      customerUrl: 'http://www.shuge.net/html/2/2779/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      // https://www.booktxt.net/3_3326/ 人皇
+      // https://www.booktxt.net/0_362/ 永夜君主
+      customerUrl: 'https://www.booktxt.net/0_362/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       progressStatus: 'active',
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify
-      // cancelNovelDownload: false, // 已有小说下载装填，用于冲掉notify
+      disabledDownload: false, // 禁止再次执行下载任务
       webSocketCount: 0, // 下载时候，webSocket传递过来总章节
       webSocketCountData: [], // 每次webSocket 传递过来的index 长度
-      novelData: [],
+      novelTable: [],
+      novelData: [], // 前端存储webSocket发送过来的小说数据，一条20条
       pageData: {
         page: 1,
         totals: 1,
@@ -153,24 +161,91 @@ export default {
     }
   },
   computed: {
-    isDoneWebSocket: function () {
+    /**
+     * @desc 判断是否通过webSocket完成数据传输的标志
+     * @return true 完成 false 未完成
+     * */
+    isDoneWebSocketCustomer: function () {
       let countLength = this.webSocketCountData.length
-      let countCeil = Math.ceil(this.webSocketCount / 20)
-      return !!(this.webSocketCount && countLength === countCeil);
+      let countCeil = this.webSocketCount
+      if (this.webSocketCount && countLength === countCeil) {
+        this.disabledDownload = false
+        return true
+      } else {
+        return false
+      }
+    },
+    /**
+     * @desc 计算小说数据并排序
+     * @return 小说内容
+     * @todo 后续需要过滤content 的正则匹配
+     * */
+    novelCustomerContent: function () {
+      let arr = this.novelData.sort((item1, item2) => {
+        return item1.index - item2.index
+      })
+      let data = ''
+      for (let item of arr) {
+        data = data + item.title + '\n' + item.content + '\n'
+      }
+      return data
     }
   },
   mounted () {
     this.receive() // 接收socket 的消息
     this.changeFlipPage() // 获取列表
   },
+  updated () {
+  },
   methods: {
+    downloadBook () {
+      let blob = new Blob([this.novelCustomerContent], {type: 'text/plain'})
+      let link = document.createElement('a')
+      link.innerHTML = this.keyword + '.txt'
+      link.href = window.URL.createObjectURL(blob)
+      link.download = this.keyword + '.txt'
+      this.$nextTick(() => {
+        console.info(document.querySelector('.download'));
+        document.querySelector('.download').appendChild(link) // 5000+章节时候，这里会失败
+        // document.getElementsByTagName('body')[0].appendChild(link)
+      })
+      // document.getElementsByTagName('body')[0].appendChild(link)
+      console.info(link);
+      return link
+    },
     /**
-     * @desc 下载小说
+     * @desc 执行下载任务
      * */
-    download () {
+    downloadNotify () {
       this.webSocketCount = 0
       this.webSocketCountData = []
-      console.info('download');
+      this.disabledDownload = true
+      this.$ajax.get('/api/novel/download?keyword=' + this.keyword)
+        .then(res => {
+          console.info(res);
+          this.disabledDownload = false
+          this.downloadBook()
+          this.webSocketCount = res.count
+          console.info('count:' + res.count);
+          console.info('failCount:' + res.failCount);
+          this.$Notice.success({
+            duration: 0,
+            title: res.msg || '',
+            render: h => {
+              return h('div', [
+                h('p', '开始时间：' + res.startTime || ''),
+                h('p', '结束时间：' + res.endTime || ''),
+                h('p', '耗时(s)：' + res.timeConsuming || ''),
+                h('p', '总章节：' + res.count || ''),
+                h('p', '成功章节：' + Number(res.count - res.failCount)),
+                h('p', '失败章节：' + res.failCount || '')
+              ])
+            }
+          })
+        })
+        .catch(err => {
+          console.info(err);
+        })
     },
     /**
      * @desc 临时测试
@@ -202,10 +277,10 @@ export default {
         .then(res => {
           this.loading = false
           if (res.errorCode === 0) {
-            this.novelData = res.data || []
+            this.novelTable = res.data || []
             this.pageData.totals = res.totals || 1
           } else {
-            this.novelData = []
+            this.novelTable = []
           }
         })
         .catch(err => {
@@ -285,9 +360,9 @@ export default {
                 h(
                   'p',
                   '成功章节：' +
-                    Number(json.data.count - json.data.failureTotal)
+                    Number(json.data.count - json.data.failCount)
                 ),
-                h('p', '失败章节：' + json.data.failureTotal || '')
+                h('p', '失败章节：' + json.data.failCount || '')
               ])
             }
           })
@@ -300,7 +375,7 @@ export default {
       this.$socket.on('novelData', json => {
         console.info(json)
         if (json.errorCode === 0) {
-          this.novelData = json.data || []
+          this.novelTable = json.data || []
           this.pageData.totals = json.totals || 1
           this.pageData.page = json.pageCurrent || 1
         }
@@ -328,8 +403,8 @@ export default {
       * */
       this.$socket.on('download', json => {
         if (json.errorCode === 0) {
-          console.info(json);
           this.webSocketCountData.push(json.index)
+          this.novelData.push(...json.data)
         }
       })
       /**
@@ -419,7 +494,7 @@ export default {
         .then(res => {
           console.info(res)
           this.loading = false
-          this.novelData = []
+          this.novelTable = []
           if (res.errorCode === 0) {
             // 开始执行进度条
             this.setProgress() // 设置进度条
@@ -456,7 +531,9 @@ export default {
           console.info(res)
           this.loading = false
           if (res.errorCode === 0) {
+            this.webSocketCount = res.count// 总章节
             this.percent = 100
+            this.downloadBook()// 生成下载blob
             this.$Notice.success({
               duration: 0,
               title: res.msg || '',
@@ -468,23 +545,23 @@ export default {
                       'a',
                       {
                         attrs: {
-                          href: location.origin + res['data']['url'],
-                          download: res['data'].name + '.txt'
+                          href: location.origin + res['url'],
+                          download: res.name + '.txt'
                         }
                       },
-                      res.data.name
+                      res.name
                     )
                   ]),
-                  h('p', '开始时间：' + res.data.startTime || ''),
-                  h('p', '结束时间：' + res.data.endTime || ''),
-                  h('p', '耗时(s)：' + res.data.timeConsuming || ''),
-                  h('p', '总章节：' + res.data.count || ''),
+                  h('p', '开始时间：' + res.startTime || ''),
+                  h('p', '结束时间：' + res.endTime || ''),
+                  h('p', '耗时(s)：' + res.timeConsuming || ''),
+                  h('p', '总章节：' + res.count || ''),
                   h(
                     'p',
                     '成功章节：' +
-                    Number(res.data.count - res.data.failureTotal)
+                    Number(res.count - res.failCount)
                   ),
-                  h('p', '失败章节：' + res.data.failureTotal || '')
+                  h('p', '失败章节：' + res.failCount || '')
                 ])
               }
             })
