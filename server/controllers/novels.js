@@ -391,7 +391,8 @@ async function pageDecode (url, header) {
           // 逻辑。如果存在gbk编码则返回false，否则true,utf-8编码成立
           let isTrue = true;
           for (let item in objMeta) {
-            if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($(objMeta[item]).attr('content'))) {
+            if (/(charset=gbk|charset=GBK|charset=GB2342)/.test($(objMeta[item])
+              .attr('content'))) {
               isTrue = false;
               resolve({status: false, host: host}); // false 走gbk
               break;
@@ -404,6 +405,7 @@ async function pageDecode (url, header) {
       });
   });
 }
+
 /**
  * @desc 判断网站的编码是gbk还是utf-8
  * @return Boolean gbk false;utf-8  true，以及主机
@@ -528,21 +530,30 @@ async function customerCatalogs (url, name, charset, header) {
           // 找到数组最大值的所在位置
           let indexMax = valuesArr.indexOf(Math.max.apply(Math, valuesArr));
           // _ELEMENTKeys[indexMax]此时 就是所在标签
-          let targetArr = Array.from($(_ELEMENTKeys[indexMax]).parent())// 得到父级数组
+          let targetArr = Array.from($(_ELEMENTKeys[indexMax])
+            .parent())// 得到父级数组
           let targetMap = {}// 存储map
           for (let item in targetArr) {
-            targetMap[item] = $(targetArr[item]).children().length// 将个数存储到map中
+            targetMap[item] = $(targetArr[item])
+              .children().length// 将个数存储到map中
           }
           let targetKeysArr = Object.values(targetMap)// 存储个数[1,33]数组
           let targetIndexMax = targetKeysArr.indexOf(Math.max.apply(Math, targetKeysArr))// 找到最大值所在的索引
           // 于是，目标标签位置就在，父级的正确索引下的对象的，子级就是正确的目标了
-          let chapters = $('body').find($($(_ELEMENTKeys[indexMax]).parent()[targetIndexMax]).children(_ELEMENTKeys[indexMax]));
+          let chapters = $('body')
+            .find($($(_ELEMENTKeys[indexMax])
+              .parent()[targetIndexMax])
+              .children(_ELEMENTKeys[indexMax]));
           let catalogsArr = []; // 组装目录的title 和 href路径
           console.time('定制化url目录循环 Each:');
           chapters.each((index, item) => {
             let obj = {
-              title: ($(item).find('a').text()).replace(/(.+?) 第/, '第'), //  正文 第1066章 黑炎出现 =>第1066章 黑炎出现
-              href: $(item).find('a').attr('href')
+              title: ($(item)
+                .find('a')
+                .text()).replace(/(.+?) 第/, '第'), //  正文 第1066章 黑炎出现 =>第1066章 黑炎出现
+              href: $(item)
+                .find('a')
+                .attr('href')
             };
             catalogsArr.push(obj);
           });
@@ -553,6 +564,7 @@ async function customerCatalogs (url, name, charset, header) {
       })
   })
 }
+
 /**
  * @desc 获取章节目录，只是vip章节
  * @param urlAndHeaderObj url header name
@@ -641,26 +653,36 @@ async function getCatalogs (urlAndHeaderObj, charset = thisCharsetStatus) {
           // 找到数组最大值的所在位置
           let indexMax = valuesArr.indexOf(Math.max.apply(Math, valuesArr));
           // _ELEMENTKeys[indexMax]此时 就是所在标签
-          let targetArr = Array.from($1(ELEMENTKeys[indexMax]).parent())// 得到父级数组
+          let targetArr = Array.from($1(ELEMENTKeys[indexMax])
+            .parent())// 得到父级数组
           let targetMap = {}// 存储map
           for (let item in targetArr) {
-            targetMap[item] = $1(targetArr[item]).children().length// 将个数存储到map中
+            targetMap[item] = $1(targetArr[item])
+              .children().length// 将个数存储到map中
           }
           let targetKeysArr = Object.values(targetMap)// 存储个数[1,33]数组
           let targetIndexMax = targetKeysArr.indexOf(Math.max.apply(Math, targetKeysArr))// 找到最大值所在的索引
           // 于是，目标标签位置就在，父级的正确索引下的对象的，子级就是正确的目标了
-          let chapters = $1('body').find($1($1(ELEMENTKeys[indexMax]).parent()[targetIndexMax]).children(ELEMENTKeys[indexMax]));
+          let chapters = $1('body')
+            .find($1($1(ELEMENTKeys[indexMax])
+              .parent()[targetIndexMax])
+              .children(ELEMENTKeys[indexMax]));
           let catalogsArr = []; // 组装目录的title 和 href路径
           // 组装分类数组
           console.time('目录循环 Each:');
           // 只需要组装vip章节即可，过滤非vip章节
           chapters.each((index, item) => {
             let obj = {
-              title: ($1(item).find('a').text()).replace(/(.+?) 第/, '第'), //  正文 第1066章 黑炎出现 =>第1066章 黑炎出现
-              href: $1(item).find('a').attr('href'),
+              title: ($1(item)
+                .find('a')
+                .text()).replace(/(.+?) 第/, '第'), //  正文 第1066章 黑炎出现 =>第1066章 黑炎出现
+              href: $1(item)
+                .find('a')
+                .attr('href'),
               catalogsUrl: urlAndHeaderObj.url
             };
-            let isHasVip = NovelModel.find({name: name, title: obj.title, isVip: 1}).count();
+            let isHasVip = NovelModel.find({name: name, title: obj.title, isVip: 1})
+              .count();
             // 如果存在vip章节则组装vip章节
             if (isHasVip) {
               catalogsArr.push(obj);
@@ -753,9 +775,13 @@ async function searchQiDianBook (name) {
             bookId: '',
             bookUrl: ''
           };
-          if ($(theBookElement).children().text() === name) {
-            ob.bookId = $(theBookElement).attr('data-bid');
-            ob.bookUrl = $(theBookElement).attr('href');
+          if ($(theBookElement)
+            .children()
+            .text() === name) {
+            ob.bookId = $(theBookElement)
+              .attr('data-bid');
+            ob.bookUrl = $(theBookElement)
+              .attr('href');
             resolve(ob);
           } else {
             // 如果找到还是跳出空对象
@@ -780,7 +806,8 @@ async function getQiDianNovelPreview (url) {
           reject(nullString); // 如果抓取失败，则返回空字符串
         } else {
           let $ = cheerio.load(res.text);
-          let content = $('.read-content').text();
+          let content = $('.read-content')
+            .text();
           resolve(content);
         }
       });
@@ -851,7 +878,8 @@ async function getQiDianNovel (bookName) {
                 });
               let theTitle = (item.cN).replace(/ [ ]+/, ' ')
               // 存在章节与章节名 两个空格 三个空格情况
-              let isHas = await NovelModel.findOne({name: bookName, title: theTitle, uuid: item.uuid}).count();
+              let isHas = await NovelModel.findOne({name: bookName, title: theTitle, uuid: item.uuid})
+                .count();
               // 如果不存在，则保存
               if (!isHas) {
                 // 构造起点小说目录对象
@@ -922,7 +950,8 @@ async function dealNovel (resObj, name) {
             title = $1;
           });
           let regTile = new RegExp(title);
-          let isHas = await NovelModel.findOne({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'}).count()
+          let isHas = await NovelModel.findOne({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'})
+            .count()
           if (isHas) {
             logger.warn('查到内容等于1的vip章节：' + regTile)
             logger.warn({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'})
@@ -935,9 +964,11 @@ async function dealNovel (resObj, name) {
                 let theUrl = ''// 真实要去爬取的url
                 if (checkHasHttp) { theUrl = i.href } else { theUrl = checkHasLine ? 'http://' + host + i.href : i.catalogsUrl + i.href; }
                 let singleData = {content: single || '', url: theUrl || '', host: host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')};
-                await NovelModel.update({name: name, title: regTile, $where: 'this.content.length<1', isVip: 1}, {$set: singleData}).exec().then(updateRes => {
-                  logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
-                });
+                await NovelModel.update({name: name, title: regTile, $where: 'this.content.length<1', isVip: 1}, {$set: singleData})
+                  .exec()
+                  .then(updateRes => {
+                    logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
+                  });
               })
               .catch(async errObj => {
                 // todo 如果走到这一步，就不执行了。
@@ -1101,9 +1132,16 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
           elArr.each((index, item) => {
             // 存在内容&&存在id&&不存在儿子的内容
             // 有些不存在id
-            if ($(item).text().trim() && ($(item).attr('id') || $(item).attr('class')) && $(item).children('br').length > 10) {
-              logger.warn('\n A+++' + index + '____' + $(item).attr('id') + '-------');
-              content = $(item).text() || '';
+            if ($(item)
+              .text()
+              .trim() && ($(item)
+              .attr('id') || $(item)
+              .attr('class')) && $(item)
+              .children('br').length > 10) {
+              logger.warn('\n A+++' + index + '____' + $(item)
+                .attr('id') + '-------');
+              content = $(item)
+                .text() || '';
               // 除了超时之外reject,还有内容为空也会reject
               clearTimeout(rejectTime);
               if (content) {
@@ -1132,7 +1170,8 @@ const _novel = {
     logger.warn('临时测试入口')
     // /第2117章 又/
     // 第1065章 战/
-    let isHas = await NovelModel.findOne({name: '重生之最强剑神', isVip: 1, title: /第1065章 战/, $where: 'this.content.length<1'}).count()
+    let isHas = await NovelModel.findOne({name: '重生之最强剑神', isVip: 1, title: /第1065章 战/, $where: 'this.content.length<1'})
+      .count()
     logger.warn(isHas)
     res.json({isHas: isHas})
     // superAgent
@@ -1301,7 +1340,8 @@ const _novel = {
         return new Promise((resolve, reject) => {
           let _index = 0
           catalogs.forEach(async (i, index) => {
-            let isHas = await NovelModel.findOne({name: name, title: i['title'], $where: 'this.content.length>1'}).count()
+            let isHas = await NovelModel.findOne({name: name, title: i['title'], $where: 'this.content.length>1'})
+              .count()
             logger.warn(isHas, {name: name, title: i['title'], $where: 'this.content.length>1'})
             if (isHas) {
               // todo update
@@ -1309,7 +1349,8 @@ const _novel = {
               await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
                 .then(async single => {
                   let singleData = {type: 'customer', title: i.title, length: single.length, isVip: 0, index: index, content: single || '', url: i.href || '', host: decodeType.host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')}
-                  await NovelModel.update({name: name, title: i['title']}, {$set: singleData}).exec()
+                  await NovelModel.update({name: name, title: i['title']}, {$set: singleData})
+                    .exec()
                     .then(updateRes => {
                       logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
                     });
@@ -1325,9 +1366,10 @@ const _novel = {
               await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
                 .then(async single => {
                   let singleData = await NovelModel({name: name, title: i.title, length: single.length, isVip: 0, type: 'customer', index: index, content: single || '', url: i.href || '', host: decodeType.host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')})
-                  await singleData.save().then(saveThen => {
-                    logger.warn('《' + name + '》 ' + i.title + ' save成功');
-                  })
+                  await singleData.save()
+                    .then(saveThen => {
+                      logger.warn('《' + name + '》 ' + i.title + ' save成功');
+                    })
                   i.single = single
                   data.push(i)
                 })
@@ -1369,25 +1411,49 @@ const _novel = {
    * */
   download: async (req, res) => {
     logger.warn('开始下载~~~~~')
+    const findPromise = (name, i) => {
+      return new Promise(async (resolve, reject) => {
+        let data = await NovelModel.find({name: name}, {title: 1, content: 1}).limit(20).skip(i * 20).sort({uuid: 1, index: 1})
+        await _io('download', {index: i, errorCode: 0, data: data})
+        resolve(data)
+      })
+    }
     console.time('下载时间耗时:');
+    let startTime = format(new Date(), 'YYYY-MM-DD HH:mm:ss');
     let name = req.query.keyword;
     if (!name) {
       await _dbError(res, '请输入要下载的小说名');
       return false;
     }
     // todo 查询500+条，表现太慢，35s，能否分为多条，然后走webSocket返回多条数据同时进行来渲染数据么
-    console.time('查询数据库所需全部章节列:');
-    let dbData = await NovelModel.find({name: name}, {title: 1, content: 1}).sort({uuid: 1, index: 1});
-    if (!dbData.length) {
+    // 1、todo 查询总数目
+    let allCount = await NovelModel.find({name: name}).count()
+    // 失败的数目
+    let failCount = await NovelModel.find({name: name, $where: 'this.content.length<1', isVip: 1}).count();
+    let countArr = []// 迭代的數組
+    // 2、todo Math.ceil(count) 出来，需要进行的多线程抓取数据库数据，预定100条数据
+    for (let i = 0; i < Math.ceil(allCount / 20); i++) {
+      countArr.push(i)
+    }
+    // findPromise(name, i)
+    console.time('查询数据库全部章所需时间:');
+    const result = await Promise.all(countArr.map(v => findPromise(name, v)))
+    console.timeEnd('查询数据库全部章所需时间:');
+    if (!allCount) {
       await missionFail('数据库不存在该小说');
       return false;
     }
-    let data = '';
-    for (let item of dbData) {
-      data = data + item.title + '\n' + item.content + '\n';
-    }
-    console.timeEnd('查询数据库所需全部章节列:');
-    await _download(res, '下载成功', data);
+    // await _download(res, '下载成功', data);
+    await _io('downloadNotify', {
+      data: result || [],
+      msg: '《' + name + '》下载成功',
+      errorCode: 0,
+      startTime: startTime,
+      timeConsuming: (new Date().valueOf() - new Date(startTime).valueOf()) / 1000,
+      failCount: failCount || 0,
+      count: allCount,
+      endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    }); // 通过webSocket告诉客户端已完成下载的消息
   },
   // 小说列表
   getNovelList: async (req, res) => {
@@ -1404,11 +1470,11 @@ const _novel = {
     console.timeEnd('time 查询数据库列表10个长度');
   }
 };
-
 async function resNotifyClient (res, obj) {
   logger.warn('++++ 最后：小说爬取完成，总章节' + obj.count + '---------');
   // 失败的计数，查询vip 且 内容为空的数目
-  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1}).count();
+  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1})
+    .count();
   const ob = {
     msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
@@ -1428,6 +1494,7 @@ async function resNotifyClient (res, obj) {
   processTask = [];
   await res.json(ob)
 }
+
 /**
  * @desc webSocket
  * @desc 完成标志，通知客户端
@@ -1436,7 +1503,8 @@ async function resNotifyClient (res, obj) {
 async function notifyClient (obj) {
   logger.warn('++++ 第十步/1：小说爬取完成，总章节' + obj.count + '---------');
   // 失败的计数，查询vip 且 内容为空的数目
-  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1}).count();
+  let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1})
+    .count();
   const ob = {
     msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
     data: {
@@ -1456,6 +1524,7 @@ async function notifyClient (obj) {
   processTask = [];
   await _io('novel', ob); // 通过webSocket告诉客户端已完成下载的消息
 }
+
 /**
  * @desc webSocket返回结果
  * */
@@ -1492,7 +1561,8 @@ async function webSocketNovelData (ob) {
     {$skip: 0},
     {$limit: 10}
   ]);
-  let latestNumber = await NovelModel.find({name: ob.bookName}).count()
+  let latestNumber = await NovelModel.find({name: ob.bookName})
+    .count()
   // 成功执行任务之后，清空任务栈
   processTask = [];
   let obj = {
@@ -1504,6 +1574,7 @@ async function webSocketNovelData (ob) {
   }
   await _io('novelData', obj); // 通过webSocket告诉客户端已完成下载的消息
 }
+
 /**
  * @desc 返回小说数据,必须直接返回该函数。
  * @param res
@@ -1525,7 +1596,8 @@ async function getNovelData (res, options) {
   } else {
     let $where = '1';
   }
-  let count = await NovelModel.find({name: options.novel, isVip: Number(options.isVip === '1' ? 1 : 0), $where: $where}).count(); // 总长度 sort() -1，倒叙,1默认升序
+  let count = await NovelModel.find({name: options.novel, isVip: Number(options.isVip === '1' ? 1 : 0), $where: $where})
+    .count(); // 总长度 sort() -1，倒叙,1默认升序
   let aggregateOb = {name: options.novel, isVip: Number(options.isVip)};
   // 不存在内容或者属于0
   if (!options.hasContent || options.hasContent === '0') {
@@ -1565,7 +1637,8 @@ async function getNovelData (res, options) {
     {$skip: Number(page) * 10 - 10},
     {$limit: 10}
   ]);
-  let isHasBook = await NovelModel.find({name: options.novel}).count() // 判断数据库是否存在该本小说
+  let isHasBook = await NovelModel.find({name: options.novel})
+    .count() // 判断数据库是否存在该本小说
   let pages = Math.ceil(count / 10);
   if (!isHasBook) {
     logger.warn('数据库不存在该小说');

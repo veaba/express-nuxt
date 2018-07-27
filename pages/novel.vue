@@ -32,6 +32,11 @@
             <Button @click="novelTesting" type="ghost" size="small">
               <Icon type="information-circled"></Icon>
               临时测试</Button>
+            <Button @click="download" type="ghost" size="small" style="border: 1px solid #2d8cf0;padding: 2px 7px">
+              <Icon type="ios-cloud-download"></Icon>
+              <a :href="'/api/novel/download?keyword='+keyword" :download="keyword+'.txt'">下载小说</a>
+              </Button>
+            {{isDoneWebSocket?'下載完成':'尚未完成'}}---{{webSocketCount}}+++{{webSocketCountData}}
           </ButtonGroup>
           <Row style="margin-top: 20px;">
           	<i-col span="6">
@@ -65,7 +70,7 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '官榜',
+      keyword: '圣墟',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
       customerUrl: 'http://www.shuge.net/html/2/2779/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
@@ -73,6 +78,8 @@ export default {
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify
       // cancelNovelDownload: false, // 已有小说下载装填，用于冲掉notify
+      webSocketCount: 0, // 下载时候，webSocket传递过来总章节
+      webSocketCountData: [], // 每次webSocket 传递过来的index 长度
       novelData: [],
       pageData: {
         page: 1,
@@ -145,11 +152,26 @@ export default {
       ]
     }
   },
+  computed: {
+    isDoneWebSocket: function () {
+      let countLength = this.webSocketCountData.length
+      let countCeil = Math.ceil(this.webSocketCount / 20)
+      return !!(this.webSocketCount && countLength === countCeil);
+    }
+  },
   mounted () {
     this.receive() // 接收socket 的消息
     this.changeFlipPage() // 获取列表
   },
   methods: {
+    /**
+     * @desc 下载小说
+     * */
+    download () {
+      this.webSocketCount = 0
+      this.webSocketCountData = []
+      console.info('download');
+    },
     /**
      * @desc 临时测试
      * */
@@ -300,6 +322,41 @@ export default {
         }
         this.progressStatus = 'wrong'
       })
+      /*
+      * @desc 通过多线程的数据库查询，让webSocket 传输数据
+      * @todo 不知道webSocket / socket.io 有多少字节的限制
+      * */
+      this.$socket.on('download', json => {
+        if (json.errorCode === 0) {
+          console.info(json);
+          this.webSocketCountData.push(json.index)
+        }
+      })
+      /**
+       * @desc 下载结果通知
+       * */
+      this.$socket.on('downloadNotify', json => {
+        if (json.errorCode === 0) {
+          this.webSocketCount = json.count
+          this.$Notice.success({
+            duration: 0,
+            title: json.msg || '',
+            render: h => {
+              return h('div', [
+                h('p', '开始时间：' + json.startTime || ''),
+                h('p', '结束时间：' + json.endTime || ''),
+                h('p', '耗时(s)：' + json.timeConsuming || ''),
+                h('p', '总章节：' + json.count || ''),
+                h('p', '成功章节：' + Number(json.count - json.failCount)),
+                h('p', '失败章节：' + json.failCount || '')
+              ])
+            }
+          })
+        }
+      })
+      /**
+       * @desc 接受消息
+       * */
       this.$socket.on('receive1', data => {
         console.info(data)
       })
