@@ -75,12 +75,13 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '永夜君主',
+      keyword: '官榜',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
       // https://www.booktxt.net/3_3326/ 人皇
       // https://www.booktxt.net/0_362/ 永夜君主
-      customerUrl: 'https://www.booktxt.net/0_362/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      // http://www.shuge.net/html/2/2779/ 官榜
+      customerUrl: 'http://www.shuge.net/html/2/2779/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       progressStatus: 'active',
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify

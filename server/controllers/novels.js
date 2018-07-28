@@ -1113,14 +1113,13 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
       clearTimeout(rejectTime);
     }, 30000);
     let superAgentChart = charset ? superAgent : superAgentTo;
+    logger.warn('单章theUrl:' + theUrl)
     superAgentChart.get(theUrl)
       .set(htmlHeader[1])
       .charset(isChartSet)
       .end(async (err, res) => {
         if (err && err.status && err.response) {
-          logger.warn(
-            '\n++++第九步/3-err：爬取单章获取内容失败，状态:' + err.status
-          );
+          logger.warn('\n++++第九步/3-err：爬取单章获取内容失败，状态:' + err.status);
           clearTimeout(rejectTime);
           let badStatus = {ErrStatus: true};
           reject(badStatus); // 如果错误404/403则抛出err
