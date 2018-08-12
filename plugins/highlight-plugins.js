@@ -4,7 +4,7 @@
  * @date 2018/2/21
  ***********************/
 import Vue from 'vue'
-import highlight from 'highlight.js'
+import highlight from 'highlight'
 import 'highlight.js/styles/googlecode.css'
 
 Vue.directive('highlight', function (el) {
