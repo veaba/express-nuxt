@@ -75,13 +75,13 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '官榜',
+      keyword: '助鬼为乐系统',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
       // https://www.booktxt.net/3_3326/ 人皇
       // https://www.booktxt.net/0_362/ 永夜君主
       // http://www.shuge.net/html/2/2779/ 官榜
-      customerUrl: 'http://www.shuge.net/html/2/2779/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      customerUrl: 'https://www.biduo.cc/biquge/42_42740/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       progressStatus: 'active',
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify
@@ -199,6 +199,9 @@ export default {
   updated () {
   },
   methods: {
+    /**
+     * @desc 前端下载小说
+     * */
     downloadBook () {
       let blob = new Blob([this.novelCustomerContent], {type: 'text/plain'})
       let link = document.createElement('a')
@@ -211,18 +214,28 @@ export default {
           document.querySelector('.download').appendChild(link)
         }
       })
-      // document.querySelector('.download').appendChild(link) // 5000+章节时候，这里会失败
-      // document.getElementsByTagName('body')[0].appendChild(link)
-      // document.getElementsByTagName('body')[0].appendChild(link)
       console.info(link);
       return link
     },
     /**
-     * @desc 执行下载任务
+     * @desc1 执行下载任务，20条下载数据库的
+     * @desc2 如果是定制化，直接爬取，不需要写入数据库下载
+     * @desc3 否则的话，需要爬取并写入数据，才从数据库下载
      * */
     downloadNotify () {
+      if (this.selectType === 'default') {
+        this.downloadDefault()
+      } else {
+        this.downloadCustomer()
+      }
+    },
+    /**
+     * @desc download-default，每20条写入
+     * */
+    downloadDefault () {
       this.webSocketCount = 0
       this.webSocketCountData = []
+      this.novelData = []// 清空小说数据
       this.disabledDownload = true
       this.$ajax.get('/api/novel/download?keyword=' + this.keyword)
         .then(res => {
@@ -250,6 +263,9 @@ export default {
         .catch(err => {
           console.info(err);
         })
+    },
+    downloadCustomer () {
+      this.customerNovel()
     },
     /**
      * @desc 临时测试

@@ -1319,97 +1319,9 @@ const _novel = {
         logger.warn(errObj, '\n novelControl catch');
       });
   },
-
-  /**
-   * @desc back 保留定制化下载的要求
-   * */
-  // customizedNovel: async (req, res) => {
-  //   let name = req.body.keyword;
-  //   let url = req.body.url
-  //   let startTime = format(new Date(), 'YYYY-MM-DD HH:mm:ss')
-  //   if (!name || !url) {
-  //     await _dbError(res, '请输入要下载的小说名或者目标url');
-  //     return false;
-  //   }
-  //   // 1、todo 判断编码
-  //   let decodeType = await pageDecode(url, htmlHeader[loopHeader])// {status,host}
-  //   // 2、todo 抓取定位所在div,爬取章节数据
-  //
-  //   await customerCatalogs(url, name, decodeType.status, htmlHeader[loopHeader])
-  //     .then(catalogs => {
-  //       // todo 回到经典的问题，forEach循环里面放一个异步,然后再使用promise 处理循环，就可以返回给第二then使用了
-  //       let data = []
-  //       return new Promise((resolve, reject) => {
-  //         let _index = 0
-  //         catalogs.forEach(async (i, index) => {
-  //           // let isHas = await NovelModel.findOne({name: name, title: i['title'], $where: 'this.content.length>1'})
-  //           //   .count()
-  //           // logger.warn(isHas, {name: name, title: i['title'], $where: 'this.content.length>1'})
-  //           // if (isHas) {
-  //           //   await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
-  //           //     .then(async single => {
-  //           //       let singleData = {type: 'customer', title: i.title, length: single.length, isVip: 0, index: index, content: single || '', url: i.href || '', host: decodeType.host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')}
-  //           //       await NovelModel.update({name: name, title: i['title']}, {$set: singleData})
-  //           //         .exec()
-  //           //         .then(updateRes => {
-  //           //           logger.warn(updateRes, '《' + name + '》 ' + i.title + ' then更新成功');
-  //           //         });
-  //           //       i.single = single
-  //           //       data.push(i)
-  //           //     })
-  //           //     .catch(singleErr => {
-  //           //       console.info(singleErr);
-  //           //     })
-  //           // } else {
-  //           //   await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
-  //           //     .then(async single => {
-  //           //       let singleData = await NovelModel({name: name, title: i.title, length: single.length, isVip: 0, type: 'customer', index: index, content: single || '', url: i.href || '', host: decodeType.host || '', timeout: false, spiderTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')})
-  //           //       await singleData.save()
-  //           //         .then(saveThen => {
-  //           //           logger.warn('《' + name + '》 ' + i.title + ' save成功');
-  //           //         })
-  //           //       i.single = single
-  //           //       data.push(i)
-  //           //     })
-  //           //     .catch(singleErr => {
-  //           //       console.info(singleErr);
-  //           //     })
-  //           // }
-  //           await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
-  //             .then(async single => {
-  //               logger.warn('《' + name + '》 ' + i.title + ' then更新成功');
-  //               i.single = single
-  //               data.push(i)
-  //             })
-  //             .catch(singleErr => {
-  //               console.info(singleErr);
-  //             })
-  //           _index++
-  //           if (_index === catalogs.length) {
-  //             resolve({_index: _index, data: data, count: catalogs.length})
-  //           }
-  //         })
-  //       })
-  //     })
-  //     .then(async obj => {
-  //       let ob = {
-  //         msg: '《' + name + '》,任务完成!',
-  //         bookName: name,
-  //         data: obj.data,
-  //         startTime: startTime,
-  //         count: obj.count,
-  //         eventType: 'done' // 事件类型，latest最新
-  //       };
-  //       await downloadCustomer(obj) // 如果不存储数据库的话，websocket，每次都会发送一个章节
-  //       await resNotifyClient(res, ob)
-  //     })
-  //     .catch(err => {
-  //       console.info(err.status);
-  //     })
-  // }
   /**
    * @desc 定制化小说部分
-   * @warning 定制化下载写入到数据库，会污染全局。
+   * @warning 定制化下载写入到数据库，会污染全局，定制化不写入数据库
    * @waring 此处是单章写入到webSocket传递
    * */
   customizedNovel: async (req, res) => {
@@ -1431,7 +1343,6 @@ const _novel = {
             await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
               .then(async single => {
                 logger.warn('《' + name + '》 ' + i.title + ' then更新成功');
-                // todo
                 i.content = single
                 i.index = index
                 await _io('download', {index: index, errorCode: 0, data: [i]})
@@ -1473,7 +1384,7 @@ const _novel = {
    * @todo 查询耗时太慢，需要优化,34章，耗时1s
    * */
   download: async (req, res) => {
-    logger.warn('开始下载~~~~~')
+    logger.warn('default 开始下载~~~~~')
     const findPromise = (name, i) => {
       return new Promise(async (resolve, reject) => {
         let data = await NovelModel.find({name: name}, {title: 1, content: 1, index: 1, uuid: 1}).limit(20).skip(i * 20).sort({uuid: 1, index: 1})
@@ -1517,18 +1428,6 @@ const _novel = {
       count: allCount,
       endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')
     })
-    // await _download(res, '下载成功', data);
-    // 通过webSocket告诉客户端已完成下载的消息
-    // await _io('downloadNotify', {
-    //   data: result || [],
-    //   msg: '《' + name + '》下载成功',
-    //   errorCode: 0,
-    //   startTime: startTime,
-    //   timeConsuming: (new Date().valueOf() - new Date(startTime).valueOf()) / 1000,
-    //   failCount: failCount || 0,
-    //   count: allCount,
-    //   endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss')
-    // });
   },
   // 小说列表
   getNovelList: async (req, res) => {
