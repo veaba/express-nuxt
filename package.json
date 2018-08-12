@@ -9,7 +9,9 @@
     "build": "nuxt build && backpack build",
     "start": "cross-env NODE_ENV=production node build/main.js",
     "precommit": "npm run lint",
-    "lint": "eslint --ext .js,.vue --ignore-path .gitignore ."
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
+    "generate": "nuxt generate",
+    "deploy": "push-dir --dir=dist --branch=master --cleanup"
   },
   "dependencies": {
     "axios": "^0.16.2",
@@ -49,6 +51,7 @@
     "node-sass": "^4.5.3",
     "pug": "^2.0.0-beta6",
     "pug-loader": "^2.3.0",
+    "push-dir": "^0.4.1",
     "sass-loader": "^6.0.6"
   }
 }
