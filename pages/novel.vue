@@ -4,6 +4,7 @@
  *@date 2018/4/20
  *@desc 网络小说下载
  *@desc todo 严重，自定义下载，会污染全局。
+ *@desc todo 区分dev 和生产环境下的的异同，然后给出不同的功能。
  -------------------------->
 <template>
     <section class="container">
@@ -70,6 +71,7 @@
 <script>
 /* eslint-disable handle-callback-err */
 // todo 下载任务完成后，会通过webSocket通知客户端。
+import nuxtConfig from './../nuxt.config'
 export default {
   name: 'novel',
   components: {},
@@ -160,7 +162,8 @@ export default {
             return h('span', params.row.preview.trim())
           }
         }
-      ]
+      ],
+      isDev: nuxtConfig.dev // 判断是否是开发环境下
     }
   },
   computed: {
