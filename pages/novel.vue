@@ -75,13 +75,15 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '助鬼为乐系统',
+      keyword: '茅山鬼谷门',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
       // https://www.booktxt.net/3_3326/ 人皇
       // https://www.booktxt.net/0_362/ 永夜君主
       // http://www.shuge.net/html/2/2779/ 官榜
-      customerUrl: 'https://www.biduo.cc/biquge/42_42740/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      // https://www.biduo.cc/biquge/44_44762/ 茅山鬼谷门
+      // https://www.biduo.cc/biquge/42_42740/ 助鬼为乐系统
+      customerUrl: 'https://www.biduo.cc/biquge/44_44762/ ', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       progressStatus: 'active',
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify
@@ -169,7 +171,7 @@ export default {
     isDoneWebSocketCustomer: function () {
       let countLength = this.webSocketCountData.length
       let countCeil = this.webSocketCount
-      if (this.webSocketCount && countLength + 1 === countCeil) {
+      if (this.webSocketCount && (countLength + 1 === countCeil || countLength === countCeil)) {
         this.disabledDownload = false
         return true
       } else {
@@ -187,18 +189,144 @@ export default {
       })
       let data = ''
       for (let item of arr) {
-        data = data + item.title + '\n' + item.content + '\n'
+        data = data + '    ' + item.title + this.formatNovelData(item.content) + '\n\n'
       }
       return data
     }
   },
   mounted () {
-    this.receive() // 接收socket 的消息
+    this.webSocketReceive() // 接收socket 的消息
     this.changeFlipPage() // 获取列表
   },
   updated () {
   },
   methods: {
+    // 接收消息 server -> client
+    webSocketReceive () {
+      this.$socket.on('isConnectSocketStatus', data => {
+        console.info(data)
+      })
+      /**
+       * @desc 小说下载完成通知消息
+       * */
+      this.$socket.on('novel', json => {
+        if (json.errorCode === 0) {
+          this.loading = false
+          // 最新的话，进度条完成
+          if (json.data.eventType === 'latest') {
+            this.percent = 100
+          }
+          console.info(json);
+          // 如果本卡有上一次通知，则在开始后，4.5s关闭本卡
+          this.$Notice.success({
+            duration: 0,
+            title: json.msg || '',
+            render: h => {
+              return h('div', [
+                h('p', [
+                  '下载地址：',
+                  h(
+                    'a',
+                    {
+                      attrs: {
+                        // todo 返回比较慢，后续才会生成txt文件
+                        href: location.origin + json['data']['url'],
+                        download: json['data'].name + '.txt'
+                      }
+                    },
+                    json.data.name
+                  )
+                ]),
+                h('p', '开始时间：' + json.data.startTime || ''),
+                h('p', '结束时间：' + json.data.endTime || ''),
+                h('p', '耗时(s)：' + json.data.timeConsuming || ''),
+                h('p', '总章节：' + json.data.count || ''),
+                h(
+                  'p',
+                  '成功章节：' +
+                  Number(json.data.count - json.data.failCount)
+                ),
+                h('p', '失败章节：' + json.data.failCount || '')
+              ])
+            }
+          })
+          this.newNovelDownload = true // 标志位，会冲掉上一次小说设置
+        }
+      })
+      /**
+       * @desc 小说下载的结果
+       * */
+      this.$socket.on('novelData', json => {
+        console.info(json)
+        if (json.errorCode === 0) {
+          this.novelTable = json.data || []
+          this.pageData.totals = json.totals || 1
+          this.pageData.page = json.pageCurrent || 1
+        }
+        this.loading = false
+        this.percent = 100
+      })
+
+      /**
+       * @desc 大兄弟，任务失败了
+       * */
+      this.$socket.on('missionFail', json => {
+        console.info(json)
+        if (json.errorCode) {
+          this.percent = 100
+          this.$Notice.warning({
+            title: '任务失败',
+            desc: json.msg || 'error'
+          })
+        }
+        this.progressStatus = 'wrong'
+      })
+      /*
+      * @desc 通过多线程的数据库查询，让webSocket 传输数据
+      * @todo 不知道webSocket / socket.io 有多少字节的限制
+      * */
+      this.$socket.on('download', json => {
+        if (json.errorCode === 0) {
+          this.webSocketCountData.push(json.index)
+          this.novelData.push(...json.data)
+        }
+      })
+      /**
+       * @desc 下载结果通知
+       * */
+      this.$socket.on('downloadNotify', json => {
+        if (json.errorCode === 0) {
+          this.webSocketCount = json.count
+          this.$Notice.success({
+            duration: 0,
+            title: json.msg || '',
+            render: h => {
+              return h('div', [
+                h('p', '开始时间：' + json.startTime || ''),
+                h('p', '结束时间：' + json.endTime || ''),
+                h('p', '耗时(s)：' + json.timeConsuming || ''),
+                h('p', '总章节：' + json.count || ''),
+                h('p', '成功章节：' + Number(json.count - json.failCount)),
+                h('p', '失败章节：' + json.failCount || '')
+              ])
+            }
+          })
+        }
+      })
+      /**
+       * @desc 接受消息
+       * */
+      this.$socket.on('receive1', data => {
+        console.info(data)
+      })
+    },
+    /**
+     * @desc 格式化排版
+     * */
+    formatNovelData (content) {
+      /* eslint no-irregular-whitespace: ["error", { "skipRegExps": true }] */
+      return content.replace(/    /g, '\n\n    ')
+    },
     /**
      * @desc 前端下载小说
      * */
@@ -336,126 +464,6 @@ export default {
     sendSome () {
       this.$socket.emit('receive', { params: '客户端发给你的一段消息' })
     },
-    // 接收消息 server -> client
-    receive () {
-      this.$socket.on('isConnectSocketStatus', data => {
-        console.info(data)
-      })
-      /**
-       * @desc 小说下载完成通知消息
-       * @todo 成功数计算错误
-       * */
-      this.$socket.on('novel', json => {
-        if (json.errorCode === 0) {
-          this.loading = false
-          // 最新的话，进度条完成
-          if (json.data.eventType === 'latest') {
-            this.percent = 100
-          }
-          console.info(json);
-          // 如果本卡有上一次通知，则在开始后，4.5s关闭本卡
-          this.$Notice.success({
-            duration: 0,
-            title: json.msg || '',
-            render: h => {
-              return h('div', [
-                h('p', [
-                  '下载地址：',
-                  h(
-                    'a',
-                    {
-                      attrs: {
-                        // todo 返回比较慢，后续才会生成txt文件
-                        href: location.origin + json['data']['url'],
-                        download: json['data'].name + '.txt'
-                      }
-                    },
-                    json.data.name
-                  )
-                ]),
-                h('p', '开始时间：' + json.data.startTime || ''),
-                h('p', '结束时间：' + json.data.endTime || ''),
-                h('p', '耗时(s)：' + json.data.timeConsuming || ''),
-                h('p', '总章节：' + json.data.count || ''),
-                h(
-                  'p',
-                  '成功章节：' +
-                    Number(json.data.count - json.data.failCount)
-                ),
-                h('p', '失败章节：' + json.data.failCount || '')
-              ])
-            }
-          })
-          this.newNovelDownload = true // 标志位，会冲掉上一次小说设置
-        }
-      })
-      /**
-       * @desc 小说下载的结果
-       * */
-      this.$socket.on('novelData', json => {
-        console.info(json)
-        if (json.errorCode === 0) {
-          this.novelTable = json.data || []
-          this.pageData.totals = json.totals || 1
-          this.pageData.page = json.pageCurrent || 1
-        }
-        this.loading = false
-        this.percent = 100
-      })
-
-      /**
-       * @desc 大兄弟，任务失败了
-       * */
-      this.$socket.on('missionFail', json => {
-        console.info(json)
-        if (json.errorCode) {
-          this.percent = 100
-          this.$Notice.warning({
-            title: '任务失败',
-            desc: json.msg || 'error'
-          })
-        }
-        this.progressStatus = 'wrong'
-      })
-      /*
-      * @desc 通过多线程的数据库查询，让webSocket 传输数据
-      * @todo 不知道webSocket / socket.io 有多少字节的限制
-      * */
-      this.$socket.on('download', json => {
-        if (json.errorCode === 0) {
-          this.webSocketCountData.push(json.index)
-          this.novelData.push(...json.data)
-        }
-      })
-      /**
-       * @desc 下载结果通知
-       * */
-      this.$socket.on('downloadNotify', json => {
-        if (json.errorCode === 0) {
-          this.webSocketCount = json.count
-          this.$Notice.success({
-            duration: 0,
-            title: json.msg || '',
-            render: h => {
-              return h('div', [
-                h('p', '开始时间：' + json.startTime || ''),
-                h('p', '结束时间：' + json.endTime || ''),
-                h('p', '耗时(s)：' + json.timeConsuming || ''),
-                h('p', '总章节：' + json.count || ''),
-                h('p', '成功章节：' + Number(json.count - json.failCount)),
-                h('p', '失败章节：' + json.failCount || '')
-              ])
-            }
-          })
-        }
-      })
-      /**
-       * @desc 接受消息
-       * */
-      this.$socket.on('receive1', data => {
-        console.info(data)
-      })
-    },
     /**
      * @desc 手动清空任务栈
      * */
@@ -559,19 +567,19 @@ export default {
               title: res.msg || '',
               render: h => {
                 return h('div', [
-                  h('p', [
-                    '下载地址：',
-                    h(
-                      'a',
-                      {
-                        attrs: {
-                          href: location.origin + res['url'],
-                          download: res.name + '.txt'
-                        }
-                      },
-                      res.name
-                    )
-                  ]),
+                  // h('p', [
+                  //   '下载地址：',
+                  //   h(
+                  //     'a',
+                  //     {
+                  //       attrs: {
+                  //         href: location.origin + res['url'],
+                  //         download: res.name + '.txt'
+                  //       }
+                  //     },
+                  //     res.name
+                  //   )
+                  // ]),
                   h('p', '开始时间：' + res.startTime || ''),
                   h('p', '结束时间：' + res.endTime || ''),
                   h('p', '耗时(s)：' + res.timeConsuming || ''),

@@ -948,7 +948,7 @@ async function dealNovel (resObj, name) {
           let title = '';
           temp.replace(/^(.+?) ./, $1 => {
             title = $1;
-          });
+          });// 为了得到 第一百三十七章 轮回过来 =>第一百三十七章 轮 的正则
           let regTile = new RegExp(title);
           let isHas = await NovelModel.findOne({name: name, isVip: 1, title: regTile, $where: 'this.content.length<1'})
             .count()
@@ -1105,6 +1105,9 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
   let checkHasHttp = /^http+/.test(url)// 有些网站会将标题的url就是直接的单章url
   let theUrl = ''// 真实要去爬取的url
   if (checkHasHttp) { theUrl = url } else { theUrl = checkHasLine ? 'http://' + host + url : catalogUrl + url; }
+  logger.warn('单章theUrl:' + theUrl)
+  logger.warn('单章href:' + url)
+  logger.warn('单章catalogUrl:' + catalogUrl)
   logger.warn(len + 'title:' + title)
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
@@ -1113,7 +1116,6 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
       clearTimeout(rejectTime);
     }, 30000);
     let superAgentChart = charset ? superAgent : superAgentTo;
-    logger.warn('单章theUrl:' + theUrl)
     superAgentChart.get(theUrl)
       .set(htmlHeader[1])
       .charset(isChartSet)
@@ -1325,8 +1327,8 @@ const _novel = {
    * @waring 此处是单章写入到webSocket传递
    * */
   customizedNovel: async (req, res) => {
-    let name = req.body.keyword;
-    let url = req.body.url
+    let name = (req.body.keyword || '').trim();
+    let url = (req.body.url || '').trim()
     let startTime = format(new Date(), 'YYYY-MM-DD HH:mm:ss')
     if (!name || !url) {
       await _dbError(res, '请输入要下载的小说名或者目标url');
@@ -1338,7 +1340,8 @@ const _novel = {
     await customerCatalogs(url, name, decodeType.status, htmlHeader[loopHeader])
       .then(catalogs => {
         return new Promise((resolve, reject) => {
-          let _index = 0
+          let _index = 0// 全部的索引
+          let failIndex = 0// 失败的索引
           catalogs.forEach(async (i, index) => {
             await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
               .then(async single => {
@@ -1348,11 +1351,13 @@ const _novel = {
                 await _io('download', {index: index, errorCode: 0, data: [i]})
               })
               .catch(singleErr => {
+                // todo 失败的个数
                 console.info(singleErr);
+                failIndex++
               })
             _index++
             if (_index === catalogs.length) {
-              resolve({_index: _index, count: catalogs.length})
+              resolve({_index: _index, count: catalogs.length, _failIndex: failIndex})
             }
           })
         })
@@ -1361,13 +1366,12 @@ const _novel = {
         let ob = {
           msg: '《' + name + '》,任务完成!',
           bookName: name,
-          data: obj.data,
           startTime: startTime,
+          failCount: obj._failIndex,
           count: obj.count,
           eventType: 'done' // 事件类型，latest最新
         };
-        await downloadCustomer(obj) // 如果不存储数据库的话，websocket，每次都会发送一个章节
-        await resNotifyClient(res, ob)
+        await downloadCustomer(res, ob) // 如果不存储数据库的话，websocket，每次都会发送一个章节
       })
       .catch(err => {
         console.info(err.status);
@@ -1448,12 +1452,28 @@ const _novel = {
 /**
  * @desc 定制化下载小说，数据只会保存在内存里面，一次用完，数据就会清空
  * */
-async function downloadCustomer (obj) {
-  logger.warn('************ 定制化开始下载 **************')
+async function downloadCustomer (res, obj) {
+  logger.warn(obj)
+  logger.warn('++++ 最后：定制化小说爬取完成，总章节' + obj.count + '---------');
+  const ob = {
+    msg: obj.msg || '《' + obj.bookName + '》,已下载完成!',
+    name: obj.bookName,
+    startTime: obj.startTime || '',
+    timeConsuming:
+      (new Date().valueOf() - new Date(obj.startTime).valueOf()) / 1000,
+    endTime: format(new Date(), 'YYYY-MM-DD HH:mm:ss'),
+    count: obj.count,
+    failCount: obj.failCount, // 失败的计数，由catch出来的索引计数
+    eventType: obj.eventType || '',
+    errorCode: 0
+  };
+  // 成功执行任务之后，清空任务栈
+  processTask = [];
+  await res.json(ob)
 }
 async function resNotifyClient (res, obj) {
   logger.warn(obj)
-  logger.warn('++++ 最后：小说爬取完成，总章节' + obj.count + '---------');
+  logger.warn('++++ 最后：默认小说爬取完成，总章节' + obj.count + '---------');
   // 失败的计数，查询vip 且 内容为空的数目
   let failCount = await NovelModel.find({name: obj.bookName, $where: 'this.content.length<1', isVip: 1}).count();
   const ob = {
