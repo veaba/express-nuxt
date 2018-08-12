@@ -53,6 +53,10 @@ module.exports = {
       }
     }
   },
+  // dev 属性的值会被 nuxt 命令 覆盖 https://zh.nuxtjs.org/api/configuration-dev#dev-%E5%B1%9E%E6%80%A7%E9%85%8D%E7%BD%AE
+  // 当使用 nuxt 命令时，dev 会被强制设置成 true
+  // 当使用 nuxt build， nuxt start 或 nuxt generate 命令时，dev 会被强制设置成 false
+  dev: (process.env.NODE_ENV !== 'production'),
   env: {
     baseUrl: process.env.BASE_URL || 'http://localhost:4000',
     HOST: '0.0.0.0',

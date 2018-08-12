@@ -1,41 +1,124 @@
 <template>
     <article>
-        <section class="section">
-            <img src="~assets/img/logo.png" alt="Nuxt.js Logo" class="logo"/>
-            <h1 class="title">
-                USERS
-            </h1>
-            <section class="banner"></section>
-            <section class="section-item">
-                <div class="item3x">
-                    <div class="item3x-content">1 item</div>
-                    <div class="item3x-footer">I am a item * 3 title</div>
-                </div>
-                <div class="item3x">
-                    <div class="item3x-content">2 item</div>
-                    <div class="item3x-footer">I am a item * 3 title</div>
-                </div>
-                <div class="item3x">
-                    <div class="item3x-content">3 item</div>
-                    <div class="item3x-footer">I am a item * 3 title</div>
-                </div>
-            </section>
-        </section>
+      <canvas id="homeCanvas" :width="width" :height="height" style="border: 1px solid red;"></canvas>
+        <!--<section class="section">-->
+            <!--<img src="~assets/img/logo.png" alt="Nuxt.js Logo" class="logo"/>-->
+            <!--<h1 class="title">-->
+                <!--USERS-->
+            <!--</h1>-->
+            <!--<section class="banner"></section>-->
+            <!--<section class="section-item">-->
+                <!--<div class="item3x">-->
+                    <!--<div class="item3x-content">1 item</div>-->
+                    <!--<div class="item3x-footer">I am a item * 3 title</div>-->
+                <!--</div>-->
+                <!--<div class="item3x">-->
+                    <!--<div class="item3x-content">2 item</div>-->
+                    <!--<div class="item3x-footer">I am a item * 3 title</div>-->
+                <!--</div>-->
+                <!--<div class="item3x">-->
+                    <!--<div class="item3x-content">3 item</div>-->
+                    <!--<div class="item3x-footer">I am a item * 3 title</div>-->
+                <!--</div>-->
+            <!--</section>-->
+        <!--</section>-->
     </article>
 </template>
 
 <script>
+  const RADIUS = 120; // 圆的半径
+  const ANGLE = 30; // 旋转的角度
+  // const WIDTH = 600; // 宽度
+  // const HEIGHT = 400; // 高度
+  // const DOT_X = 200; // 圆点X轴
+  // const DOT_Y = 300; // 圆点Y轴
+  const GIRTH = 2 * Math.PI * RADIUS; // 半径60的周长
   export default {
+    name: 'Home',
     data () {
-      return {}
+      return {
+        height: 400,
+        width: 600
+      }
     },
     /* asyncData (context) {
       console.info(context.env)
       return { project: 'nuxt' }
     }, */
     mounted () {
+      this.Init()
+      this.height = window.innerHeight || 0;
+      this.width = window.innerWidth || 0;
     },
-    methods: {}
+    methods: {
+      /**
+       * @desc 求sin α
+       * */
+      sinAngle (angle) {
+        return Math.round(Math.sin(angle * Math.PI / 180) * 1000000) / 1000000;
+      },
+      /**
+       * @desc 求cos α
+       * */
+      cosAngle (angle) {
+        return Math.round(Math.cos(angle * Math.PI / 180) * 1000000) / 1000000;
+      },
+      /**
+       * @des Init 初始化函数
+       * */
+      Init () {
+        window.requestAnimationFrame(this.draw)
+      },
+      /**
+       * @desc 绘制函数
+       * */
+      draw () {
+        const canvas = document.getElementById('homeCanvas')// 获取位置的id
+        const ctx = canvas.getContext('2d')// 获取canvas的上下文对象
+        const time = new Date()
+        ctx.globalCompositeOperation = 'destination-over';// todo 忘记做什么了
+        // 第一步 清空画布
+        ctx.clearRect(0, 0, this.width, this.height)
+
+        // 秒钟
+        ctx.save()
+        ctx.translate(this.width / 2, this.height / 2)// (200,300)(DOT_X, DOT_Y)
+        ctx.fillStyle = 'red'
+        ctx.rotate(time.getSeconds() * -30 * Math.PI / 180)
+        ctx.fillRect(0, 0, 1, RADIUS)
+        ctx.restore()
+
+        // 绘制最长的线
+        this.animation(ctx, 0, RADIUS, 'blue', 12)
+        this.animation(ctx, ANGLE, RADIUS, 'red', 11)
+        this.animation(ctx, 2 * ANGLE, RADIUS, 'green', 10)
+        this.animation(ctx, 3 * ANGLE, RADIUS, 'blue', 9)
+        this.animation(ctx, 4 * ANGLE, RADIUS, 'blue', 8)
+        this.animation(ctx, 5 * ANGLE, RADIUS, 'blue', 7)
+        this.animation(ctx, 6 * ANGLE, RADIUS, 'blue', 6)
+        this.animation(ctx, 7 * ANGLE, RADIUS, 'blue', 5)
+        this.animation(ctx, 8 * ANGLE, RADIUS, 'blue', 4)
+        this.animation(ctx, 9 * ANGLE, RADIUS, 'blue', 3)
+        this.animation(ctx, 10 * ANGLE, RADIUS, 'blue', 2)
+        this.animation(ctx, 11 * ANGLE, RADIUS, 'blue', 1)
+        ctx.beginPath(); // beginPath() 丢弃任何当前定义的路径并且开始一条新的路径。它把当前的点设置为 (0,0)。
+        window.requestAnimationFrame(this.draw);
+      },
+      /**
+       * @desc animation
+       * */
+      animation (ctx, angle, radius, color, percent) {
+        ctx.save()
+        ctx.strokeStyle = color
+        const sinAngle = this.sinAngle(angle)
+        const cosAngle = this.cosAngle(angle)
+        console.info(angle * 30);
+        ctx.moveTo(this.width / 2 + sinAngle * radius, this.height / 2 + cosAngle * radius)
+        ctx.lineTo((this.width / 2 + sinAngle * radius) + cosAngle * percent / 12 * GIRTH, (this.height / 2 + cosAngle * RADIUS) - sinAngle * percent / 12 * GIRTH)
+        ctx.stroke()
+        ctx.restore()
+      }
+    }
   }
 </script>
 
