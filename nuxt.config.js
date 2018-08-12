@@ -2,7 +2,14 @@
  * @desc nuxt 配置文件
  * @Port 端口配置 env.PORT
  * */
+// 1 部署部分，由于https://veaba.github.io/express-nuxt/ 为此需要一个基础的路径
+const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? {
+  router: {
+    base: '/express-nuxt/'
+  }
+} : {}
 module.exports = {
+  ...routerBase,
   /*
   ** Headers of the page
   */
