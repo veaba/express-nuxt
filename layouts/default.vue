@@ -2,7 +2,7 @@
 @desc view 前台布局模式
 -->
 <template>
-    <div class="main">
+    <div class="main" >
         <!--头部文件-->
         <Header-com></Header-com>
         <!--nuxt 主体内容-->
@@ -15,10 +15,19 @@
 <script>
   import HeaderCom from '~/components/common/Header.vue'
   import FooterCom from '~/components/common/Footer.vue'
-
   export default {
+    name: 'default',
     components: {
       HeaderCom, FooterCom
+    },
+    data () {
+      return {
+
+      }
+    },
+    methods: {
+    },
+    mounted () {
     }
   }
 </script>
@@ -27,7 +36,6 @@
     .container {
         margin: 0;
         width: 100%;
-        /*background: #f7f7f7;*/
     }
     .button, .button:visited {
         display: inline-block;

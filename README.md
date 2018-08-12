@@ -111,8 +111,57 @@
 ## 后端
 ### 翻页接口函数
 ### mongodb 语法
-	db.getCollection('articles').find({}).limit(10).skip(10) // 假如有20条，则从第10开始，截取10条结果返回
-	db.getCollection('articles').find({}).limit(10) // 从1 到10条截取
+
+- query
+```js
+// 100章所消时间 - 132.5s 
+// 50章所消时间 - 114s
+// 30章所消时间 - 144s
+// 20章所消时间-95.942s
+// 10章所消时间-94.01s
+// 5章所消时间-226.184s
+
+db.getCollection('articles').find({}).limit(10).skip(10) // 假如有20条，则从第10开始，截取10条结果返回
+db.getCollection('articles').find({}).limit(10) // 从1 到10条截取
+```
+
+- 聚合查询
+
+```js
+db.getCollection('articles').aggregate([
+	{
+		$match:{
+			length:{
+				$gt:5000
+			}
+		}
+	},
+	{
+		$sort:{
+			uuid:1
+		}
+	},
+	{
+		$limit:50
+	}
+]) // 查询长度大于5000的，数字长度的集合
+
+db.getCollection('novels').aggregate([{
+    $project: {
+        content: {
+            $substr: ["$content", 0, 10]
+        }
+    }
+}])
+//查到某一列，并生成新列名，并字符串分割,如果使用 substr 会报一个解析的错误
+```
+
+- 额外的查询
+
+```js
+db.getCollection('novels').distinct("name") //查询 name 字段多少个值，通过这个，可以查询数据库存储多少本小说
+
+```
 ### 文章
 	- 文章预览（标题、时间、）
 	- 
@@ -303,3 +352,6 @@ mavon-editor
 
 	less  
 	less-loader
+##　开发笔记
+### 如何处理未知的章节页面具体的小说内容所在的id？
+- 因为风格原因，有些命名#content 、有些BookText,没办法知道内容所在的id名称为此，只能这样计算

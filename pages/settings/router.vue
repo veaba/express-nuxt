@@ -118,6 +118,7 @@
           name: this.search_router
         }})
           .then(res => {
+            console.info(res)
             if (res.errorCode === 0) {
               this.routerData = res.data
             } else {

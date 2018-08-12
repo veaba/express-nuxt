@@ -19,7 +19,7 @@ const port = process.env.PORT || 4000
 // 创建socket服务
 const server = app.listen(port + 1)
 const io = require('socket.io')(server)
-// body parser 封装req.bdoy
+// body parser 封装req.body
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 app.set('port', port)
@@ -46,7 +46,7 @@ io.sockets.emit('isConnectSocketStatus', {msg: 'WebSocket is connected!'})
  * @param data 消息 {Object}
  * */
 async function _io (name, data) {
-  logger.warn('小说下载完成，通知客户端!')
+  // logger.warn('小说下载完成，通知客户端!', name)
   return io.sockets.emit(name, data)
 }
 /***************************************************

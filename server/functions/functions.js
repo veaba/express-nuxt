@@ -1,3 +1,4 @@
+/* eslint-disable handle-callback-err */
 /***********************
  * @name JS
  * @author Jo.gel
@@ -61,7 +62,7 @@ async function _flipPage (res, data, errorCode, msg, {totals, pages, pageCurrent
     msg: msg || '操作成功',
     totals: totals,
     pages: pages,
-    pageCurrent: pageCurrent
+    pageCurrent: Number(pageCurrent)
   })
 }
 
@@ -98,4 +99,15 @@ async function _webSocket (socket) {
   console.info('novel 向前端通信')
   logger.warn('\n~~~~Websocket已连接~~~~\n')
 }
-export {_isAuth, _dbError, _dbSuccess, _flipPage, _encryptedPWD, _queryRouter, _webSocket}
+/**
+ * @desc 下载小说函数，返回结果
+ * */
+async function _download (res, msg, data, errorCode) {
+  console.time('发送到前端消耗时间:')
+  res.set('Content-Type', 'text/plain');
+  // 由于中文空格的关系，导致报了一个不规格的空格的警告
+  res.send(data.replace(/　　|    /g, '\n\n　　'))
+  console.timeEnd('发送到前端消耗时间:')
+  console.timeEnd('下载时间耗时:');
+}
+export {_isAuth, _dbError, _dbSuccess, _flipPage, _encryptedPWD, _queryRouter, _webSocket, _download}

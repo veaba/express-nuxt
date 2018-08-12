@@ -11,7 +11,7 @@ import { format } from 'date-fns' // 时间格式工具
 const logger = require('tracer').console() // console追踪库
 const _article = {
   /**
-   * @desc 拉去文章列表函数，正文内容，两百字
+   * @desc 拉取文章列表函数，正文内容，两百字
    * @desc page 与 skip的关系 1->0、2->10、3->20 page*10-10
    * @TODO 增加模糊查询
    * */
@@ -21,7 +21,7 @@ const _article = {
     let data = req.query.name ? ({name: req.query.title}) : {}
     let page = req.query.page ? req.query.page : 1
     let finArticleAll = await ArticleModel.find(data).count()// 总长度 sort() -1，倒叙,1默认升序
-    let articleArr = await ArticleModel.find(data).limit(10).skip(page * 10 - 10).sort({_id: -1}).exec()
+    let articleArr = await ArticleModel.find(data).limit(10).limit(10).skip(page * 10 - 10).sort({_id: -1}).exec()
     let findArticle = []
     for (let item of articleArr) {
       item.post_content = item.post_content.slice(0, 200)

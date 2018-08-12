@@ -3,9 +3,6 @@
  *@author Jo.gel
  *@date 2017/11/26
  -------------------------->
-<style lang="scss">
-
-</style>
 <template>
     <nuxt-child/>
 </template>
@@ -13,7 +10,7 @@
   /* eslint-disable quotes */
 
   export default {
-    name: 'settings',
+    name: 'settingsImport',
     layout: 'console',
     components: {},
     data () {
