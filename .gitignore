@@ -9,11 +9,10 @@ npm-debug.log
 .nuxt
 
 # Nuxt generate
-dist
+#dist
 
 # Backpack build
 build
 .idea/
-static/img/
 /server/config.js
 .vscode/
