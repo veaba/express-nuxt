@@ -3,16 +3,14 @@
  * @Port 端口配置 env.PORT
  * */
 // 1 部署部分，由于https://veaba.github.io/express-nuxt/ 为此需要一个基础的路径
-const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? {
-  router: {
-    base: '/express-nuxt/'
-  }
-} : {}
+// 无法解构
+const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? '/express-nuxt/' : ''
+console.info(routerBase);
 module.exports = {
-  ...routerBase,
-  /*
-  ** Headers of the page
-  */
+  // ...routerBase,
+  router: {
+    base: routerBase
+  },
   head: {
     title: 'beike.io',
     meta: [
@@ -70,11 +68,8 @@ module.exports = {
     PORT: '4000'
   },
   // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件
-  plugins: ['~plugins/axios', '~plugins/highlight-plugins', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
+  plugins: ['~plugins/axios', '~plugins/highlight-plugins', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}]
   // src: '~plugins/socket', ssr: false}
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件
-  router: {
-    // middleware: ['auth'] //鉴权
-  }
 }
