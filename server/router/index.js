@@ -28,7 +28,12 @@ let options = {
   pass: 'admin'
 }
 
-mongoose.connect(config.base + ':' + config.port + '/' + config.database, options) // 连接
+mongoose.connect(config.base + ':' + config.port + '/' + config.database, options, err => {
+  if (err) {
+    logger.warn('mongodb 数据库链接失败，请检查')
+    logger.warn(err.message)
+  }
+}) // 连接
 /**********************************
  * @desc 数据库链接初始化，管理员
  * @define  项目启动->找管理员用户->如果没有->查找失败->并开始初始化信息

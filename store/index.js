@@ -119,18 +119,12 @@ const store = () => new Vuex.Store({
       // console.info(req.session)
       // 1未授权之前处理referer的路由跳转
       // let referer = req.session.referer
-      console.error('未授权之前处理referer的路由跳转 store' + req.session.routerLock)
-      if (req.session.routerLock) {
+      console.error('未授权之前处理referer的路由跳转 store' + req.session)
+      if (req.session && req.session.routerLock) {
         commit('ROUTER_LOCK', true)
       } else {
         commit('ROUTER_LOCK', false)
       }
-      // todo
-      // if (referer && referer !== '/login') {
-      //   commit('REFERER', referer)
-      // } else {
-      //   commit('REFERER', '/')
-      // }
     }
   },
   /**

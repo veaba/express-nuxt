@@ -6,8 +6,10 @@
 // 无法解构
 const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? '/express-nuxt/' : ''
 console.info(routerBase);
+console.info('*************');
+// console.info(process.env.NODE_ENV);
+console.info('^^^^^^^^^^^^^');
 module.exports = {
-  // ...routerBase,
   router: {
     base: routerBase
   },

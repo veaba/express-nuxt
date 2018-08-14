@@ -8,9 +8,6 @@
  -------------------------->
 <template>
     <section class="container">
-        <div class="send-socket">
-            <Button type="ghost" @click="sendSome">发送一段文字</Button>
-        </div>
         <!--Input-->
         <div class="novel">
             <div class="input-body">
@@ -72,6 +69,8 @@
 /* eslint-disable handle-callback-err */
 // todo 下载任务完成后，会通过webSocket通知客户端。
 import nuxtConfig from './../nuxt.config'
+
+console.info(nuxtConfig);
 export default {
   name: 'novel',
   components: {},
@@ -464,9 +463,9 @@ export default {
       }, 1000)
     },
     // 发送消息 client -> server
-    sendSome () {
-      this.$socket.emit('receive', { params: '客户端发给你的一段消息' })
-    },
+    // sendSome () {
+    //   this.$socket.emit('receive', { params: '客户端发给你的一段消息' })
+    // },
     /**
      * @desc 手动清空任务栈
      * */
