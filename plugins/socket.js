@@ -8,7 +8,9 @@
  ***********************/
 import Vue from 'vue'
 import io from 'socket.io-client'
-const socket = io('http://' + '127.0.0.1' + ':' + (process.env.PORT * 1.0 + 1))
+import config from '../nuxt.config'
+console.info(config.dev);
+const socket = io('http://' + '127.0.0.1' + ':' + (444))
 Vue.use(socket)
 Vue.prototype.$socket = socket
 export default socket

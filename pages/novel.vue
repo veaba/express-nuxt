@@ -5,72 +5,48 @@
  *@desc 网络小说下载
  *@desc todo 严重，自定义下载，会污染全局。
  *@desc todo 区分dev 和生产环境下的的异同，然后给出不同的功能。
+ *@desc todo 移动端iphone/ipad 无法支持blob 对象、download，导致无法下载文件
  -------------------------->
 <template>
     <section class="container">
         <!--Input-->
         <div class="novel">
+          <!--progress-->
             <div class="input-body">
-                <i-input v-model="keyword" size="large" icon="search" placeholder="查找的小说">
-                  <Select v-model="selectType" slot="append" style="width: 70px">
-                    <Option value="default">默认</Option>
-                    <Option value="customer">自定义</Option>
+              <Progress :percent="percent" :status="progressStatus"></Progress>
+              <i-input v-model="keyword" size="large" icon="search" placeholder="查找的小说">
+                  <Select v-model="selectType" disabled slot="append" style="width: 70px">
+                    <!--<Option value="default">默认</Option>-->
+                    <Option value="customer" >自定义</Option>
                   </Select>
                 </i-input>
               <!--todo 暂时未开发，后续开发一个对目录直接撸的，不走起点-->
               <Input v-if="selectType==='customer'" v-model="customerUrl" size="large" icon="network" placeholder="请输入小说的目录URL" style="margin-top: 20px;"></Input>
             </div>
-            <Button style="margin-top: 20px;" @click="getNovel" type="primary" long>更新小说内容</Button>
-          <ButtonGroup style="margin-top: 20px;">
-            <Button @click="onClearNovel" type="ghost" size="small">
-              <Icon type="trash-a"></Icon>
-              手动清空任务栈</Button>
-            <Button @click="changeFlipPage" type="ghost" size="small">
-              <Icon type="search"></Icon>
-              查询该小说</Button>
-            <Button @click="novelTesting" type="ghost" size="small">
-              <Icon type="information-circled"></Icon>
-              临时测试</Button>
-            <Button @click="downloadNotify" :disabled="disabledDownload" type="ghost" size="small" style="border: 1px solid #2d8cf0;padding: 2px 7px">
-              <Icon type="play"></Icon>
-              下载小说
-            </Button>
-            <!--定制化-->
-            <Button v-show="isDoneWebSocketCustomer" type="ghost" size="small">
-              <Icon type="ios-cloud-download"></Icon>
-              <span class="download" style="margin-left: 5px;"></span>
-            </Button>
-          </ButtonGroup>
-          <Row style="margin-top: 20px;">
-          	<i-col span="6">
-              <Select v-model="pageData.isVip">
-                <Option :value="1">vip</Option>
-                <Option :value="0">普通</Option>
-              </Select>
-          	</i-col>
-            <i-col span="6">
-              <Select v-model="pageData.hasContent">
-                <Option :value="1">成功的章节</Option>
-                <Option :value="0">失败的章节</Option>
-              </Select>
-            </i-col>
-          </Row>
+            <Button style="margin-top: 20px;" @click="getNovel" type="primary" long>执行任务</Button>
+          <!--定制化-->
+          <Button style="margin-top: 10px;" v-show="isDoneWebSocketCustomer||customerStatus" type="ghost" long>
+            <Icon type="ios-cloud-download"></Icon>
+            <span class="download" style="margin-left: 5px;"></span>
+          </Button>
+
+          <div class="btn-group">
+            <ButtonGroup style="margin-top: 20px;">
+              <Button @click="onClearNovel" type="ghost">
+                <Icon type="trash-a"></Icon>
+                手动清空任务栈</Button>
+              <Button v-if="isDev" @click="novelTesting" type="ghost">
+                <Icon type="information-circled"></Icon>
+                临时测试</Button>
+            </ButtonGroup>
+          </div>
         </div>
-        <!--progress-->
-        <Progress :percent="percent" :status="progressStatus"></Progress>
-        <!--table-->
-        <Table :loading="loading" :data="novelTable" :columns="novelColumns"></Table>
-        <Row class="pageBox" type="flex" justify="end">
-            <Page :total="pageData.totals" :current.sync="pageData.page" show-total on-change @on-change="changeFlipPage"></Page>
-        </Row>
     </section>
 </template>
 <script>
 /* eslint-disable handle-callback-err */
 // todo 下载任务完成后，会通过webSocket通知客户端。
-import nuxtConfig from './../nuxt.config'
-
-console.info(nuxtConfig);
+import nuXtConfig from './../nuxt.config'
 export default {
   name: 'novel',
   components: {},
@@ -79,12 +55,8 @@ export default {
       keyword: '茅山鬼谷门',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
-      // https://www.booktxt.net/3_3326/ 人皇
-      // https://www.booktxt.net/0_362/ 永夜君主
-      // http://www.shuge.net/html/2/2779/ 官榜
-      // https://www.biduo.cc/biquge/44_44762/ 茅山鬼谷门
-      // https://www.biduo.cc/biquge/42_42740/ 助鬼为乐系统
       customerUrl: 'https://www.biduo.cc/biquge/44_44762/ ', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      customerStatus: false,
       progressStatus: 'active',
       percent: 0, // 进度条
       newNovelDownload: false, // 新小说下载状态，用于冲掉notify
@@ -99,70 +71,7 @@ export default {
         isVip: '', // 1 vip 0 普通
         hasContent: '' // 有内容
       },
-      novelColumns: [
-        {
-          title: '序号',
-          type: 'index',
-          sortable: true,
-          width: 80
-        },
-        {
-          title: 'uuid',
-          key: 'uuid',
-          sortable: true,
-          width: 80
-        },
-        {
-          title: '是否抓取成功',
-          key: 'hasContent',
-          width: 110,
-          render: (h, params) => {
-            return h('span', params.row.hasContent ? '成功' : '失败')
-          }
-        },
-        {
-          title: '类型',
-          key: 'isVip',
-          width: 80,
-          render: (h, params) => {
-            return h('span', params.row.isVip ? 'vip' : '普通')
-          }
-        },
-        {
-          title: '小说',
-          width: 120,
-          key: 'name'
-        },
-        {
-          title: '章节名称',
-          width: 200,
-          key: 'title'
-        },
-        {
-          title: '字数',
-          key: 'length',
-          width: 100,
-          sortable: true
-        },
-        {
-          title: '是否超时',
-          width: 100,
-          sortable: true,
-          render: (h, params) => {
-            return h('span', params.row.timeout ? '是' : '-')
-          }
-        },
-        {
-          title: '内容预览',
-          minWidth: 480,
-          ellipsis: true,
-          key: 'preview',
-          render: (h, params) => {
-            return h('span', params.row.preview.trim())
-          }
-        }
-      ],
-      isDev: nuxtConfig.dev // 判断是否是开发环境下
+      isDev: nuXtConfig.dev // 判断是否是开发环境下
     }
   },
   computed: {
@@ -191,14 +100,13 @@ export default {
       })
       let data = ''
       for (let item of arr) {
-        data = data + '    ' + item.title + this.formatNovelData(item.content) + '\n\n'
+        data = data + item.title + this.formatNovelData(item.content) + '\n\n'
       }
       return data
     }
   },
   mounted () {
     this.webSocketReceive() // 接收socket 的消息
-    this.changeFlipPage() // 获取列表
   },
   updated () {
   },
@@ -354,45 +262,9 @@ export default {
      * */
     downloadNotify () {
       if (this.selectType === 'default') {
-        this.downloadDefault()
       } else {
         this.downloadCustomer()
       }
-    },
-    /**
-     * @desc download-default，每20条写入
-     * */
-    downloadDefault () {
-      this.webSocketCount = 0
-      this.webSocketCountData = []
-      this.novelData = []// 清空小说数据
-      this.disabledDownload = true
-      this.$ajax.get('/api/novel/download?keyword=' + this.keyword)
-        .then(res => {
-          console.info(res);
-          this.disabledDownload = false
-          this.downloadBook()
-          this.webSocketCount = res.count
-          console.info('count:' + res.count);
-          console.info('failCount:' + res.failCount);
-          this.$Notice.success({
-            duration: 0,
-            title: res.msg || '',
-            render: h => {
-              return h('div', [
-                h('p', '开始时间：' + res.startTime || ''),
-                h('p', '结束时间：' + res.endTime || ''),
-                h('p', '耗时(s)：' + res.timeConsuming || ''),
-                h('p', '总章节：' + res.count || ''),
-                h('p', '成功章节：' + Number(res.count - res.failCount)),
-                h('p', '失败章节：' + res.failCount || '')
-              ])
-            }
-          })
-        })
-        .catch(err => {
-          console.info(err);
-        })
     },
     downloadCustomer () {
       this.customerNovel()
@@ -401,42 +273,12 @@ export default {
      * @desc 临时测试
      * */
     novelTesting () {
-      console.info(11)
       this.$ajax.get('/api/novel/novelTesting')
         .then(res => {
           console.info(res)
         })
         .catch(err => {
           console.info(err)
-        })
-    },
-    /**
-     * @desc 翻页
-     * */
-    changeFlipPage () {
-      this.loading = true
-      this.$ajax
-        .get('/api/novel/getNovelList', {
-          params: {
-            keyword: this.keyword,
-            page: this.pageData.page,
-            isVip: this.pageData.isVip,
-            hasContent: this.pageData.hasContent // '' 全部 1-有内容 0-没内容
-          }
-        })
-        .then(res => {
-          this.loading = false
-          if (res.errorCode === 0) {
-            this.novelTable = res.data || []
-            this.pageData.totals = res.totals || 1
-          } else {
-            this.novelTable = []
-          }
-        })
-        .catch(err => {
-          console.info(err)
-          this.loading = false
-          this.pageData.totals = err.totals || 1
         })
     },
     /**
@@ -505,47 +347,10 @@ export default {
       this.$Notice.close('novelNotify') // 移除通知卡
       if (this.selectType === 'default') {
         // 起点爬取部分
-        this.qiQianNovel()
       } else {
         // 自定义爬取部分
         this.customerNovel()
       }
-    },
-    /**
-     * @desc 起点爬取部分
-     * */
-    qiQianNovel () {
-      this.loading = true
-      this.$ajax.get('/api/novel/getNovel', {
-        params: {
-          keyword: this.keyword.trim()
-        }
-      })
-        .then(res => {
-          console.info(res)
-          this.loading = false
-          this.novelTable = []
-          if (res.errorCode === 0) {
-            // 开始执行进度条
-            this.setProgress() // 设置进度条
-            this.$Notice.success({
-              title: res.data.start + '开始处理',
-              desc: res.msg
-            })
-          } else {
-            // 已有任务，警告
-            this.$Notice.warning({
-              title: res.msg || '',
-              desc: res.data || []
-            })
-          }
-        })
-        .catch(err => {
-          this.$Notice.error({
-            title: '无法处理你的请求',
-            desc: err.msg
-          })
-        })
     },
     /**
      * @desc 负责通知而已
@@ -553,6 +358,9 @@ export default {
     customerNovel () {
       this.loading = true
       this.setProgress() // 设置进度条
+      this.novelData = []// 初始化
+      this.webSocketCountData = []// 初始化
+      this.customerStatus = false
       this.$ajax.post('/api/novel/customizedNovel', {
         url: this.customerUrl,
         keyword: this.keyword.trim()
@@ -563,25 +371,13 @@ export default {
           if (res.errorCode === 0) {
             this.webSocketCount = res.count// 总章节
             this.percent = 100
+            this.customerStatus = true
             this.downloadBook()// 生成下载blob
             this.$Notice.success({
               duration: 0,
               title: res.msg || '',
               render: h => {
                 return h('div', [
-                  // h('p', [
-                  //   '下载地址：',
-                  //   h(
-                  //     'a',
-                  //     {
-                  //       attrs: {
-                  //         href: location.origin + res['url'],
-                  //         download: res.name + '.txt'
-                  //       }
-                  //     },
-                  //     res.name
-                  //   )
-                  // ]),
                   h('p', '开始时间：' + res.startTime || ''),
                   h('p', '结束时间：' + res.endTime || ''),
                   h('p', '耗时(s)：' + res.timeConsuming || ''),
@@ -596,6 +392,7 @@ export default {
               }
             })
           } else {
+            this.customerStatus = false
             this.percent = 100
             // 已有任务，警告
             this.$Notice.warning({
@@ -605,6 +402,7 @@ export default {
           }
         })
         .catch(err => {
+          this.customerStatus = false
           this.$Notice.error({
             title: '无法处理你的请求',
             desc: err.msg
@@ -629,6 +427,9 @@ export default {
   margin: 0 auto 100px;
 }
 
+.btn-group{
+  text-align: center;
+}
 @media screen and (max-width: 767px) {
   .novel {
     width: 80%;

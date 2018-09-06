@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars,no-const-assign,no-mixed-spaces-and-tabs */
 /***********************
  * @name JS
+ * @desc back文件，保持备份，现移除写入数据库的功能
  * @author Jo.gel
  * @date 2018/4/20
  * @desc 程序设计：
