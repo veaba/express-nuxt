@@ -28,7 +28,7 @@
     "express": "^4.15.3",
     "express-session": "^1.15.6",
     "highlight.js": "^9.12.0",
-    "iview": "^2.6.0",
+    "iview": "^2.14.3",
     "marked": "^0.3.16",
     "mavon-editor": "^2.4.16",
     "mongoose": "^5.0.6",

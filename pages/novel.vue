@@ -27,27 +27,34 @@
             </div>
             <Button style="margin-top: 20px;" @click="getNovel" :loading="loading" type="primary" long>执行任务</Button>
           <!--定制化-->
-          <Button style="margin-top: 10px;" v-show="isDoneWebSocketCustomer||customerStatus" type="ghost" long>
+            <Button style="margin-top: 10px;" v-show="isDoneWebSocketCustomer||customerStatus" type="ghost" long>
             <Icon type="ios-cloud-download"></Icon>
             <span class="download" style="margin-left: 5px;"></span>
           </Button>
 
-          <div class="btn-group">
-            <ButtonGroup style="margin-top: 20px;">
-              <Button @click="onClearNovel" type="ghost">
-                <Icon type="trash-a"></Icon>
-                手动清空任务栈</Button>
-              <Button v-if="isDev" @click="novelTesting" type="ghost">
-                <Icon type="information-circled"></Icon>
-                临时测试</Button>
-            </ButtonGroup>
+            <div class="btn-group">
+              <ButtonGroup style="margin-top: 20px;">
+                <Button @click="onClearNovel" type="ghost">
+                  <Icon type="trash-a"></Icon>
+                  手动清空任务栈</Button>
+                <Button v-if="isDev" @click="novelTesting" type="ghost">
+                  <Icon type="information-circled"></Icon>
+                  临时测试</Button>
+              </ButtonGroup>
           </div>
+
+            <Card :bordered="false" :dis-hover="true">
+              <p>- 需要输入小说名和网站目录地址成功后，会生成txt文件</p>
+              <p>- 目录过长可能会丢失部分章节</p>
+              <p>- iPhone/iPad等无法下载，请更换PC/Android</p>
+              <p>- 如有问题，请联系<a href="https://weibo.com/Naruzi" target="_blank">@叶箫大人</a></p>
+            </Card>
         </div>
     </section>
 </template>
 <script>
 /* eslint-disable handle-callback-err */
-import nuXtConfig from './../nuxt.config'
+import nuXtConfig from './../nuxt.config';
 export default {
   name: 'novel',
   components: {},
@@ -75,7 +82,7 @@ export default {
         hasContent: '' // 有内容
       },
       isDev: nuXtConfig.dev // 判断是否是开发环境下
-    }
+    };
   },
   computed: {
     /**
@@ -83,13 +90,16 @@ export default {
      * @return true 完成 false 未完成
      * */
     isDoneWebSocketCustomer: function () {
-      let countLength = this.webSocketCountData.length
-      let countCeil = this.webSocketCount
-      if (this.webSocketCount && (countLength + 1 === countCeil || countLength === countCeil)) {
-        this.disabledDownload = false
-        return true
+      let countLength = this.webSocketCountData.length;
+      let countCeil = this.webSocketCount;
+      if (
+        this.webSocketCount &&
+        (countLength + 1 === countCeil || countLength === countCeil)
+      ) {
+        this.disabledDownload = false;
+        return true;
       } else {
-        return false
+        return false;
       }
     },
     /**
@@ -99,35 +109,34 @@ export default {
      * */
     novelCustomerContent: function () {
       let arr = this.novelData.sort((item1, item2) => {
-        return item1.index - item2.index
-      })
-      let data = ''
+        return item1.index - item2.index;
+      });
+      let data = '';
       for (let item of arr) {
-        data = data + item.title + this.formatNovelData(item.content) + '\n\n'
+        data = data + item.title + this.formatNovelData(item.content) + '\n\n';
       }
-      return data
+      return data;
     }
   },
   mounted () {
-    this.webSocketReceive() // 接收socket 的消息
+    this.webSocketReceive(); // 接收socket 的消息
   },
-  updated () {
-  },
+  updated () {},
   methods: {
     // 接收消息 server -> client
     webSocketReceive () {
       this.$socket.on('isConnectSocketStatus', data => {
-        console.info(data)
-      })
+        console.info(data);
+      });
       /**
        * @desc 小说下载完成通知消息
        * */
       this.$socket.on('novel', json => {
         if (json.errorCode === 0) {
-          this.loading = false
+          this.loading = false;
           // 最新的话，进度条完成
           if (json.data.eventType === 'latest') {
-            this.percent = 100
+            this.percent = 100;
           }
           console.info(json);
           // 如果本卡有上一次通知，则在开始后，4.5s关闭本卡
@@ -156,60 +165,59 @@ export default {
                 h('p', '总章节：' + json.data.count || ''),
                 h(
                   'p',
-                  '成功章节：' +
-                  Number(json.data.count - json.data.failCount)
+                  '成功章节：' + Number(json.data.count - json.data.failCount)
                 ),
                 h('p', '失败章节：' + json.data.failCount || '')
-              ])
+              ]);
             }
-          })
-          this.newNovelDownload = true // 标志位，会冲掉上一次小说设置
+          });
+          this.newNovelDownload = true; // 标志位，会冲掉上一次小说设置
         }
-      })
+      });
       /**
        * @desc 小说下载的结果
        * */
       this.$socket.on('novelData', json => {
-        console.info(json)
+        console.info(json);
         if (json.errorCode === 0) {
-          this.novelTable = json.data || []
-          this.pageData.totals = json.totals || 1
-          this.pageData.page = json.pageCurrent || 1
+          this.novelTable = json.data || [];
+          this.pageData.totals = json.totals || 1;
+          this.pageData.page = json.pageCurrent || 1;
         }
-        this.loading = false
-        this.percent = 100
-      })
+        this.loading = false;
+        this.percent = 100;
+      });
 
       /**
        * @desc 大兄弟，任务失败了
        * */
       this.$socket.on('missionFail', json => {
-        console.info(json)
+        console.info(json);
         if (json.errorCode) {
-          this.percent = 100
+          this.percent = 100;
           this.$Notice.warning({
             title: '任务失败',
             desc: json.msg || 'error'
-          })
+          });
         }
-        this.progressStatus = 'wrong'
-      })
+        this.progressStatus = 'wrong';
+      });
       /*
       * @desc 通过多线程的数据库查询，让webSocket 传输数据
       * @todo 不知道webSocket / socket.io 有多少字节的限制
       * */
       this.$socket.on('download', json => {
         if (json.errorCode === 0) {
-          this.webSocketCountData.push(json.index)
-          this.novelData.push(...json.data)
+          this.webSocketCountData.push(json.index);
+          this.novelData.push(...json.data);
         }
-      })
+      });
       /**
        * @desc 下载结果通知
        * */
       this.$socket.on('downloadNotify', json => {
         if (json.errorCode === 0) {
-          this.webSocketCount = json.count
+          this.webSocketCount = json.count;
           this.$Notice.success({
             duration: 0,
             title: json.msg || '',
@@ -221,43 +229,43 @@ export default {
                 h('p', '总章节：' + json.count || ''),
                 h('p', '成功章节：' + Number(json.count - json.failCount)),
                 h('p', '失败章节：' + json.failCount || '')
-              ])
+              ]);
             }
-          })
+          });
         }
-      })
+      });
       /**
        * @desc 接受消息
        * */
       this.$socket.on('receive1', data => {
-        console.info(data)
-      })
+        console.info(data);
+      });
     },
     /**
      * @desc 格式化排版
      * */
     formatNovelData (content) {
       /* eslint no-irregular-whitespace: ["error", { "skipRegExps": true }] */
-      return content.replace(/    /g, '\n\n    ')
+      return content.replace(/    /g, '\n\n    ');
     },
     /**
      * @desc 前端下载小说
      * */
     downloadBook () {
-      let blob = new Blob([this.novelCustomerContent], {type: 'text/plain'})
-      let link = document.createElement('a')
-      link.innerHTML = this.keyword + '.txt'
-      link.href = window.URL.createObjectURL(blob)
-      link.download = this.keyword + '.txt'
+      let blob = new Blob([this.novelCustomerContent], { type: 'text/plain' });
+      let link = document.createElement('a');
+      link.innerHTML = this.keyword + '.txt';
+      link.href = window.URL.createObjectURL(blob);
+      link.download = this.keyword + '.txt';
       this.$nextTick(() => {
-        document.querySelector('.download').innerHTML = ''// 清空上一个遗留
+        document.querySelector('.download').innerHTML = ''; // 清空上一个遗留
         if (document.querySelector('.download')) {
           console.info(document.querySelector('.download'));
-          document.querySelector('.download').appendChild(link)
+          document.querySelector('.download').appendChild(link);
         }
-      })
+      });
       console.info(link);
-      return link
+      return link;
     },
     /**
      * @desc1 执行下载任务，20条下载数据库的
@@ -267,46 +275,47 @@ export default {
     downloadNotify () {
       if (this.selectType === 'default') {
       } else {
-        this.downloadCustomer()
+        this.downloadCustomer();
       }
     },
     downloadCustomer () {
-      this.customerNovel()
+      this.customerNovel();
     },
     /**
      * @desc 临时测试
      * */
     novelTesting () {
-      this.$ajax.get('/api/novel/novelTesting')
+      this.$ajax
+        .get('/api/novel/novelTesting')
         .then(res => {
-          console.info(res)
+          console.info(res);
         })
         .catch(err => {
-          console.info(err)
-        })
+          console.info(err);
+        });
     },
     /**
      * @desc setProgress
      * */
     setProgress () {
-      this.percent = 0
+      this.percent = 0;
       let setTime = setInterval(() => {
         // 进行中的话，++，但最大99
         if (this.percent < 99) {
-          this.percent++
+          this.percent++;
         }
         // 回来的话，设置为100，并清空定时器
         if (this.percent > 98 && this.percent < 100) {
-          this.percent = 99
-          clearInterval(setTime)
-          return false
+          this.percent = 99;
+          clearInterval(setTime);
+          return false;
         }
         if (this.percent === 100) {
-          clearInterval(setTime)
-          return false
+          clearInterval(setTime);
+          return false;
         }
-        console.log(this.percent)
-      }, 1000)
+        console.log(this.percent);
+      }, 1000);
     },
     // 发送消息 client -> server
     // sendSome () {
@@ -323,60 +332,61 @@ export default {
             this.$Notice.success({
               title: '任务成功',
               desc: res.msg || 'success'
-            })
+            });
           } else {
-            this.progressStatus = 'wrong'
+            this.progressStatus = 'wrong';
             this.$Notice.warning({
               title: '任务失败',
               desc: res.msg || 'error'
-            })
+            });
           }
         })
         .catch(err => {
-          console.info(err)
-        })
+          console.info(err);
+        });
     },
     /**
      * @desc 获取小说
      * */
     getNovel () {
       if (!this.keyword) {
-        this.$Message.error('尚未输入小说名')
-        return false
+        this.$Message.error('尚未输入小说名');
+        return false;
       }
       if (this.selectType === 'customer' && !this.customerUrl) {
-        this.$Message.error('请输入爬取目标小说目录所在的url')
-        return false
+        this.$Message.error('请输入爬取目标小说目录所在的url');
+        return false;
       }
-      this.$Notice.close('novelNotify') // 移除通知卡
+      this.$Notice.close('novelNotify'); // 移除通知卡
       if (this.selectType === 'default') {
         // 起点爬取部分
       } else {
         // 自定义爬取部分
-        this.customerNovel()
+        this.customerNovel();
       }
     },
     /**
      * @desc 负责通知而已
      * */
     customerNovel () {
-      this.loading = true
-      this.setProgress() // 设置进度条
-      this.novelData = []// 初始化
-      this.webSocketCountData = []// 初始化
-      this.customerStatus = false
-      this.$ajax.post('/api/novel/customizedNovel', {
-        url: this.customerUrl,
-        keyword: this.keyword.trim()
-      })
+      this.loading = true;
+      this.setProgress(); // 设置进度条
+      this.novelData = []; // 初始化
+      this.webSocketCountData = []; // 初始化
+      this.customerStatus = false;
+      this.$ajax
+        .post('/api/novel/customizedNovel', {
+          url: this.customerUrl,
+          keyword: this.keyword.trim()
+        })
         .then(res => {
-          console.info(res)
-          this.loading = false
+          console.info(res);
+          this.loading = false;
           if (res.errorCode === 0) {
-            this.webSocketCount = res.count// 总章节
-            this.percent = 100
-            this.customerStatus = true
-            this.downloadBook()// 生成下载blob
+            this.webSocketCount = res.count; // 总章节
+            this.percent = 100;
+            this.customerStatus = true;
+            this.downloadBook(); // 生成下载blob
             this.$Notice.success({
               duration: 0,
               title: res.msg || '',
@@ -386,37 +396,33 @@ export default {
                   h('p', '结束时间：' + res.endTime || ''),
                   h('p', '耗时(s)：' + res.timeConsuming || ''),
                   h('p', '总章节：' + res.count || ''),
-                  h(
-                    'p',
-                    '成功章节：' +
-                    Number(res.count - res.failCount)
-                  ),
+                  h('p', '成功章节：' + Number(res.count - res.failCount)),
                   h('p', '失败章节：' + res.failCount || '')
-                ])
+                ]);
               }
-            })
+            });
           } else {
-            this.customerStatus = false
-            this.percent = 100
+            this.customerStatus = false;
+            this.percent = 100;
             // 已有任务，警告
             this.$Notice.warning({
               title: res.msg || '',
               desc: res.data || []
-            })
+            });
           }
         })
         .catch(err => {
-          this.customerStatus = false
+          this.customerStatus = false;
           this.$Notice.error({
             title: '无法处理你的请求',
             desc: err.msg
-          })
-          this.pageData.totals = 1
-          this.pageData.page = 1
-        })
+          });
+          this.pageData.totals = 1;
+          this.pageData.page = 1;
+        });
     }
   }
-}
+};
 </script>
 <style lang="scss" scoped>
 .novel {
@@ -431,7 +437,7 @@ export default {
   margin: 0 auto 100px;
 }
 
-.btn-group{
+.btn-group {
   text-align: center;
 }
 @media screen and (max-width: 767px) {
