@@ -45,8 +45,8 @@
       return {
         formItem: {},
         msg: 'Hello world login VueJS',
-        username: 'admin',
-        password: 'admin'
+        username: '',
+        password: ''
       }
     },
     created () {

@@ -6,6 +6,8 @@
  *@desc todo 严重，自定义下载，会污染全局。
  *@desc todo 区分dev 和生产环境下的的异同，然后给出不同的功能。
  *@desc todo 移动端iphone/ipad 无法支持blob 对象、download，导致无法下载文件
+ * todo 下载任务完成后，会通过webSocket通知客户端。
+
  -------------------------->
 <template>
     <section class="container">
@@ -23,7 +25,7 @@
               <!--todo 暂时未开发，后续开发一个对目录直接撸的，不走起点-->
               <Input v-if="selectType==='customer'" v-model="customerUrl" size="large" icon="network" placeholder="请输入小说的目录URL" style="margin-top: 20px;"></Input>
             </div>
-            <Button style="margin-top: 20px;" @click="getNovel" type="primary" long>执行任务</Button>
+            <Button style="margin-top: 20px;" @click="getNovel" :loading="loading" type="primary" long>执行任务</Button>
           <!--定制化-->
           <Button style="margin-top: 10px;" v-show="isDoneWebSocketCustomer||customerStatus" type="ghost" long>
             <Icon type="ios-cloud-download"></Icon>
@@ -45,17 +47,18 @@
 </template>
 <script>
 /* eslint-disable handle-callback-err */
-// todo 下载任务完成后，会通过webSocket通知客户端。
 import nuXtConfig from './../nuxt.config'
 export default {
   name: 'novel',
   components: {},
   data () {
     return {
-      keyword: '茅山鬼谷门',
+      keyword: '魔鬼',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
-      customerUrl: 'https://www.biduo.cc/biquge/44_44762/ ', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      // http://www.23xs.cc/book/19/index.html 官榜
+      // https://www.biduo.cc/biquge/44_44762/
+      customerUrl: 'https://www.biduo.cc/biquge/44_44762/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       customerStatus: false,
       progressStatus: 'active',
       percent: 0, // 进度条
@@ -247,6 +250,7 @@ export default {
       link.href = window.URL.createObjectURL(blob)
       link.download = this.keyword + '.txt'
       this.$nextTick(() => {
+        document.querySelector('.download').innerHTML = ''// 清空上一个遗留
         if (document.querySelector('.download')) {
           console.info(document.querySelector('.download'));
           document.querySelector('.download').appendChild(link)
@@ -418,7 +422,7 @@ export default {
 .novel {
   .input-body {
     height: 100%;
-    margin-top: 10%;
+    margin-top: 25%;
   }
 }
 
