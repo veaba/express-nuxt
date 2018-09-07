@@ -23,7 +23,7 @@
                   </Select>
                 </i-input>
               <!--todo 暂时未开发，后续开发一个对目录直接撸的，不走起点-->
-              <Input v-if="selectType==='customer'" v-model="customerUrl" size="large" icon="network" placeholder="请输入小说的目录URL" style="margin-top: 20px;"></Input>
+              <Input v-if="selectType==='customer'" v-model="customerUrl" size="large" icon="network" placeholder="请输入小说的目录URL，如：https://www.biduo.cc/biquge/44_44762/" style="margin-top: 20px;"></Input>
             </div>
             <Button style="margin-top: 20px;" @click="getNovel" :loading="loading" type="primary" long>执行任务</Button>
           <!--定制化-->
@@ -60,12 +60,12 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '魔鬼',
+      keyword: '',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
       // http://www.23xs.cc/book/19/index.html 官榜
       // https://www.biduo.cc/biquge/44_44762/
-      customerUrl: 'https://www.biduo.cc/biquge/44_44762/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      customerUrl: '', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       customerStatus: false,
       progressStatus: 'active',
       percent: 0, // 进度条
