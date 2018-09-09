@@ -14,7 +14,10 @@
 ```
 ## HTTPS/SSL/TSL
 
-全站开启了`HTTPS`访问，可喜可贺，折腾了十几个小时，这次的升级是心满意足了。并干掉了两个讨厌的警告，警告我半年了！！
+-全站开启了`HTTPS`访问
+
+可喜可贺，折腾了十几个小时，这次的升级是心满意足了。并干掉了两个讨厌的警告，警告我半年了！！
+
 这是因为在 plugins: ['~plugins/axios']的原因，早期开发的版本引起！一直没注意到！！
 ```text
 context.isServer has been deprecated, please use process.server instead.
@@ -24,16 +27,16 @@ context.isClient has been deprecated, please use process.client instead.
 `by@veaba ——2018年9月10日03:08:43` 
 
 
-
+- 访问http将会301重定向到https上去
 ![访问http将会301重定向到https上去](/static/img/https.jpg "访问http将会301重定向到https上去")
 
-依赖插件如下:
+- 依赖插件如下:
 ```json
 {
 	"express-force-ssl": "^0.3.2"
 }
 ```
-主要代码
+- 主要代码
 ```js
 	// 1.不用官方的在nuxt.config.js文件配置，不管怎么样都会启动http服务，搞了半天，没看懂。后续再看
 	module.exports={
@@ -59,11 +62,9 @@ context.isClient has been deprecated, please use process.client instead.
 	const nuxt = new Nuxt(config)
 	const http = require('http'); // http 模块
     const https = require('https'); // https 模块
-    // 需要同时启动80端口，作为http的，443作为https的端口。后续通过使用中间器件express-force-ssl重定向http到https端口去
-    http.createServer(app).listen(80)
+    http.createServer(app).listen(80)// 需要同时启动80端口，作为http的，443作为https的端口。后续通过使用中间器件express-force-ssl重定向http到https端口去
     https.createServer(httpsOptions, app).listen(443)
-    //这里需要注意次序！router 和forceSSL都需要在render之前，否则无法应用生面的中间器件，node 的中间器件是从上到下生效，下会覆盖上的。
-    app.use('/api',router)
+    app.use('/api',router) //这里需要注意次序！router 和forceSSL都需要在render之前，否则无法应用生面的中间器件，node 的中间器件是从上到下生效，下会覆盖上的。
     app.use('forceSSL')
     app.use(nuxt.render)
 	
@@ -71,13 +72,13 @@ context.isClient has been deprecated, please use process.client instead.
 - 技巧1 在尾部这样写，就可以向外面暴露了
 ```js
 module.exports = app//之前是在nuxt.config.js里面的中间器件的
-    export default {_io}
+export default {_io}
 ```
 - 技巧2 使用backpack biubiu的方便开发！ 
 
 - 技巧3 更改本机的HOSTS文件，让你的域名在本地HTTPS生效
 ```HOST
-	127.0.0.1 www.admingod.com
+127.0.0.1 www.admingod.com
 ```
 
 ## 控制台 [次要考虑]
