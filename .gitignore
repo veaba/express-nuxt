@@ -1,6 +1,6 @@
 # dependencies
 node_modules
-server/config.js
+serverNew/config.js
 
 # logs
 npm-debug.log
@@ -14,5 +14,5 @@ npm-debug.log
 # Backpack build
 build
 .idea/
-/server/config.js
+/serverNew/config.js
 .vscode/

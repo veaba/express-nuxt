@@ -4,13 +4,80 @@
 
 ```json
 {
-    "nuxt-dev": "nuxt",//官方 Start ExpressJS server in development with Nuxt.js in dev mode (hot reloading). Listen on http://localhost:3000.
+    "nuxt-dev": "nuxt",//官方 Start ExpressJS serverNew in development with Nuxt.js in dev mode (hot reloading). Listen on http://localhost:3000.
     "nuxt-build": "nuxt build",//官方 Build the nuxt.js web application for production.
-    "nuxt-start": "nuxt build && nuxt start",//官方 Start ExpressJS server in production.
+    "nuxt-start": "nuxt build && nuxt start",//官方 Start ExpressJS serverNew in production.
     "backpack-dev": "backpack debug dev",//开发模式下，使用此命令，让实现热重载
     "backpack-build": "nuxt build && backpack build",
     "backpack-start": "cross-env NODE_ENV=production node build/main.js"
 }
+```
+## HTTPS/SSL/TSL
+
+全站开启了`HTTPS`访问，可喜可贺，折腾了十几个小时，这次的升级是心满意足了。并干掉了两个讨厌的警告，警告我半年了！！
+这是因为在 plugins: ['~plugins/axios']的原因，早期开发的版本引起！一直没注意到！！
+```text
+context.isServer has been deprecated, please use process.server instead.
+context.isClient has been deprecated, please use process.client instead.
+```
+
+`by@veaba ——2018年9月10日03:08:43` 
+
+
+
+![访问http将会301重定向到https上去](/static/img/https.jpg "访问http将会301重定向到https上去")
+
+依赖插件如下:
+```json
+{
+	"express-force-ssl": "^0.3.2"
+}
+```
+主要代码
+```js
+	// 1.不用官方的在nuxt.config.js文件配置，不管怎么样都会启动http服务，搞了半天，没看懂。后续再看
+	module.exports={
+        serverMiddleware: [
+                '~/server/index.js'
+         ]
+	}
+	
+	// 2.入口文件，依赖了babel-register，让它/server/index.js 作为一个入口文件，支持导入es6的语法文件server/import.js
+	module.exports={
+	  "babel-register": "^6.26.0"
+	}
+	// 3.server/index.js文件，引入一个库，并引入主要文件import.js
+	require('babel-register');
+    require('./import.js')
+
+	// 4.import.js文件，express
+	import express from 'express'
+	import forceSSL from 'express-force-ssl'//直接在nuxt.config.js字符串引入会报错req.get 不是一个function
+	import router from './router/index.js'
+	import {Nuxt, Builder} from 'nuxt'// 编程的方式使用Nuxt
+	let config = require('../nuxt.config.js')
+	const nuxt = new Nuxt(config)
+	const http = require('http'); // http 模块
+    const https = require('https'); // https 模块
+    // 需要同时启动80端口，作为http的，443作为https的端口。后续通过使用中间器件express-force-ssl重定向http到https端口去
+    http.createServer(app).listen(80)
+    https.createServer(httpsOptions, app).listen(443)
+    //这里需要注意次序！router 和forceSSL都需要在render之前，否则无法应用生面的中间器件，node 的中间器件是从上到下生效，下会覆盖上的。
+    app.use('/api',router)
+    app.use('forceSSL')
+    app.use(nuxt.render)
+	
+```
+- 技巧1 在尾部这样写，就可以向外面暴露了
+```js
+module.exports = app//之前是在nuxt.config.js里面的中间器件的
+    export default {_io}
+```
+- 技巧2 使用backpack biubiu的方便开发！ 
+
+- 技巧3 更改本机的HOSTS文件，让你的域名在本地HTTPS生效
+```HOST
+	127.0.0.1 www.admingod.com
 ```
 
 ## 控制台 [次要考虑]
@@ -74,9 +141,9 @@
 
 ## 色系设计
 
-## server 目录结构
+## serverNew 目录结构
 
-    /server
+    /serverNew
     ----/functions
     	----functions.js
     ----/model
@@ -84,7 +151,7 @@
     ----/router
     	----index.js api请求入口
     ----config.js 一些数据库配置参数
-    ----server.js 服务端
+    ----server-new.back.js 服务端
 
 ## mongodb 语法
 
@@ -294,7 +361,7 @@ type: org(organizations)    组织/团队/小队/工作室等
 | mall          | 购物中心  |
 | shop          | 商店      |
 | marker        | 标记      |
-| server        | 服务器    |
+| serverNew        | 服务器    |
 | service       | 服务      |
 | active        | 积极      |
 | activation    | 激活      |
@@ -340,7 +407,7 @@ type: org(organizations)    组织/团队/小队/工作室等
 
 ## 系统架构
 
-### server
+### serverNew
 
     node
 

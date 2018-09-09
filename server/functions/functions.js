@@ -95,9 +95,9 @@ async function _webSocket (socket) {
     socket.emit('receive1', {lala: 'lalallala'})
     logger.error(data)
   })
-  // novel 向前端通信
-  console.info('novel 向前端通信')
-  logger.warn('\n~~~~Websocket已连接~~~~\n')
+  console.log('\x1B[32m%s\x1B[39m', '  ==============================')
+  console.log('\x1B[32m%s\x1B[39m', ' ║      WebSocket已连接 √    ║')
+  console.log('\x1B[32m%s\x1B[39m', '  ==============================')
 }
 /**
  * @desc 下载小说函数，返回结果

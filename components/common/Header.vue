@@ -133,10 +133,8 @@
         project: 'default'
       }
     },
-    created () {
-      this.getUserInfo()
-    },
     mounted () {
+      this.getUserInfo()
     },
     methods: {
 

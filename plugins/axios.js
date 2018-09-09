@@ -1,25 +1,26 @@
 import Vue from 'vue'
 import axios from 'axios'
 import { Notice } from 'iview'
-/**
- * @desc 重定向登录页面
- * */
-// function redirectLogin () {
-//   let path = Vue.prototype.$nuxt._router.history.fullPath || ''
-//   location.href = '/login?ref=' + path
-// }
+
+if (process.browser) {
+  console.info('浏览器!');
+  // 自动添加上这个字段
+  axios.defaults.baseURL = '/'
+} else {
+  console.info('不是浏览器');
+  axios.defaults.baseURL = 'http://localhost/api'
+}
 
 /**
 * @desc req 拦截器
 * */
 axios.interceptors.request.use(req => {
-  // console.info('axios request 拦截器')
   return req
 }, err => {
-  return Promise.reject(err)
+  return Promise.reject(err.request)
 })
 /**
- * @desc res 拦截器 Axios 和socket没什么卵关系~~
+ * @desc res 拦截器 axios
  * */
 axios.interceptors.response.use(res => {
   if (res && res.data) {
@@ -32,20 +33,11 @@ axios.interceptors.response.use(res => {
       })
     } else {
       // 4003 等状态则跳回login 页面
-      // redirectLogin()
       return Promise.reject(res.data)
     }
   }
   return res
 }, error => {
-  // console.info(error)
-  // // todo 有问题
-  // if (error && error.res && error.res.data && error.res.data.errorCode) {
-  //   console.info(error)
-  //   if (error.res.data.errorCode === 403) {
-  //     redirectLogin()
-  //   }
-  // }
   // 错误信息扶正，后续在请求时，不需要catch
   return Promise.resolve(error.response)
 })
@@ -53,7 +45,3 @@ Vue.prototype.$ajax = axios
 
 // 暴露出去给vuex 使用
 export default axios
-
-// export default (ctx) => {
-//   console.info(ctx)
-// }

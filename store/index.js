@@ -1,3 +1,4 @@
+/* eslint-disable handle-callback-err */
 /***********************
  * @name JS
  * @author Jo.gel
@@ -28,38 +29,6 @@ const store = () => new Vuex.Store({
     Referer: null, // 存储来源页面地址
     routerLock: null, // 锁定路由
     articleList: [ // 用于_user 文章标题、摘要、发表时间
-      {_id: 'ijdsjjijoij1',
-        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
-        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
-        createdTime: '2018-3-22 20:56:20',
-        updateTime: '2018年3月22日20:56:33',
-        comment: '我的评论评论',
-        likes: '我的评论评论'
-      },
-      {_id: 'dsadsadsad2',
-        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
-        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
-        createdTime: '2018-3-22 20:56:20',
-        updateTime: '2018年3月22日20:56:33',
-        comment: '我的评论评论',
-        likes: '我的评论评论'
-      },
-      {_id: 'dsadsadsad3',
-        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
-        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
-        createdTime: '2018-3-22 20:56:20',
-        updateTime: '2018年3月22日20:56:33',
-        comment: '我的评论评论',
-        likes: '我的评论评论'
-      },
-      {_id: 'dsadsadsad4',
-        title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
-        abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
-        createdTime: '2018-3-22 20:56:20',
-        updateTime: '2018年3月22日20:56:33',
-        comment: '我的评论评论',
-        likes: '我的评论评论'
-      },
       {_id: 'dsadsadsad5',
         title: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十 ',
         abstract: '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十',
@@ -103,29 +72,26 @@ const store = () => new Vuex.Store({
     getUserInfoAPI ({commit}, info) {
       axios.get('/api/getUser')
         .then(res => {
+          console.info(res);
           if (res.errorCode === 0) {
-            // localStorage.userInfo = JSON.stringify(res.data)
             commit('USER_INFO', res.data)
           }
         })
         .catch(err => {
-          console.error(err + ':store')
+          console.error('err:store')
         })
-    },
+    }
     /**
      * @desc 此方法可以让服务端将一些数据传给客户端
      * */
-    nuxtServerInit ({commit}, {req}) {
-      // console.info(req.session)
-      // 1未授权之前处理referer的路由跳转
-      // let referer = req.session.referer
-      console.error('未授权之前处理referer的路由跳转 store' + req.session)
-      if (req.session && req.session.routerLock) {
-        commit('ROUTER_LOCK', true)
-      } else {
-        commit('ROUTER_LOCK', false)
-      }
-    }
+    // nuxtServerInit ({commit}, {req}) {
+    //   console.error('未授权之前处理referer的路由跳转 store' + req.session)
+    //   if (req.session && req.session.routerLock) {
+    //     commit('ROUTER_LOCK', true)
+    //   } else {
+    //     commit('ROUTER_LOCK', false)
+    //   }
+    // }
   },
   /**
    * @desc 相当于计算属性,缺点是，并不能及时更新数据。。。实际需要检测数据的变化，有没有登录

@@ -6,16 +6,16 @@
 /* eslint-disable import/first,no-unexpected-multiline,func-call-spacing,wrap-iife,new-cap,handle-callback-err,standard/object-curly-even-spacing */
 import {Router} from 'express'
 import mongoose from 'mongoose' // mongoose 库
-const logger = require('tracer').console() // console追踪库
 import {config} from '../config'
 import {UsersModel} from '../model/model' // 用户api,构造函数应该是大写开头
 import {_dbError, _encryptedPWD} from '../functions/functions'
 import _article from '../controllers/articles' // 文章操作函数
-import _novel from '../controllers/novels' // 小说下载操作函数
 import _router from '../controllers/routers' // 路由相关操作函数
 import _public from '../controllers/publics' // 公开相关操作函数
-import _user from '../controllers/users' // 用户相关操作函数
+import _user from '../controllers/users'// 没问题
+import _novel from '../controllers/novels' // 小说下载操作函数，有问题
 const router = Router()
+const logger = require('tracer').console() // console追踪库
 
 /**
  * @desc 配置数据库连接选项,访问数据库的通信证
@@ -25,7 +25,8 @@ let options = {
   poolSize: 5, // 线程池是什么鬼
   keepAlive: 30000,
   user: 'admin',
-  pass: 'admin'
+  pass: 'admin',
+  useNewUrlParser: true
 }
 
 mongoose.connect(config.base + ':' + config.port + '/' + config.database, options, err => {
@@ -73,12 +74,6 @@ const connect = async function () {
   }
 }
 connect()
-/** ---------------------------------------------------------------------------
- * ================================= main pages ===================================
- *-----------------------------------------------------------------------------**/
-router.get('/', (req, res, next) => {
-  res.send('hello world api')
-})
 
 /** ---------------------------------------------------------------------------
  * ================================= Routes ===================================
@@ -136,7 +131,7 @@ router.post('/deletesArticle', _article.deleteArticle)
  * @desc 获取用户身份信息
  * */
 router.get('/getUser', _user.getUser)
-
+//
 /** ---------------------------------------------------------------------------
  * ================================= public ===================================
  *-----------------------------------------------------------------------------**/
@@ -156,15 +151,13 @@ router.post('/logout', _public.logout)
  * */
 router.post('/register', _public.register)
 
-/*******************************************************************
- * @desc novel 模块
- * */
+// /*******************************************************************
+//  * @desc novel 模块
+//  * */
 
 router.post('/novel/customizedNovel', _novel.customizedNovel)// 定制化
 router.get('/novel/getNovelList', _novel.getNovelList)// 小说翻页
 router.post('/novel/clearNovel', _novel.clearNovel)// 清空任务栈
 router.get('/novel/novelTesting', _novel.novelTesting)// testing
-
 router.get('/novel/download', _novel.download)// 下载小说
-
-export {router}
+export default router

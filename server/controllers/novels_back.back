@@ -48,7 +48,7 @@ import { format } from 'date-fns'; // 时间格式工具
 import charset from 'superagent-charset'; // 转移模块
 import cheerio from 'cheerio'; // 解析字符
 import superAgent from 'superagent';
-import _io from '../server';
+import _io from '../serverNew';
 
 const superAgentTo = charset(superAgent); // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
 const logger = require('tracer')

@@ -40,56 +40,16 @@ import { NovelModel, NovelBadUrlModel, ArticleModel } from '../model/model';
 import {
   _dbError,
   _dbSuccess,
-  _flipPage,
-  _download
+  _flipPage
 } from '../functions/functions';
 import { format } from 'date-fns'; // 时间格式工具
 import charset from 'superagent-charset'; // 转移模块
 import cheerio from 'cheerio'; // 解析字符
 import superAgent from 'superagent';
-import _io from '../server';
+import {_io} from '../import';
 
 const superAgentTo = charset(superAgent); // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
-const logger = require('tracer')
-  .console(); // console追踪库
-// search 起点
-const qiDianHeader = [
-  {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Host': 'www.qidian.com',
-    'Pragma': 'no-cache',
-    'Upgrade-Insecure-Requests': 1,
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
-  },
-  {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Cookie': '_csrfToken=qy4Rd0tr9OeOPGeTbBmP5wFM4mwEehh4nArJXzap; newstatisticUUID=1529775060_1919789918',
-    'Host': 'read.qidian.com',
-    'Pragma': 'no-cache',
-    'Upgrade-Insecure-Requests': 1,
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
-  },
-  {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Cookie': '_csrfToken=c1T7tQp3nx4YuzLrg6hPImmAdrPh0fDclhAKwnif; pageOps=1; newstatisticUUID=1529845827_59365039; qdrs=0%7C3%7C0%7C0%7C1; qdgd=1; lrbc=3657207%7C294479399%7C1; rcr=3657207; bc=3657207',
-    'Host': 'vipreader.qidian.com',
-    'Pragma': 'no-cache',
-    'Upgrade-Insecure-Requests': 1,
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36'
-  }
-];
+const logger = require('tracer').console(); // console追踪库
 /**
  * @desc 自定义的请求头参数，status400/403的时候去变更这个索引值，重新set header 的源，一般是由于host 不对所致
  * */
@@ -143,9 +103,7 @@ const htmlHeader = [
   }
 ];
 let processTask = []; // 小说下载进程，后续去判断是否存在下载任务，有的话，将需要等待，否则会影响性能
-let isCharsetDecodeIndex = 0; // isCharsetDecode 的索引
 let loopHeader = 1; // 递归loop函数执行此处判断，用于更换header头部参数
-let isInit = 0;
 /**
  * @desc 定制化判断编码
  * */
@@ -307,10 +265,6 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
   if (checkHasHttp) { theUrl = url } else {
     theUrl = checkHasLine ? 'http://' + host + url : ((catalogUrl.substr(-1) === '/') ? catalogUrl + url : (catalogUrl.slice(0, catalogUrl.lastIndexOf('/') + 1)) + url);
   }
-  // logger.warn('单章theUrl:' + theUrl)
-  // logger.warn('单章href:' + url)
-  // logger.warn('单章catalogUrl:' + catalogUrl)
-  // logger.warn(len + 'title:' + title)
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
       logger.warn('\n++++第九步/2：爬取单章超时30等待完成');
@@ -682,8 +636,7 @@ async function missionFail (msg) {
       logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程');
     });
 }
-
 /**
  * @desc 解析html代码一级请求数据
  * */
-export default _novel;
+export default _novel

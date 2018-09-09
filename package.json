@@ -4,6 +4,12 @@
   "description": "exepress nuxt ssr",
   "author": "veaba <908662421@qq.com>",
   "private": true,
+  "config": {
+    "nuxt": {
+      "host": "0.0.0.0",
+      "port": "80"
+    }
+  },
   "scripts": {
     "nuxt-dev": "nuxt",
     "nuxt-build": "nuxt build",
@@ -11,7 +17,7 @@
     "start-nuxt": "nuxt start",
     "backpack-dev": "backpack debug dev",
     "backpack-start": "nuxt build &&cross-env NODE_ENV=release node build/main.js",
-    "start": "nuxt build && backpack dev",
+    "start": "cross-env NODE_ENV=production node ./server/index.js",
     "build": "nuxt build && nuxt start && cross-env NODE_ENV=production node ./server/index.js",
     "server": "cross-env NODE_ENV=production node ./server/index.js",
     "generate": "cross-env DEPLOY_ENV=GH_PAGES nuxt generate",
@@ -26,13 +32,14 @@
     "cross-env": "^5.0.1",
     "date-fns": "^1.29.0",
     "express": "^4.15.3",
+    "express-force-ssl": "^0.3.2",
     "express-session": "^1.15.6",
     "highlight.js": "^9.12.0",
     "iview": "^2.14.3",
     "marked": "^0.3.16",
     "mavon-editor": "^2.4.16",
     "mongoose": "^5.0.6",
-    "nuxt": "^1.4.0",
+    "nuxt": "^1.4.2",
     "socket.io": "^2.0.4",
     "socket.io-client": "^2.0.4",
     "source-map-support": "^0.4.15",

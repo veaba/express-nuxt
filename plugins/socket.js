@@ -10,7 +10,12 @@ import Vue from 'vue'
 import io from 'socket.io-client'
 import config from '../nuxt.config'
 console.info(config.dev);
-const socket = io('http://' + '127.0.0.1' + ':' + (444))
+const socket = io('http://' + '127.0.0.1' + ':' + (444), {
+  reconnectionAttempts: 10// 自动重连次数
+})
+socket.connect((res) => {
+  console.info(res);
+})
 Vue.use(socket)
 Vue.prototype.$socket = socket
 export default socket

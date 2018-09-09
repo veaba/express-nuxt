@@ -4,10 +4,9 @@
  * */
 // 1 部署部分，由于https://veaba.github.io/express-nuxt/ 为此需要一个基础的路径
 // 无法解构
+// const forceSSL = require('express-force-ssl')
 const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? '/express-nuxt/' : ''
-console.info(routerBase);
 console.info('*************');
-// console.info(process.env.NODE_ENV);
 console.info('^^^^^^^^^^^^^');
 module.exports = {
   router: {
@@ -49,8 +48,8 @@ module.exports = {
     /*
     ** Run ESLINT on save
     */
-    extend (config, { isClient, isDev }) {
-      if (isClient && isDev) {
+    extend (config, { isDev, isClient }) {
+      if (isDev && isClient) {
         config.module.rules.push({
           enforce: 'pre',
           test: /\.(js|vue)$/,
@@ -65,13 +64,22 @@ module.exports = {
   // 当使用 nuxt build， nuxt start 或 nuxt generate 命令时，dev 会被强制设置成 false
   dev: (process.env.NODE_ENV !== 'production'),
   env: {
-    baseUrl: process.env.BASE_URL || 'http://localhost:4000',
+    baseUrl: process.env.BASE_URL || 'http://localhost:443',
     HOST: '0.0.0.0',
-    PORT: '4000'
+    PORT: '443'
   },
-  // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件
-  plugins: ['~plugins/axios', '~plugins/highlight-plugins', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}]
-  // src: '~plugins/socket', ssr: false}
+  // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件'~plugins/axios',
+  // 插件引入axios，导致报错 context.isClient has been deprecated, please use process.client instead
+  // context.isServer has been deprecated, please use process.client instead
+  plugins: ['~plugins/highlight-plugins', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
+  // 服务器中间器件,因为使用backpack导致重复，所以这地方需要处理下
+  // 发现是字符串，尝试require解析
+  // If middleware is String Nuxt.js will
+  // try to automatically resolve and require it.
+  // 使用本文件下的serverMiddleware，始终会启动http服务，WTF?
+  serverMiddleware: [
+    // '~/server/index.js'
+  ]
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件
 }

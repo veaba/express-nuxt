@@ -123,7 +123,7 @@ export default {
   },
   updated () {},
   methods: {
-    // 接收消息 server -> client
+    // 接收消息 serverNew -> client
     webSocketReceive () {
       this.$socket.on('isConnectSocketStatus', data => {
         console.info(data);
@@ -317,7 +317,7 @@ export default {
         console.log(this.percent);
       }, 1000);
     },
-    // 发送消息 client -> server
+    // 发送消息 client -> serverNew
     // sendSome () {
     //   this.$socket.emit('receive', { params: '客户端发给你的一段消息' })
     // },

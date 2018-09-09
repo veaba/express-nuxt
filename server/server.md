@@ -1,5 +1,5 @@
 ## server目录结构
-	/server
+	/serverNew
 	----/controllers 
 		----article.js 文章数据库模块操作
 	----/functions
@@ -9,7 +9,7 @@
 	----/router
 		----index.js api请求入口
 	----config.js 一些数据库配置参数
-	----server.js 服务端
+	----serverNew-new.js 服务端
 ## async/wait 并发处理
 - 虽然是并发，但无法得到完整标志
 ```js
