@@ -9,4 +9,15 @@
  ]
  ***********************/
 require('babel-register');
-require('./import.js')
+if (process.env.NODE_NUXT === 'nuxtDev' || process.env.NODE_NUXT === 'nuxtStart') {
+  const app = require('./import.js')
+  module.exports = {
+    path: '/api', // TODO 这个api干吗用的？
+    handler: app
+  }
+  console.info('  nuxt 命令下 index es5语法');
+} else {
+  console.info('  node 命令下 index es5语法');
+  require('./import.js')
+}
+console.error('  node 或者nuxt 命令访问入口文件index')

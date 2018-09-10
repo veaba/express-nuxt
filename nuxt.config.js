@@ -6,8 +6,6 @@
 // 无法解构
 // const forceSSL = require('express-force-ssl')
 const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? '/express-nuxt/' : ''
-console.info('*************');
-console.info('^^^^^^^^^^^^^');
 module.exports = {
   router: {
     base: routerBase
@@ -77,9 +75,8 @@ module.exports = {
   // If middleware is String Nuxt.js will
   // try to automatically resolve and require it.
   // 使用本文件下的serverMiddleware，始终会启动http服务，WTF?
-  serverMiddleware: [
-    // '~/server/index.js'
-  ]
+  serverMiddleware: (process.env.NODE_NUXT === 'nuxtDev' || process.env.NODE_NUXT === 'nuxtStart') ? ['~/server/index.js'] : []
+
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件
 }

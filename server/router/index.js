@@ -161,3 +161,4 @@ router.post('/novel/clearNovel', _novel.clearNovel)// 清空任务栈
 router.get('/novel/novelTesting', _novel.novelTesting)// testing
 router.get('/novel/download', _novel.download)// 下载小说
 export default router
+module.exports = router

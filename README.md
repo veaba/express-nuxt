@@ -13,12 +13,17 @@
 }
 ```
 ## HTTPS/SSL/TSL
+- 提示，`serverMiddleware`不得含有空字符串。
+	`nuxt.config.js`的 `serverMiddleware`比如是含有中间器件字符串，不得存在空字符串情况，可以使空数组，但元素不能为空!否则无法调用 nuxt page里面的全部路由
+- 提示，`vmware-hostd.exe` 会占用443端口
 
--全站开启了`HTTPS`访问
+	如果本机安装了`VMware` 将可能在某个时候被 `vmware-hostd.exe` 占用 443端口，这时候https 服务将无法启动，需要注意下，9月11日我就搞了一天，后来 cmd 下 `netsate -ano` 查看了端口并关闭了对应的进程才得以成功。
 
-可喜可贺，折腾了十几个小时，这次的升级是心满意足了。并干掉了两个讨厌的警告，警告我半年了！！
+- 全站开启了`HTTPS`访问
 
-这是因为在 plugins: ['~plugins/axios']的原因，早期开发的版本引起！一直没注意到！！
+	可喜可贺，折腾了十几个小时，这次的升级是心满意足了。并干掉了两个讨厌的警告，警告我半年了！！
+
+	这是因为在 plugins: ['~plugins/axios']的原因，早期开发的版本引起！一直没注意到！！
 ```text
 context.isServer has been deprecated, please use process.server instead.
 context.isClient has been deprecated, please use process.client instead.
