@@ -28,7 +28,7 @@
       <div class="bike-table">
         <Table :loading="loading" :data="bikeTable" :columns="bikeColumns"></Table>
         <Row class="pageBox" type="flex" justify="end">
-          <Page :total="pageData.totals" :current.sync="pageData.page" show-total on-change @on-change="changeFlipPage"></Page>
+          <Page :total="pageData.totals" :current.sync="pageData.page" show-total @on-change="goSearchMyBike"></Page>
         </Row>
       </div>
     </div>
@@ -101,9 +101,11 @@
       goSearchMyBike () {
         this.$ajax.post('/api/bike/searchBike', this.bikeData)
           .then(res => {
+            this.bikeData = []
             console.info(res);
           })
           .catch(err => {
+            this.bikeData = []
             console.info(err);
           })
       }
