@@ -40,6 +40,7 @@
     name: 'bike',
     data () {
       return {
+        loading: false,
         bikeData: {
           brand_name: '喜德盛', // 品牌名
           brand_uppercase: 'XDS', // 大写
@@ -99,12 +100,15 @@
        * @desc 皮卡丘走起
        */
       goSearchMyBike () {
+        this.loading = true
         this.$ajax.post('/api/bike/searchBike', this.bikeData)
           .then(res => {
+            this.loading = false
             this.bikeData = []
             console.info(res);
           })
           .catch(err => {
+            this.loading = false
             this.bikeData = []
             console.info(err);
           })
