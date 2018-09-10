@@ -103,7 +103,9 @@
       openName () {
         let route = this.$store.state.route
         this.$nextTick(() => {
-          this.$refs.menu.updateOpened()
+          if (process.browser) {
+            this.$refs.menu.updateOpened()
+          }
         })
         let path1 = []
         let path2 = []
