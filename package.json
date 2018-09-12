@@ -14,7 +14,7 @@
     "nuxt-dev": "cross-env NODE_ENV=development NODE_NUXT=nuxtDev HOST=0.0.0.0 nuxt",
     "nuxt-build": "nuxt build",
     "nuxt-start": "cross-env NODE_ENV=production NODE_NUXT=nuxtStart HOST=0.0.0.0 nuxt build && nuxt start",
-    "backpack-dev": "cross-env NODE_RENDER=backpackDev NODE_ENV=development backpack debug dev",
+    "backpack-dev": "cross-env NODE_RENDER=backpackDev NODE_ENV=development backpack dev",
     "server": "cross-env NODE_RENDER=server NODE_ENV=production  node ./server/import.js",
     "generate": "cross-env DEPLOY_ENV=GH_PAGES nuxt generate",
     "precommit": "npm run lint",
