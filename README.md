@@ -12,6 +12,31 @@
     "backpack-start": "cross-env NODE_ENV=production node build/main.js"
 }
 ```
+## HTTP2
+	郁闷！HTTP2自带了HTTPS了，所以很简单。
+```js
+const express = require('express')
+const http2 =require('http2')
+const spdy = require('spdy')
+const fs = require('fs')
+const path = require('path')
+const app = express()
+const http2Options = {
+  key: fs.readFileSync(path.join(__dirname, './ssl/key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, './ssl/cert.pem')),
+  spdy:{
+      'x-forwarded-for': true,
+  }
+}
+
+const http2Server = spdy.createServer(http2Options,app)
+http2Server.listen(8080)
+
+app.get('/',function (req,res,next) {
+    res.send('<h1>hello world HTTP2</h1>')
+})
+
+```
 ## HTTPS/SSL/TSL
 - 如果使用`nuxt-dev`、`nuxt-start`请求一次，都会让中间器件重新链接数据库，这显然不太对。能否让稳定的express 链接？
 - 提示，经过多次验证，发现nuxt内置的服务端无法被中间器件应用他的路由，除非nuxt作为express的中间器件被应用，这方式和启动`npm run server`一样

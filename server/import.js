@@ -21,8 +21,8 @@ const { _dbError, _encryptedPWD } = require('./functions/functions')
 const logger = require('tracer').console() // console追踪库
 const path = require('path');
 const http = require('http'); // http 模块
-const https = require('https'); // https 模块
-const http2 = require('http2')// https 模块
+const http2 = require('spdy'); // spdy 模块，让express 支持http2
+// const https = require('https'); // https 模块
 const fs = require('fs');// 文件读写模块
 const app = express()
 const httpsPort = process.env.PORT || 443
@@ -30,6 +30,10 @@ const httpsPort = process.env.PORT || 443
 const httpsOptions = {
   key: fs.readFileSync(path.join(__dirname, './ssl/admingod.key')),
   cert: fs.readFileSync(path.join(__dirname, './ssl/admingod.pem'))
+}
+const http2Options = {
+  key: fs.readFileSync(path.join(__dirname, './ssl/key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, './ssl/cert.pem'))
 }
 const config = require('../nuxt.config.js')
 const {configDB} = require('./config.js')
@@ -94,7 +98,7 @@ config.backpackDev = (process.env.NODE_RENDER === 'backpackDev')// cnpm run back
 config.server = (process.env.NODE_RENDER === 'server')// cnpm run backpack-dev 适合开发环境下，nuxt和express 都会自动热更新
 
 // 创建WebSocket服务，加密的
-const webSocket = (config.nuxtDev || config.nuxtStart) ? http.createServer(app).listen(httpsPort + 1) : https.createServer(httpsOptions, app).listen(httpsPort + 1)
+const webSocket = http2.createServer(http2Options, app).listen(httpsPort + 1)
 const io = require('socket.io')(webSocket)
 io.on('connection', _webSocket) // socket 连接
 
@@ -168,8 +172,9 @@ if (config.backpackDev || config.server) {
       console.log('\x1B[32m%s\x1B[49m', '  ==============================')
       process.exit(1)
     })
-  http.createServer(app).listen(80)
-  https.createServer(httpsOptions, app).listen(443)
+  http.createServer(app).listen(80)// 80->443 一定要启用80端口
+  http2.createServer(http2Options, app).listen(443)
+  // https.createServer(httpsOptions, app).listen(443)
 }
 
 // @desc 以es5 require方式导出给node 支持es6语法的import index.js使用
