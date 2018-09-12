@@ -3,7 +3,7 @@
  * @author Jo.gel
  * @date 2018/4/20
  ***********************/
-import {_dbError, _dbSuccess} from '../functions/functions'
+const {_dbError, _dbSuccess} = require('../functions/functions')
 const _user = {
   getUser: async (req, res, next) => {
     // 如果session 存在则判断用户在登录状态
@@ -14,4 +14,4 @@ const _user = {
     }
   }
 }
-export default _user
+module.exports = _user

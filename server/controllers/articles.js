@@ -4,10 +4,10 @@
  * @date 2018/3/25
  * @desc 文章操作函数
  ***********************/
-import { ArticleModel } from '../model/model'
-import {_flipPage, _isAuth, _dbError, _dbSuccess} from '../functions/functions'
-import mongoose from 'mongoose' // mongoose 库
-import { format } from 'date-fns' // 时间格式工具
+const { ArticleModel } = require('../model/model')
+const {_flipPage, _isAuth, _dbError, _dbSuccess} = require('../functions/functions')
+const mongoose = require('mongoose') // mongoose 库
+const { format } = require('date-fns') // 时间格式工具
 const logger = require('tracer').console() // console追踪库
 const _article = {
   /**
@@ -114,4 +114,4 @@ const _article = {
   }
 }
 
-export default _article
+module.exports = _article

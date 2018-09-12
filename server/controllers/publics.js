@@ -3,8 +3,8 @@
  * @author Jo.gel
  * @date 2018/4/20
  ***********************/
-import {UsersModel} from '../model/model'
-import {_dbError, _dbSuccess, _encryptedPWD} from '../functions/functions'
+const {UsersModel} = require('../model/model')
+const {_dbError, _dbSuccess, _encryptedPWD} = require('../functions/functions')
 const _public = {
   /**
    * @desc 登录
@@ -58,4 +58,4 @@ const _public = {
   }
 
 }
-export default _public
+module.exports = _public

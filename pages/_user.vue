@@ -89,12 +89,10 @@
       }
     },
     created () {
-      console.info(this.$route.params.user)
       this.keyword = this.$route.params.user
       // TODO 去查询 该路由表存不存在
       // TODO * 被禁路由库
       // TODO * 用户路由库
-      this.getRouter(this.keyword)
     },
     mounted () {
       // todo 频繁localStorage is not defined
@@ -104,6 +102,8 @@
         // TODO
         // alert('error 没找到用户')
       }
+      this.getTest()
+      this.getRouter(this.keyword)
     },
     methods: {
       /**
@@ -111,7 +111,6 @@
        * */
       getTabName (name) {
         this.tabName = name
-        console.info(name)
       },
 
       /**
@@ -127,7 +126,16 @@
             this.isFind = res.errorCode === 0
           })
           .catch(err => {
-            console.detail(err)
+            console.error(err)
+          })
+      },
+      getTest () {
+        this.$ajax.get('/test/test')
+          .then(res => {
+            console.info(res);
+          })
+          .catch(err => {
+            console.info(err)
           })
       }
     }

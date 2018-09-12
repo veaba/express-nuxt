@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars,no-unexpected-multiline */
 /***********************
  * @name JS
  * @author Jo.gel
@@ -6,69 +7,101 @@
  * @config NODE_NUXT = nuxt方式 启动服务器 nuxtDev:开发、nuxtStart 生产
  * @config NODE_RENDER = 编程方式启动服务器、backpack 或者node则调用服务器
  ***********************/
-import express from 'express'
-import router from './router/index'
-import bodyParser from 'body-parser'
-import session from 'express-session'
-import forceSSL from 'express-force-ssl'
-import { _webSocket } from './functions/functions'
-import {Nuxt, Builder} from 'nuxt'// 编程的方式使用Nuxt
+const router = require('./router/index')
+const bodyParser = require('body-parser')
+const session = require('express-session')
+const forceSSL = require('express-force-ssl')
+const { _webSocket } = require('./functions/functions')
+const {Nuxt, Builder} = require('nuxt')
+const express = require('express')// 编程的方式使用Nuxt
+const mongoose = require('mongoose') // mongoose 库
+const { UsersModel } = require('./model/model')
+const { _dbError, _encryptedPWD } = require('./functions/functions')
 
 const logger = require('tracer').console() // console追踪库
 const path = require('path');
 const http = require('http'); // http 模块
 const https = require('https'); // https 模块
+const http2 = require('http2')// https 模块
 const fs = require('fs');// 文件读写模块
 const app = express()
-const port = process.env.PORT || 443
-let config = require('../nuxt.config.js')
-const nuxt = new Nuxt(config)
+const httpsPort = process.env.PORT || 443
+// https 证书
+const httpsOptions = {
+  key: fs.readFileSync(path.join(__dirname, './ssl/admingod.key')),
+  cert: fs.readFileSync(path.join(__dirname, './ssl/admingod.pem'))
+}
+const config = require('../nuxt.config.js')
+const {configDB} = require('./config.js')
 
 /**
- * @desc nuxt钩子
+ * @desc 配置数据库连接选项,访问数据库的通信证
  * */
-nuxt.hook('ready', async nuxt => {
-  // nuxt 钩子-Nuxt准备好工作了：ModuleContainer 和 Renderer
-  console.log('\x1B[31m%s\x1B[39m', '  Nuxt 准备好了 ModuleContainer 和 Renderer')
-})
-
-nuxt.hook('error', async nuxt => {
-  // nuxt 钩子-调用钩子时未处理的错误
-  console.log('\x1B[31m%s\x1B[39m', '  Nuxt 准备好了 ModuleContainer 和 Renderer')
-})
-nuxt.hook('close', async nuxt => {
-  // nuxt 钩子-Nuxt实例被关闭
-  console.log('\x1B[31m%s\x1B[39m', '  Nuxt实例被关闭')
-})
-nuxt.hook('listen', async (server, host, port) => {
-  // nuxt 钩子-Nuxt 内部服务器开启帧听.使用nuxt start,和nuxt dev
-  logger.warn(server, host, port)
-  console.log('\x1B[31m%s\x1B[39m', '  Nuxt 内部服务器开启帧听.使用nuxt start,和nuxt dev')
-})
+const optionsDB = {
+  poolSize: 5, // 线程池是什么鬼
+  keepAlive: 30000,
+  user: 'admin',
+  pass: 'admin',
+  useNewUrlParser: true
+}
+// 创建一个启动数据库并链接的函数，作为中间器件，只允许链接一次保持稳定
+async function launchDB () {
+  console.log('\x1B[32m%s\x1B[49m', '  ==============================')
+  console.log('\x1B[32m%s\x1B[49m', ' ╞     Mongodb服务已启动 √   ╡  ')
+  console.log('\x1B[32m%s\x1B[49m', '  ==============================')
+  mongoose.connect(configDB.base + ':' + configDB.port + '/' + configDB.database, optionsDB, err => {
+    if (err) {
+      logger.warn('mongodb 数据库链接失败，请检查')
+      logger.warn(err.message)
+    }
+  })
+  let db = await mongoose.connection
+  if (db) {
+    let InitAdministrator = {
+      username: 'admin',
+      password: '123456',
+      nick: 'admin',
+      email: ''
+    }
+    db.once('connected', function () {
+      logger.info('----------> 连接成功 ^_^------------')
+      // 先查找存不存在admin 这个管理员账号
+      UsersModel.find({'username': InitAdministrator.username}, function (err, res) {
+        if (err) {
+          _dbError(res, err)
+        }
+        // 查询为空会返回空数组
+        if (res.length === 0) {
+          InitAdministrator.password = _encryptedPWD(InitAdministrator.password) // 用户密码加密
+          let adminModel = new UsersModel(InitAdministrator)
+          adminModel.save(function (err, res) {
+            if (err) {
+              logger.info('----------> 初始化admin账号失败 v_v')
+            } else {
+              logger.info('----------> 初始化admin账号成功 ^_^')
+            }
+          })
+        }
+      })
+    })
+  }
+}
+launchDB()
 config.dev = !(process.env.NODE_ENV === 'production')
 config.nuxtDev = (process.env.NODE_NUXT === 'nuxtDev')// cnpm run nuxt-dev，nuxt开发环境 nuxt自动热更新
 config.nuxtStart = (process.env.NODE_NUXT === 'nuxtStart')// cnpm run nuxt-dev，nuxt开发环境 nuxt自动热更新
 config.backpackDev = (process.env.NODE_RENDER === 'backpackDev')// cnpm run backpack-dev 适合开发环境下，nuxt和express 都会自动热更新
 config.server = (process.env.NODE_RENDER === 'server')// cnpm run backpack-dev 适合开发环境下，nuxt和express 都会自动热更新
-// 创建WebSocket服务
-const webSocket = app.listen(port + 1)
+
+// 创建WebSocket服务，加密的
+const webSocket = (config.nuxtDev || config.nuxtStart) ? http.createServer(app).listen(httpsPort + 1) : https.createServer(httpsOptions, app).listen(httpsPort + 1)
 const io = require('socket.io')(webSocket)
-// socket 连接
-io.on('connection', _webSocket)
-/**
- * @desc 小说下载完成，通知客户端,该方法为对server提供export
- * @param name novel {String}
- * @param data 消息 {Object}
- * */
-async function _io (name, data) {
-  return io.sockets.emit(name, data)
-}
+io.on('connection', _webSocket) // socket 连接
 
 // 请求体解析
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 
-console.info(config);
 // Session 创建req.session
 app.use(session({
   secret: 'super-secret-key',
@@ -76,59 +109,74 @@ app.use(session({
   saveUninitialized: false,
   cookie: {maxAge: 6000000}
 }))
-app.set('forceSSLOptions', {
-  enable301Redirects: true,
-  trustXFPHeader: false,
-  httpsPort: 443,
-  sslRequiredMessage: 'SSL Required.'
-});
-app.use(forceSSL)// SSL中间器件
-app.use('/api', router)
+
 /**
  * @desc 配置路由接口。
  * */
 // 1、如果是cnpm run nuxt-dev：nuxt
 if (config.nuxtDev || config.nuxtStart) {
   console.log('\x1B[31m%s\x1B[39m', '  nuxt dev')
-  // app.use('/api', router)// 为什么nuxt-dev无法调用这个路由??
+  app.use(router)
 }
+/**
+ * @desc 开发环境下 node/backpack
+ * */
 if (config.backpackDev || config.server) {
-  // app.use('/api', router)
+  const nuxt = new Nuxt(config)
+  /**
+   * @desc nuxt钩子
+   * */
+  nuxt.hook('ready', async nuxt => {
+    // nuxt 钩子-Nuxt准备好工作了：ModuleContainer 和 Renderer
+    console.log('\x1B[31m%s\x1B[39m', '  Nuxt 准备好了 ModuleContainer 和 Renderer')
+  })
+
+  nuxt.hook('error', async nuxt => {
+    // nuxt 钩子-调用钩子时未处理的错误
+    console.log('\x1B[31m%s\x1B[39m', '  Nuxt 准备好了 ModuleContainer 和 Renderer')
+  })
+  nuxt.hook('close', async nuxt => {
+    // nuxt 钩子-Nuxt实例被关闭
+    console.log('\x1B[31m%s\x1B[39m', '  Nuxt实例被关闭')
+  })
+  nuxt.hook('listen', async (server, host, port) => {
+    // nuxt 钩子-Nuxt 内部服务器开启帧听.使用nuxt start,和nuxt dev
+    logger.warn(server, host, port)
+    console.log('\x1B[31m%s\x1B[39m', '  Nuxt 内部服务器开启帧听.使用nuxt start,和nuxt dev')
+  })
+  app.set('forceSSLOptions', {
+    enable301Redirects: true,
+    trustXFPHeader: false,
+    httpsPort: 443,
+    sslRequiredMessage: 'SSL Required.'
+  });
+  app.use('/api', router)
+  app.use(forceSSL)// SSL中间器件
   app.use(nuxt.render)
   console.log('\x1B[31m%s\x1B[39m', '  backpack dev')
   const builder = new Builder(nuxt)
   builder.build()
     .then(res => {
       console.log('\x1B[32m%s\x1B[49m', '  ==============================')
-      console.log('\x1B[32m%s\x1B[49m', ' ║      Nuxt服务已启动 √    ║')
+      console.log('\x1B[32m%s\x1B[49m', ' ╞     Nuxt服务已启动 √      ╡')
       console.log('\x1B[32m%s\x1B[49m', '  ==============================')
     })
     .catch(err => {
       logger.warn(err)
       console.log('\x1B[32m%s\x1B[49m', '  ==============================')
-      console.log('\x1B[32m%s\x1B[49m', ' ║      Nuxt服务已停止 √    ║')
+      console.log('\x1B[32m%s\x1B[49m', ' ╞     Nuxt服务已停止 √      ╡')
       console.log('\x1B[32m%s\x1B[49m', '  ==============================')
       process.exit(1)
     })
+  http.createServer(app).listen(80)
+  https.createServer(httpsOptions, app).listen(443)
 }
 
-/**
- * @desc https 配置参数对象
- * */
-const httpsOptions = {
-  key: fs.readFileSync(path.join(__dirname, './ssl/admingod.key')),
-  cert: fs.readFileSync(path.join(__dirname, './ssl/admingod.pem'))
-}
-http.createServer(app).listen(80)
-https.createServer(httpsOptions, app).listen(443)
-
-/**
- * @desc Hello world
- * */
-app.get('/api', forceSSL, function (req, res) {
-  logger.warn('Welcome to Server API pages!')
-  return res.send('HTTPS only.');
-});
 // @desc 以es5 require方式导出给node 支持es6语法的import index.js使用
-module.exports = app
-export default {_io}
+module.exports = {
+  path: '/api',
+  handler: app,
+  _io: async (name, data) => {
+    return io.sockets.emit(name, data)
+  }
+}

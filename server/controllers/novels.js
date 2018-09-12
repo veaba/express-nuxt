@@ -36,17 +36,17 @@
  * @todo 闭包的思想，依然需要注意！
  * @bug todo 默认的列表页数不对
  ***********************/
-import { NovelModel, NovelBadUrlModel, ArticleModel } from '../model/model';
-import {
+const { NovelModel, NovelBadUrlModel, ArticleModel } = require('../model/model')
+const { format } = require('date-fns'); // 时间格式工具
+const charset = require('superagent-charset'); // 转移模块
+const cheerio = require('cheerio'); // 解析字符
+const superAgent = require('superagent');
+const {
   _dbError,
   _dbSuccess,
   _flipPage
-} from '../functions/functions';
-import { format } from 'date-fns'; // 时间格式工具
-import charset from 'superagent-charset'; // 转移模块
-import cheerio from 'cheerio'; // 解析字符
-import superAgent from 'superagent';
-import {_io} from '../import';
+} = require('../functions/functions');
+const {_io} = '../import';
 
 const superAgentTo = charset(superAgent); // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
 const logger = require('tracer').console(); // console追踪库
@@ -636,7 +636,4 @@ async function missionFail (msg) {
       logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程');
     });
 }
-/**
- * @desc 解析html代码一级请求数据
- * */
-export default _novel
+module.exports = _novel

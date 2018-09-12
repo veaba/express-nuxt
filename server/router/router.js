@@ -3,8 +3,7 @@
  * @author Jo.gel
  * @date 9/9/2018
  ***********************/
-import {Router} from 'express'
-import _user from '../controllers/users' // 用户相关操作函数
+const {Router} = require('express')
 const router = Router()
 
 // Mock Users
@@ -14,8 +13,15 @@ const users = [
   { name: 'Sébastien' }
 ]
 
-router.get('/getUser', _user.getUser)
-
+router.get('/getUser', function (req, res, next) {
+  res.send('getUser')
+})
+router.get('/test', function (req, res, next) {
+  res.send('test')
+})
+router.get('/test/test', function (req, res, next) {
+  res.send('/test/test')
+})
 /* GET user by ID. */
 router.get('/users/:id', function (req, res, next) {
   const id = parseInt(req.params.id)
@@ -27,4 +33,4 @@ router.get('/users/:id', function (req, res, next) {
 })
 
 export default router
-// module.exports = router
+module.exports = router

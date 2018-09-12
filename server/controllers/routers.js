@@ -4,12 +4,9 @@
  * @author Jo.gel
  * @date 2018/4/20
  ***********************/
-
-import {RouterModel} from '../model/model'
-import {_dbError, _dbSuccess, _queryRouter} from '../functions/functions'
-// import mongoose from 'mongoose' // mongoose 库
+const {RouterModel} = require('../model/model')
+const {_dbError, _dbSuccess, _queryRouter} = require('../functions/functions')
 const logger = require('tracer').console() // console追踪库
-
 /**
  * @desc 每次进入 /xx 非页面路由都会调用这个接口，也就是后端路由
  * @desc 这时，使用router 的中间器件，函数来判断是否存在,
@@ -23,7 +20,6 @@ const _router = {
    * */
   getRouter: async (req, res, next) => {
     let router = await RouterModel.find({'name': req.query.router}).exec()
-    logger.error(router)
     if (router.length === 0) {
       req.session.routerLock = true // 路由锁定,auth.js ，直接error({报错处理})
       return _dbError(res, '404用户')
@@ -94,4 +90,4 @@ const _router = {
   }
 }
 
-export default _router
+module.exports = _router

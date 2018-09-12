@@ -6,8 +6,8 @@
  * @desc 用户数据模式
  * @desc collection users
  * */
-import mongoose from 'mongoose'
-let Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
 /*************************************
  * @desc 声明用户schema
@@ -98,9 +98,11 @@ let novelErrorUrlSchema = new Schema({
 /***********************************************
  * @desc 构建表模型，model(CollectionName,Model)
  * **********************************************/
-let UsersModel = mongoose.model('users', usersSchema)
-let RouterModel = mongoose.model('routers', routerSchema)
-let ArticleModel = mongoose.model('articles', articleSchema)
-let NovelModel = mongoose.model('novels', novelSchema)
-let NovelBadUrlModel = mongoose.model('bad.urls', novelErrorUrlSchema)
-export {UsersModel, RouterModel, ArticleModel, NovelModel, NovelBadUrlModel}
+const UsersModel = mongoose.model('users', usersSchema)
+const RouterModel = mongoose.model('routers', routerSchema)
+const ArticleModel = mongoose.model('articles', articleSchema)
+const NovelModel = mongoose.model('novels', novelSchema)
+const NovelBadUrlModel = mongoose.model('bad.urls', novelErrorUrlSchema)
+module.exports = {
+  UsersModel, RouterModel, ArticleModel, NovelModel, NovelBadUrlModel
+}

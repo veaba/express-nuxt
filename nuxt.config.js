@@ -1,10 +1,9 @@
 /**
  * @desc nuxt 配置文件
  * @Port 端口配置 env.PORT
+ * @server 有一个session 警告
  * */
 // 1 部署部分，由于https://veaba.github.io/express-nuxt/ 为此需要一个基础的路径
-// 无法解构
-// const forceSSL = require('express-force-ssl')
 const routerBase = process.env.DEPLOY_ENV === 'GH_PAGES' ? '/express-nuxt/' : ''
 module.exports = {
   router: {
@@ -63,20 +62,25 @@ module.exports = {
   dev: (process.env.NODE_ENV !== 'production'),
   env: {
     baseUrl: process.env.BASE_URL || 'http://localhost:443',
-    HOST: '0.0.0.0',
-    PORT: '443'
+    HOST: 'www.admingod.com',
+    PORT: 443
   },
   // axios 请求组件、iview ui 组件 、socket webSocket组件、 mavon-editor 编辑器markdown 组件'~plugins/axios',
   // 插件引入axios，导致报错 context.isClient has been deprecated, please use process.client instead
   // context.isServer has been deprecated, please use process.client instead
-  plugins: ['~plugins/highlight-plugins', '~plugins/iview', '~plugins/socket', {src: '~plugins/mavon-editor', ssr: false}],
+  plugins: ['~plugins/highlight-plugins', '~plugins/iview', {src: '~plugins/socket', ssr: false}, {src: '~plugins/mavon-editor', ssr: false}],
   // 服务器中间器件,因为使用backpack导致重复，所以这地方需要处理下
   // 发现是字符串，尝试require解析
   // If middleware is String Nuxt.js will
   // try to automatically resolve and require it.
   // 使用本文件下的serverMiddleware，始终会启动http服务，WTF?
-  serverMiddleware: (process.env.NODE_NUXT === 'nuxtDev' || process.env.NODE_NUXT === 'nuxtStart') ? ['~/server/index.js'] : []
-
+  // 服务器中间器件不能有空字符串
+  serverMiddleware: [
+    (process.env.NODE_NUXT === 'nuxtDev' || process.env.NODE_NUXT === 'nuxtStart') ? '~/server/import.js' : {},
+    {
+      'path': '/test', handler: '~/server/nuxt-middle.js'
+    }
+  ]
   // modules: ['bootstrap-vue/nuxt'],暂时不调用bootstrap
   // 路由跳转调用中间鉴权文件
 }

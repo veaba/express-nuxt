@@ -5,8 +5,8 @@
  * @date 2017/11/18
  * @desc 常见操作函数
  ***********************/
-import cryPto from 'crypto'
-import {RouterModel} from '../model/model' // node 中的加密模块
+const cryPto = require('crypto')
+const {RouterModel} = require('../model/model') // node 中的加密模块
 const logger = require('tracer').console() // console追踪库
 
 /**
@@ -110,4 +110,4 @@ async function _download (res, msg, data, errorCode) {
   console.timeEnd('发送到前端消耗时间:')
   console.timeEnd('下载时间耗时:');
 }
-export {_isAuth, _dbError, _dbSuccess, _flipPage, _encryptedPWD, _queryRouter, _webSocket, _download}
+module.exports = {_isAuth, _dbError, _dbSuccess, _flipPage, _encryptedPWD, _queryRouter, _webSocket, _download}

@@ -13,6 +13,8 @@
 }
 ```
 ## HTTPS/SSL/TSL
+- 如果使用`nuxt-dev`、`nuxt-start`请求一次，都会让中间器件重新链接数据库，这显然不太对。能否让稳定的express 链接？
+- 提示，经过多次验证，发现nuxt内置的服务端无法被中间器件应用他的路由，除非nuxt作为express的中间器件被应用，这方式和启动`npm run server`一样
 - 提示，`serverMiddleware`不得含有空字符串。
 	`nuxt.config.js`的 `serverMiddleware`比如是含有中间器件字符串，不得存在空字符串情况，可以使空数组，但元素不能为空!否则无法调用 nuxt page里面的全部路由
 - 提示，`vmware-hostd.exe` 会占用443端口

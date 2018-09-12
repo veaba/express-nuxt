@@ -3,11 +3,10 @@ import axios from 'axios'
 import { Notice } from 'iview'
 
 if (process.browser) {
-  console.info('浏览器!');
-  // 自动添加上这个字段
+  // console.info('浏览器!');
   axios.defaults.baseURL = '/'
 } else {
-  console.info('不是浏览器');
+  // console.info('不是浏览器');
   axios.defaults.baseURL = 'http://localhost/api'
 }
 
