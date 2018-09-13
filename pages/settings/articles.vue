@@ -15,7 +15,7 @@
       </i-col>
     </Row>
 
-    <Table :data="articleData" :columns="articleCol"></Table>
+    <Table :data="articleData" :columns="articleCol" :loading="articleLoading"></Table>
      <Row class="pageBox" type="flex" justify="end">
          <Page :total="pageData.total" :current.sync="pageData.page" show-total on-change @on-change="getArticleListAPI"></Page>
      </Row>
@@ -27,12 +27,18 @@
       components: {},
       data () {
         return {
-          search: '标题1',
+          search: '',
           msg: 'Hello world article VueJS',
+          articleLoading: false,
           articleData: [],
           articleCol: [
+            { title: '序号',
+              type: 'index',
+              width: 80,
+              align: 'center'
+            },
             {
-              title: '内容',
+              title: '标题',
               key: 'post_title',
               render: (h, params) => {
                 return h('a', {
@@ -49,8 +55,16 @@
               }
             },
             {
+              title: '内容摘要',
+              key: 'post_abstract'
+            },
+            {
               title: '更新时间',
               key: 'post_date'
+            },
+            {
+              title: '字数',
+              key: 'post_size'
             },
             {
               title: '操作',
@@ -76,7 +90,7 @@
           }
         }
       },
-      created () {
+      mounted () {
         this.getArticleListAPI()
       },
       methods: {
@@ -87,6 +101,7 @@
          * @desc 拉取api
          * */
         getArticleListAPI () {
+          this.articleLoading = true
           this.$ajax.get('/api/getArticleList', {
             params: {
               name: this.search,
@@ -94,7 +109,7 @@
             }
           })
             .then(res => {
-              console.info(res)
+              this.articleLoading = false
               if (res.errorCode === 0) {
                 this.articleData = res.data
                 this.pageData.total = res.totals || 1
@@ -104,6 +119,7 @@
             })
             .catch(err => {
               console.info(err)
+              this.articleLoading = false
               this.pageData.total = err.total || 1
             })
         }

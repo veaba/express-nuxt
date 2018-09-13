@@ -14,6 +14,11 @@
 ```
 ## HTTP2
 	郁闷！HTTP2自带了HTTPS了，所以很简单。
+	
+- 警惕 spdy会导致页面刷新的时候，服务器直接炸掉。
+
+![访问http2Error](/static/img/spdy-error.png "访问http2Error")
+
 ```js
 const express = require('express')
 const http2 =require('http2')
@@ -188,6 +193,14 @@ export default {_io}
 
 ## mongodb 语法
 
+- `count()`、`length()` 突然发现count()返回的结果不对，当find 是一个空对象的时候
+```js
+db.getCollection('articles').find({}).length()//18
+db.getCollection('articles').find({}).count()//2
+db.getCollection('articles').find({post_title:/文章/}).length()//10
+db.getCollection('articles').find({post_title:/文章/}).count()//10
+```
+
 ## mongoose 语法
 
 ## 函数
@@ -301,8 +314,8 @@ db.getCollection("novels").aggregate([
 ```js
 db.getCollection("novels").distinct("name"); //查询 name 字段多少个值，通过这个，可以查询数据库存储多少本小说
 ```
-
-### 文章
+### 文章，带导航式的，翻译教程类网站，vuejs.org、mongoose.com等
+### 文章 普通文章，带节点类似GitHub的 readme
 
     - 文章预览（标题、时间、）
     -

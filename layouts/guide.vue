@@ -12,49 +12,10 @@
     <article class="article">
       <section class="all-section workspace">
         <Row type="flex">
-          <!--menu区域-->
           <i-col span="3" class="work-menu" style="overflow-y: auto;">
-            <Menu :active-name="activeName"
-                  :open-names="openName"
-                  @on-select="onSelectPage"
-                  ref="menu"
-                  theme="light" width="auto">
-              <MenuItem name="router-list">
-                <Icon type="flag"></Icon>
-                路由配置
-              </MenuItem>
-              <Submenu name="users">
-                <template slot="title">
-                  <Icon type="xbox"></Icon>
-                  用户配置
-                </template>
-                <MenuItem name="users-list">用户管理</MenuItem>
-                <MenuItem name="users-forbidden">用户黑名单</MenuItem>
-                <MenuItem name="users-permission">用户权限</MenuItem>
-              </Submenu>
-
-
-              <MenuItem name="articles">
-                <Icon type="document"></Icon>
-                文章管理
-              </MenuItem>
-              <MenuItem name="profile">
-                <Icon type="social-tux"></Icon>
-                个人设置
-              </MenuItem>
-              <MenuItem name="account">
-                <Icon type="social-html5"></Icon>
-                账号管理
-              </MenuItem>
-              <MenuItem name="security">
-                <Icon type="social-wordpress"></Icon>
-                安全设置
-              </MenuItem>
-              <MenuItem name="organization">
-                <Icon type="social-css3"></Icon>
-                组织设置
-              </MenuItem>
-            </Menu>
+            <p>教程类</p>
+            <p>112</p>
+            <p>333</p>
           </i-col>
           <!--内容区域-->
           <i-col span="21" style="padding-left: 20px;margin-top: 20px;">

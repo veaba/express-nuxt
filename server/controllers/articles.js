@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /***********************
  * @name article
  * @author Jo.gel
@@ -16,24 +17,36 @@ const _article = {
    * @TODO 增加模糊查询
    * */
   getArticleList: async (req, res, next) => {
-    let session = (req.session && req.session.isAuth) ? req.session.isAuth : false
-    _isAuth(res, session)
-    let data = req.query.name ? ({name: req.query.title}) : {}
+    // await _isAuth(res, (req.session && req.session.isAuth) ? req.session.isAuth : false)
+    let data = req.query.name ? ({post_title: new RegExp(req.query.name || '')}) : {}
     let page = req.query.page ? req.query.page : 1
-    let finArticleAll = await ArticleModel.find(data).count()// 总长度 sort() -1，倒叙,1默认升序
-    let articleArr = await ArticleModel.find(data).limit(10).limit(10).skip(page * 10 - 10).sort({_id: -1}).exec()
-    let findArticle = []
-    for (let item of articleArr) {
-      item.post_content = item.post_content.slice(0, 200)
-      let ob = JSON.parse(JSON.stringify(item))
-      findArticle.push(ob)
-    }
-
-    if (findArticle.length === 0) {
+    // mongoose 抛弃了count()
+    let finArticleAll = await ArticleModel.find(data).countDocuments()// 总长度 sort() -1，倒叙,1默认升序
+    let articleArr = await ArticleModel.aggregate([
+      {$match: data},
+      {
+        $project: {
+          post_title: 1,
+          post_date: 1,
+          post_abstract: 1,
+          post_size: {$strLenCP: '$post_content'}
+        }
+      },
+      {
+        $skip: page * 10 - 10
+      },
+      {
+        $limit: 10
+      },
+      {
+        $sort: {_id: 1}
+      }
+    ])
+    if (articleArr.length === 0) {
       _dbError(res, '查询为空数据', 4004)
     } else {
       let pages = Math.ceil((finArticleAll / 10))
-      await _flipPage(res, findArticle, 0, null, {totals: finArticleAll, pages: pages, pageCurrent: page})
+      await _flipPage(res, articleArr, 0, null, {totals: finArticleAll, pages: pages, pageCurrent: page})
     }
   },
 

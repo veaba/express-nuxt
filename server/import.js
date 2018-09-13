@@ -22,6 +22,7 @@ const logger = require('tracer').console() // console追踪库
 const path = require('path');
 const http = require('http'); // http 模块
 const http2 = require('spdy'); // spdy 模块，让express 支持http2
+// const http2 = require('spdy'); // spdy 模块，让express 支持http2
 // const https = require('https'); // https 模块
 const fs = require('fs');// 文件读写模块
 const app = express()
@@ -33,7 +34,8 @@ const httpsOptions = {
 }
 const http2Options = {
   key: fs.readFileSync(path.join(__dirname, './ssl/key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, './ssl/cert.pem'))
+  cert: fs.readFileSync(path.join(__dirname, './ssl/cert.pem')),
+  'x-forwarded-for': true
 }
 const config = require('../nuxt.config.js')
 const {configDB} = require('./config.js')
@@ -172,6 +174,7 @@ if (config.backpackDev || config.server) {
       console.log('\x1B[32m%s\x1B[49m', '  ==============================')
       process.exit(1)
     })
+  // console.info(router);
   http.createServer(app).listen(80)// 80->443 一定要启用80端口
   http2.createServer(http2Options, app).listen(443)
   // https.createServer(httpsOptions, app).listen(443)
