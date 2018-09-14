@@ -35,7 +35,9 @@
  * @finish 客户端按两次，导致函数执行两次，如何清空函数? √，通过progressTask 任务栈来处理
  * @todo 闭包的思想，依然需要注意！
  * @bug todo 默认的列表页数不对
+ * @lergan
  ***********************/
+import _io from '../import'
 const { NovelModel, NovelBadUrlModel, ArticleModel } = require('../model/model')
 const { format } = require('date-fns'); // 时间格式工具
 const charset = require('superagent-charset'); // 转移模块
@@ -46,15 +48,14 @@ const {
   _dbSuccess,
   _flipPage
 } = require('../functions/functions');
-const {_io} = '../import';
 
 const superAgentTo = charset(superAgent); // ajax api http 库 gb2312 或者gbk 的页面，需要  配合charset
-const logger = require('tracer').console(); // console追踪库
+const logger = require('tracer').console();
 /**
  * @desc 自定义的请求头参数，status400/403的时候去变更这个索引值，重新set header 的源，一般是由于host 不对所致
  * */
 const htmlHeader = [
-  // baidu:
+  // baidu:1
   {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
@@ -267,10 +268,10 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
   }
   return new Promise((resolve, reject) => {
     const rejectTime = setTimeout(() => {
-      logger.warn('\n++++第九步/2：爬取单章超时30等待完成');
+      logger.warn('\n++++第九步/2：爬取单章超时10s等待完成');
       reject(errObj);
       clearTimeout(rejectTime);
-    }, 30000);
+    }, 10000);
     let superAgentChart = charset ? superAgent : superAgentTo;
     superAgentChart.get(theUrl)
       .set(htmlHeader[1])
@@ -282,7 +283,7 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
           let badStatus = {ErrStatus: true};
           reject(badStatus); // 如果错误404/403则抛出err
         } else {
-          logger.warn('\n++++ 第九步/3-success：单章页面成功，状态:' + res.status);
+          // logger.warn('\n++++ 第九步/3-success：单章页面成功，状态:' + res.status);
           // 匹配到真正的内容，尽管如此，还需要后续的关注。才能产生变种
           const $ = await cheerio.load(res.text);
           let elArr = $('div,dd');// todo 1、有些网站内容放在div。2、有些放在 dd，比如 https://www.23us.so/files/article/html/0/131/9208971.html
@@ -295,8 +296,8 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
               .attr('id') || $(item)
               .attr('class')) && $(item)
               .children('br').length > 10) {
-              logger.warn('\n A+++' + index + '____' + $(item)
-                .attr('id') + '-------');
+              // logger.warn('\n A+++' + index + '____' + $(item)
+              //   .attr('id') + '-------');
               content = $(item)
                 .text() || '';
               // 除了超时之外reject,还有内容为空也会reject
@@ -306,7 +307,6 @@ async function singleNovel (url, catalogUrl, host, title, len, charset) {
               } else {
                 reject(errObj);
               }
-              logger.warn('\n++++ 第九步/4:进入单章内容抓取循环')
               return false; // 停止循环
             }
           });
@@ -325,12 +325,8 @@ const _novel = {
   // 临时测试入口
   novelTesting: async (req, res) => {
     logger.warn('临时测试入口')
-    // /第2117章 又/
-    // 第1065章 战/
-    let isHas = await NovelModel.findOne({name: '重生之最强剑神', isVip: 1, title: /第1065章 战/, $where: 'this.content.length<1'})
-      .count()
-    logger.warn(isHas)
-    res.json({isHas: isHas})
+    await _io('receive1', {'hello': 'I am testing server'})
+    res.json({isHas: 'I am test res'})
     // superAgent
     // // superAgentTo
     //   .get('https://www.23us.so/files/article/html/0/131/9208971.html')
@@ -391,14 +387,13 @@ const _novel = {
           catalogs.forEach(async (i, index) => {
             await singleNovel(i.href, url, decodeType.host, i.title, catalogs.length, decodeType.status)
               .then(async single => {
-                logger.warn('《' + name + '》 ' + i.title + ' then更新成功');
+                // logger.warn('《' + name + '》 ' + i.title + ' then更新成功');
                 i.content = single
                 i.index = index
                 await _io('download', {index: index, errorCode: 0, data: [i]})
               })
               .catch(singleErr => {
-                // todo 失败的个数
-                console.info(singleErr);
+                logger.warn(singleErr);
                 failIndex++
               })
             _index++
@@ -431,7 +426,7 @@ const _novel = {
   /**
    * @desc 下载小说页面
    * @todo 下载任务中，不允许再次提交。并限制
-   * @todo 查询耗时太慢，需要优化,34章，耗时1s
+   * @mongodb 查询耗时太慢，需要优化,34章，耗时1s
    * */
   download: async (req, res) => {
     logger.warn('default 开始下载~~~~~')
@@ -636,4 +631,5 @@ async function missionFail (msg) {
       logger.warn('\n++++ 由于错误导致任务失败， B/error：完成流程');
     });
 }
-module.exports = _novel
+// module.exports = _novel
+export default _novel

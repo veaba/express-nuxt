@@ -60,12 +60,12 @@ export default {
   components: {},
   data () {
     return {
-      keyword: '',
+      keyword: '网游之真幻无双',
       loading: false,
       selectType: 'customer', // default走起点、customer，自定义
       // http://www.23xs.cc/book/19/index.html 官榜
       // https://www.biduo.cc/biquge/44_44762/
-      customerUrl: '', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
+      customerUrl: 'https://www.biqugexsw.com/86_86838/', // 自定义的url目录 //全职武神 (4) http://www.shuge.net/html/2/2779/ http://www.mianhuatang.la/23/23460/
       customerStatus: false,
       progressStatus: 'active',
       percent: 0, // 进度条
@@ -113,6 +113,7 @@ export default {
       });
       let data = '';
       for (let item of arr) {
+        // 起点阅读无法识别标题多出两个空格，导致无法智能分割章节
         data = data + item.title + this.formatNovelData(item.content) + '\n\n';
       }
       return data;
@@ -151,7 +152,6 @@ export default {
                     'a',
                     {
                       attrs: {
-                        // todo 返回比较慢，后续才会生成txt文件
                         href: location.origin + json['data']['url'],
                         download: json['data'].name + '.txt'
                       }
@@ -242,11 +242,12 @@ export default {
       });
     },
     /**
-     * @desc 格式化排版
+     * @desc 格式化排版是
      * */
     formatNovelData (content) {
-      /* eslint no-irregular-whitespace: ["error", { "skipRegExps": true }] */
-      return content.replace(/    /g, '\n\n    ');
+      // todo 就这个正则替换，搞了好几个小时，郁闷死了。空格是全角的，感觉需要优化下
+      // todo 因为在控制台下，呈现的不一样的，一个一个的替换了很久才发现空格是全角的，感觉需要优化下
+      return content.replace(/\s{10}/g, '\n\n　　').replace(/\s{8}/g, '\n\n　　')
     },
     /**
      * @desc 前端下载小说
@@ -260,12 +261,9 @@ export default {
       this.$nextTick(() => {
         document.querySelector('.download').innerHTML = ''; // 清空上一个遗留
         if (document.querySelector('.download')) {
-          console.info(document.querySelector('.download'));
           document.querySelector('.download').appendChild(link);
         }
       });
-      console.info(link);
-      return link;
     },
     /**
      * @desc1 执行下载任务，20条下载数据库的
@@ -285,6 +283,7 @@ export default {
      * @desc 临时测试
      * */
     novelTesting () {
+      this.$socket.emit('receive', { params: '客户端发给你的一段消息' })
       this.$ajax
         .get('/api/novel/novelTesting')
         .then(res => {

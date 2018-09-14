@@ -7,17 +7,17 @@
  * @config NODE_NUXT = nuxt方式 启动服务器 nuxtDev:开发、nuxtStart 生产
  * @config NODE_RENDER = 编程方式启动服务器、backpack 或者node则调用服务器
  ***********************/
-const router = require('./router/index')
+import router from './router/index'
+// const router = require('./router/index')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const forceSSL = require('express-force-ssl')
-const { _webSocket } = require('./functions/functions')
 const {Nuxt, Builder} = require('nuxt')
 const express = require('express')// 编程的方式使用Nuxt
 const mongoose = require('mongoose') // mongoose 库
 const { UsersModel } = require('./model/model')
+const { _webSocket } = require('./functions/functions')
 const { _dbError, _encryptedPWD } = require('./functions/functions')
-
 const logger = require('tracer').console() // console追踪库
 const path = require('path');
 const http = require('http'); // http 模块
@@ -99,14 +99,14 @@ config.nuxtStart = (process.env.NODE_NUXT === 'nuxtStart')// cnpm run nuxt-dev�
 config.backpackDev = (process.env.NODE_RENDER === 'backpackDev')// cnpm run backpack-dev 适合开发环境下，nuxt和express 都会自动热更新
 config.server = (process.env.NODE_RENDER === 'server')// cnpm run backpack-dev 适合开发环境下，nuxt和express 都会自动热更新
 
+// 请求体解析
+app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.json())
+
 // 创建WebSocket服务，加密的
 const webSocket = http2.createServer(http2Options, app).listen(httpsPort + 1)
 const io = require('socket.io')(webSocket)
 io.on('connection', _webSocket) // socket 连接
-
-// 请求体解析
-app.use(bodyParser.urlencoded({extended: true}))
-app.use(bodyParser.json())
 
 // Session 创建req.session
 app.use(session({
@@ -180,11 +180,16 @@ if (config.backpackDev || config.server) {
   // https.createServer(httpsOptions, app).listen(443)
 }
 
+async function _io (name, data) {
+  return io.sockets.emit(name, data)
+}
+
 // @desc 以es5 require方式导出给node 支持es6语法的import index.js使用
-module.exports = {
-  path: '/api',
-  handler: app,
-  _io: async (name, data) => {
-    return io.sockets.emit(name, data)
+if (config.nuxtDev || config.nuxtStart) {
+  module.exports = {
+    path: '/api',
+    handler: app
   }
 }
+// es6方式暴露出给给novel.js使用
+export default _io

@@ -1,11 +1,12 @@
 /**
  * @向外提供Router Express路由，es5 require方式
  * */
+import _novel from '../controllers/novels'
 const _article = require('../controllers/articles') // 文章操作函数
 const _router = require('../controllers/routers') // 路由相关操作函数
 const _public = require('../controllers/publics') // 公开相关操作函数
 const _user = require('../controllers/users')
-const _novel = require('../controllers/novels')
+// const _novel = require('../controllers/novels')
 const {Router} = require('express') // 小说下载操作函数，有问题
 const router = Router()
 

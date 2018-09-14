@@ -92,7 +92,7 @@ async function _webSocket (socket) {
 
   // 收到消息
   socket.on('receive', (data) => {
-    socket.emit('receive1', {lala: 'lalallala'})
+    socket.emit('receive', {receive: '拉拉，receive，我收到你的消息了!'})
     logger.error(data)
   })
   console.log('\x1B[32m%s\x1B[39m', '  ==============================')

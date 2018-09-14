@@ -18,4 +18,4 @@ const socket = io(scheme + host + ':' + (config.env.PORT + 1.0 || 444), {
 })
 Vue.use(socket)
 Vue.prototype.$socket = socket
-// export default socket
+export default socket
