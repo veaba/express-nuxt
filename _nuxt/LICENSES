@@ -1,5 +1,5 @@
 /*!
- * Vue.js v2.5.22
+ * Vue.js v2.6.6
  * (c) 2014-2019 Evan You
  * Released under the MIT License.
  */
@@ -37,8 +37,8 @@
  */
 
 /**
- * vuex v3.0.1
- * (c) 2017 Evan You
+ * vuex v3.1.0
+ * (c) 2019 Evan You
  * @license MIT
  */
 
