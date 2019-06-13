@@ -4,13 +4,6 @@
  * Released under the MIT License.
  */
 
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
  * @version 1.14.3
@@ -49,6 +42,13 @@
  * @license MIT
  */
 
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
 /*! https://mths.be/utf8js v2.1.2 by @mathias */
 
 /*!
@@ -56,7 +56,7 @@
  * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
  * @license   Licensed under MIT license
  *            See https://raw.githubusercontent.com/stefanpenner/es6-promise/master/LICENSE
- * @version   v4.2.6+9869a4bc
+ * @version   v4.2.8+1e68dce6
  */
 
 /**
